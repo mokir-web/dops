@@ -44,9 +44,11 @@
     }
     .nav button { flex-shrink: 0; }
     .nav-right {
-      margin-left: auto; display: flex; gap: 8px;
+      margin-left: auto; display: flex; gap: 12px;
       align-items: center; font-size: 15px; color: #6b5c52;
     }
+    .nav-user-info { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+    .nav-mobile-user { display: flex; flex-direction: column; gap: 2px; padding: 10px 0 14px; border-bottom: 1px solid #c4b8ac; margin-bottom: 8px; }
     .nav-desktop-btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .hamburger { display: none; background: #3d5c4a; color: #f0ede8; border: none; border-radius: 5px; padding: 16px 28px; cursor: pointer; font-size: 26px; line-height: 1; min-height: 60px; }
     .nav-menu { display: none; }
@@ -152,6 +154,7 @@
       .nav-desktop-btns { display: none; }
       .nav { gap: 6px; border-bottom: none; padding-bottom: 8px; flex-wrap: wrap; }
       .nav-right { display: none; }
+      .nav-mobile-user { display: flex; }
       #nav-user { font-size: 15px; }
       .date-grid { grid-template-columns: 1fr; }
       #login-panel { margin: 16px auto; padding: 16px; border: none; border-radius: 0; }
@@ -170,7 +173,14 @@
   <!-- ═══ LOGIN ════════════════════════════════════════════════════ -->
 
   <div id="login-panel">
-    <h2>Bedömning</h2>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:20px;">
+      <svg width="56" height="56" viewBox="0 0 42 42" aria-label="MoraDOPS">
+  <circle cx="21" cy="21" r="21" fill="#3d5c4a"/>
+  <text x="21" y="27" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#f0ede8" text-anchor="middle">MD</text>
+</svg>
+      <div style="font-family:Arial,sans-serif; font-size:22px; font-weight:700; color:#2a1f18; letter-spacing:-0.3px;">MoraDOPS</div>
+      <div style="font-size:13px; color:#6b5c52;">Mora lasarett · Kirurgi</div>
+    </div>
 
     <div id="login-view">
       <div class="field">
@@ -279,20 +289,32 @@
   <div id="app" class="hidden">
 
     <div class="nav">
-      <!-- Desktop -->
+      <!-- Desktop knappar -->
       <div class="nav-desktop-btns">
         <button class="btn-primary"   onclick="showPanel('assessment')">Registrera bedömning</button>
         <button class="btn-secondary" onclick="showPanel('my-assessments')">Mina bedömningar</button>
         <button class="btn-secondary" onclick="showPanel('profile')">Min profil</button>
       </div>
-      <!-- Mobil -->
-      <button class="hamburger" onclick="toggleMenu()" aria-label="Meny">☰</button>
+      <!-- Mobil: hamburger -->
+      <button class="hamburger" id="hamburger-btn" aria-label="Meny">☰</button>
+      <!-- Desktop: användare + logga ut + logo -->
       <div class="nav-right">
-        <span id="nav-user"></span>
+        <div class="nav-user-info">
+          <span id="nav-user" style="font-weight:bold;"></span>
+          <span id="nav-clinic" style="font-size:13px; color:#6b5c52;"></span>
+        </div>
         <button class="btn-danger" onclick="doLogout()">Logga ut</button>
+        <svg width="36" height="36" viewBox="0 0 42 42" style="flex-shrink:0; cursor:pointer;" onclick="showPanel('assessment')" aria-label="MoraDOPS hem">
+  <circle cx="21" cy="21" r="21" fill="#3d5c4a"/>
+  <text x="21" y="27" font-family="Arial,sans-serif" font-size="14" font-weight="700" fill="#f0ede8" text-anchor="middle">MD</text>
+</svg>
       </div>
       <!-- Mobil dropdown -->
       <div class="nav-menu" id="nav-menu">
+        <div class="nav-mobile-user">
+          <span id="nav-user-mob" style="font-weight:bold; font-size:17px;"></span>
+          <span id="nav-clinic-mob" style="font-size:14px; color:#6b5c52;"></span>
+        </div>
         <button class="btn-primary"   onclick="showPanel('assessment'); closeMenu()">Registrera bedömning</button>
         <button class="btn-secondary" onclick="showPanel('my-assessments'); closeMenu()">Mina bedömningar</button>
         <button class="btn-secondary" onclick="showPanel('profile'); closeMenu()">Min profil</button>
@@ -509,7 +531,16 @@
     function bootApp() {
       document.getElementById('login-panel').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
-      document.getElementById('nav-user').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+      const fullName = `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('nav-user').textContent = fullName;
+      document.getElementById('nav-clinic').textContent = currentUser.clinic;
+      const mobUser = document.getElementById('nav-user-mob');
+      const mobClinic = document.getElementById('nav-clinic-mob');
+      if (mobUser) mobUser.textContent = fullName;
+      if (mobClinic) mobClinic.textContent = currentUser.clinic;
+      // Hamburgare – sätt onclick via JS (säkrare än inline på mobil)
+      const hbtn = document.getElementById('hamburger-btn');
+      if (hbtn) hbtn.onclick = toggleMenu;
       prefillAssessment();
       prefillProfile();
       showPanel('assessment');
@@ -1094,21 +1125,20 @@
     }
 
     // ── Helpers ───────────────────────────────────────────────────
-    // Stäng menyn om man klickar utanför
-    document.addEventListener('click', function(e) {
-      const menu = document.getElementById('nav-menu');
-      const btn  = document.getElementById('nav-hamburger');
-      if (menu && !menu.contains(e.target) && e.target !== btn) {
-        menu.classList.remove('open');
-      }
-    });
-
     function toggleMenu() {
       document.getElementById('nav-menu').classList.toggle('open');
     }
     function closeMenu() {
       document.getElementById('nav-menu').classList.remove('open');
     }
+    // Stäng menyn om man klickar utanför
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('nav-menu');
+      const btn  = document.getElementById('hamburger-btn');
+      if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.remove('open');
+      }
+    });
 
     function showSelectionFields() {
       ['f-intro','f1','f2','f3','f4','f5'].forEach(id => show(id, true));
