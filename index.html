@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="format-detection" content="telephone=no">
+  <style>
+    * { box-sizing: border-box; }
+    html { width: 100%; font-size: 16px; }
+    body { min-width: 0 !important; }
+    body { font-family: Arial, sans-serif; max-width: 1100px; width: 100%; margin: 0 auto; padding: 24px 32px; color: #1e1612; font-size: 19px; -webkit-text-size-adjust: 100%; background: #e6e0d8; }
+    h2 { color: #2a1f18; margin-top: 0; font-size: 26px; }
+    h3 { color: #2a1f18; font-size: 21px; }
+    h4 { color: #6b5c52; margin: 20px 0 4px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field { margin-top: 22px; }
+    label.field-label { display: block; font-weight: bold; margin-bottom: 5px; color: #1e1612; font-size: 19px; }
+    .field-description { font-size: 16px; color: #6b5c52; margin-bottom: 8px; }
+    input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], select, textarea {
+      width: 100%; max-width: 560px; padding: 11px 10px; font-size: 18px;
+      border: 1.5px solid #c4b8ac; border-radius: 5px;
+      background: #f5f1ec; color: #1e1612; }
+    textarea { max-width: 760px; }
+    textarea { min-height: 90px; }
+    .radio-group label { display: block; margin: 8px 0; font-weight: normal; cursor: pointer; color: #1e1612; font-size: 18px; }
+    .radio-group input[type=radio] { margin-right: 10px; width: 18px; height: 18px; }
+    .checkbox-group label { display: block; margin: 8px 0; font-weight: normal; cursor: pointer; color: #1e1612; font-size: 18px; }
+    .checkbox-group input[type=checkbox] { margin-right: 10px; width: 18px; height: 18px; cursor: pointer; }
+
+    .scale-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .scale-group label {
+      display: flex; flex-direction: column; align-items: center;
+      cursor: pointer; font-size: 15px;
+      min-width: 40px; padding: 5px 3px; color: #1e1612;
+    }
+    .scale-group input { margin-bottom: 5px; width: 22px; height: 22px; cursor: pointer; }
+
+    .hidden { display: none; }
+
+    .nav {
+      display: flex; gap: 8px; margin-bottom: 24px;
+      flex-wrap: wrap; align-items: center;
+      padding-bottom: 16px; border-bottom: 1.5px solid #c4b8ac;
+    }
+    .nav button { flex-shrink: 0; }
+    .nav-right {
+      margin-left: auto; display: flex; gap: 8px;
+      align-items: center; font-size: 15px; color: #6b5c52;
+    }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+    button.btn-primary {
+      padding: 13px 22px; font-size: 18px;
+      background: #5c3d2e; color: #f5f1ec;
+      border: none; border-radius: 5px; cursor: pointer;
+      min-height: 48px;
+    }
+    button.btn-primary:hover { background: #3d2518; }
+    button.btn-secondary {
+      padding: 13px 22px; font-size: 18px;
+      background: #ddd5ca; color: #1e1612;
+      border: 1.5px solid #c4b8ac; border-radius: 5px; cursor: pointer;
+      min-height: 48px;
+    }
+    button.btn-secondary:hover { background: #cfc5b8; }
+    button.btn-danger {
+      padding: 11px 16px; font-size: 16px;
+      background: rgba(176,48,32,0.12); color: #9e2a18;
+      border: 1.5px solid rgba(176,48,32,0.35); border-radius: 5px; cursor: pointer;
+      min-height: 48px;
+    }
+    button.btn-danger:hover { background: rgba(176,48,32,0.22); }
+    button.btn-small { padding: 7px 15px; font-size: 15px; min-height: 38px; }
+
+    .section-header {
+      background: #d8cfc5; padding: 12px 16px;
+      border-radius: 5px; margin-top: 28px;
+      font-weight: bold; color: #2a1f18; font-size: 18px;
+      border-left: 4px solid #9e7c68;
+    }
+    .question-label { font-weight: bold; margin-bottom: 3px; color: #1e1612; font-size: 18px; }
+    hr { border: none; border-top: 1.5px solid #c4b8ac; margin: 24px 0; }
+    .status-ok  { color: #3a6e30; font-weight: bold; margin-top: 14px; font-size: 18px; }
+    .status-err { color: #9e2a18; font-weight: bold; margin-top: 14px; font-size: 18px; }
+
+    .assessment-card { border: 1.5px solid #c4b8ac; border-radius: 7px; padding: 16px; margin-top: 16px; background: #f5f1ec; }
+    .assessment-card h4 { margin: 0 0 7px; color: #2a1f18; font-size: 17px; text-transform: none; letter-spacing: 0; }
+    .assessment-card .meta { font-size: 14px; color: #6b5c52; margin-bottom: 10px; }
+    .assessment-answers { font-size: 16px; margin-top: 10px; }
+    .ans-section { font-weight: bold; margin-top: 12px; color: #2a1f18; font-size: 16px; }
+    .ans-row { margin: 3px 0 3px 14px; color: #1e1612; font-size: 16px; }
+
+    .filter-box { margin-top: 16px; padding: 16px; background: #d8cfc5; border-radius: 7px; }
+    .filter-chip {
+      font-size: 15px; cursor: pointer;
+      background: #f5f1ec; border: 1.5px solid #c4b8ac;
+      padding: 7px 14px; border-radius: 14px;
+      display: inline-flex; align-items: center; gap: 7px;
+      min-height: 38px; color: #1e1612;
+    }
+    .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    #login-panel {
+      max-width: 420px; width: 100%;
+      margin: 48px auto; padding: 28px;
+      border: 1.5px solid #c4b8ac; border-radius: 9px;
+      background: #f5f1ec;
+    }
+    #login-panel h2 { text-align: center; }
+
+    /* ── Mobile overrides (max 600px = phone) ── */
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+        font-size: 17px;
+        max-width: 100%;
+        background: #f0ede8;
+      }
+      h2 { font-size: 22px; }
+      h3 { font-size: 18px; }
+      h4 { font-size: 14px; }
+      label.field-label { font-size: 16px; }
+      .field-description { font-size: 15px; }
+      .question-label { font-size: 17px; }
+      .section-header { font-size: 17px; }
+      input[type=text], input[type=email], input[type=password],
+      input[type=number], input[type=date], select, textarea {
+        font-size: 17px;
+        padding: 12px 10px;
+      }
+      .radio-group label { font-size: 17px; margin: 8px 0; }
+      .radio-group input[type=radio] { width: 20px; height: 20px; margin-right: 10px; }
+      .scale-group { gap: 8px; }
+      .scale-group label { min-width: 40px; font-size: 16px; }
+      .scale-group input { width: 24px; height: 24px; }
+      button.btn-primary, button.btn-secondary, button.btn-danger {
+        font-size: 17px;
+        padding: 14px 18px;
+        min-height: 50px;
+      }
+      button.btn-small { font-size: 15px; padding: 8px 14px; min-height: 40px; }
+      .btn-row { flex-direction: column; gap: 8px; }
+      .btn-row button { width: 100%; text-align: center; }
+      .btn-row button.btn-small { width: auto; }
+      .nav { gap: 6px; }
+      .nav-right { margin-left: auto; }
+      #nav-user { font-size: 14px; }
+      .date-grid { grid-template-columns: 1fr; }
+      #login-panel { margin: 16px auto; padding: 16px; border: none; border-radius: 0; }
+      .assessment-card { padding: 12px; }
+      .assessment-card h4 { font-size: 16px; }
+      .assessment-card .meta { font-size: 14px; }
+      .ans-section { font-size: 15px; }
+      .ans-row { font-size: 15px; }
+      .filter-chip { font-size: 15px; padding: 8px 14px; }
+    }
+  </style>
+
+</head>
+<body>
+
+  <!-- ═══ LOGIN ════════════════════════════════════════════════════ -->
+
+  <div id="login-panel">
+    <h2>Bedömning</h2>
+
+    <div id="login-view">
+      <div class="field">
+        <label class="field-label">E-postadress</label>
+        <input type="email" id="login-email" placeholder="din@email.se">
+      </div>
+      <div class="field">
+        <label class="field-label">PIN</label>
+        <input type="password" id="login-pin" placeholder="••••" maxlength="6"
+          onkeydown="if(event.key==='Enter') doLogin()">
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="doLogin()">Logga in</button>
+        <button class="btn-secondary" onclick="showLoginView('register')">Skapa konto</button>
+      </div>
+      <div style="margin-top:12px;">
+        <a href="#" onclick="showLoginView('forgot'); return false;" style="font-size:13px; color:#1a73e8;">Glömt PIN?</a>
+      </div>
+      <div id="login-status"></div>
+    </div>
+
+    <div id="forgot-view" class="hidden">
+      <h3 style="color:#1a73e8;">Återställ PIN</h3>
+      <div id="forgot-step1">
+        <div class="field">
+          <label class="field-label">E-postadress</label>
+          <input type="email" id="forgot-email" placeholder="din@email.se">
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="sendResetCode()">Skicka kod</button>
+          <button class="btn-secondary" onclick="showLoginView('login')">Tillbaka</button>
+        </div>
+        <div id="forgot-status1"></div>
+      </div>
+      <div id="forgot-step2" class="hidden">
+        <div class="field">
+          <label class="field-label">Kod (från mailet)</label>
+          <input type="text" id="forgot-code" maxlength="6" placeholder="123456">
+        </div>
+        <div class="field">
+          <label class="field-label">Ny PIN (4–6 siffror)</label>
+          <input type="password" id="forgot-newpin" maxlength="6">
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="doResetPin()">Spara ny PIN</button>
+        </div>
+        <div id="forgot-status2"></div>
+      </div>
+    </div>
+
+    <div id="register-view" class="hidden">
+      <h3 style="color:#1a73e8;">Skapa konto</h3>
+      <div class="field"><label class="field-label">Förnamn *</label><input type="text" id="reg-firstname"></div>
+      <div class="field"><label class="field-label">Efternamn *</label><input type="text" id="reg-lastname"></div>
+      <div class="field"><label class="field-label">E-postadress *</label><input type="email" id="reg-email"></div>
+      <div class="field">
+        <label class="field-label">PIN (4–6 siffror) *</label>
+        <input type="password" id="reg-pin" maxlength="6">
+      </div>
+      <div class="field">
+        <label class="field-label">Yrkesroll *</label>
+        <select id="reg-jobrole">
+          <option value="">-- Välj --</option>
+          <option value="ST">ST</option>
+          <option value="Spec">Spec</option>
+          <option value="AT">AT</option>
+          <option value="BT">BT</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Ort *</label>
+        <select id="reg-location" onchange="updateClinicDropdown()">
+          <option value="">-- Välj ort --</option>
+          <option value="__new__">+ Ny ort</option>
+        </select>
+        <input type="text" id="reg-location-new" class="hidden" placeholder="Ange ort" style="margin-top:6px;">
+      </div>
+      <div class="field">
+        <label class="field-label">Klinik *</label>
+        <select id="reg-clinic" onchange="checkNewClinic()">
+          <option value="">-- Välj klinik --</option>
+          <option value="__new__">+ Ny klinik</option>
+        </select>
+        <input type="text" id="reg-clinic-new" class="hidden" placeholder="Ange kliniknamn" style="margin-top:6px;">
+      </div>
+      <div class="field">
+        <label class="field-label">Användarroll *</label>
+        <select id="reg-userrole">
+          <option value="">-- Välj --</option>
+          <option value="Registrerare">Registrerare</option>
+          <option value="Mottagare">Mottagare</option>
+          <option value="Blandbild">Blandbild</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="doRegister()">Registrera</button>
+        <button class="btn-secondary" onclick="showLoginView('login')">Tillbaka</button>
+      </div>
+      <div id="reg-status"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══ APP ══════════════════════════════════════════════════════ -->
+
+  <div id="app" class="hidden">
+
+    <div class="nav">
+      <button class="btn-primary"   onclick="showPanel('assessment')">Bedömning</button>
+      <button class="btn-secondary" onclick="showPanel('my-assessments')">Mina bedömningar</button>
+      <button class="btn-secondary" onclick="showPanel('profile')">Min profil</button>
+      <div class="nav-right">
+        <span id="nav-user"></span>
+        <button class="btn-danger" onclick="doLogout()">Logga ut</button>
+      </div>
+    </div>
+
+    <!-- ── ASSESSMENT ──────────────────────────────────────────── -->
+
+    <div id="panel-assessment">
+      <h2>Bedömning</h2>
+      <p id="f-intro" style="color:#666; font-size:13px;">Frågor som inte anses relevanta kan med fördel lämnas obesvarade.</p>
+
+      <div class="field" id="f1">
+        <label class="field-label">1. Klinik</label>
+        <div id="clinic-display" style="padding:8px; background:#f8f9fa; border-radius:4px; font-size:14px;"></div>
+      </div>
+
+      <div class="field" id="f2">
+        <label class="field-label">2. Registrerare</label>
+        <div id="registrar-display" style="padding:8px; background:#f8f9fa; border-radius:4px; font-size:14px;"></div>
+      </div>
+
+      <div class="field" id="f3">
+        <label class="field-label">3. Mottagarens kategori *</label>
+        <div class="radio-group" id="category-group">
+          <label><input type="radio" name="category" value="Spec" onchange="updateRecipients()"> Spec</label>
+          <label><input type="radio" name="category" value="ST"   onchange="updateRecipients()"> ST</label>
+          <label><input type="radio" name="category" value="BT"   onchange="updateRecipients()"> BT</label>
+          <label><input type="radio" name="category" value="AT"   onchange="updateRecipients()"> AT</label>
+        </div>
+      </div>
+
+      <div class="field hidden" id="f4">
+        <label class="field-label">4. Mottagare *</label>
+        <select id="recipient" onchange="updateFormTypes()">
+          <option value="">-- Välj mottagare --</option>
+        </select>
+      </div>
+
+      <div class="field hidden" id="f5">
+        <label class="field-label">5. Formulärtyp *</label>
+        <div class="radio-group" id="form-type-group"></div>
+      </div>
+
+      <div id="f6-container" class="hidden">
+        <div style="margin-bottom:12px;">
+          <button class="btn-secondary btn-small" onclick="showSelectionFields()">&#8592; Ändra val</button>
+        </div>
+        <hr>
+        <div id="form-questions"></div>
+        <div class="btn-row">
+          <button class="btn-primary hidden" id="submit-btn" onclick="submitAssessment()">Skicka bedömning</button>
+        </div>
+      </div>
+
+      <div id="assessment-status"></div>
+    </div>
+
+    <!-- ── MY ASSESSMENTS ─────────────────────────────────────── -->
+
+    <div id="panel-my-assessments" class="hidden">
+      <h2>Mina bedömningar</h2>
+
+      <div class="btn-row">
+        <button class="btn-primary"   id="tab-sent"     onclick="setAssessmentTab('sent')">Skickade</button>
+        <button class="btn-secondary" id="tab-received" onclick="setAssessmentTab('received')">Mottagna</button>
+      </div>
+
+      <div class="filter-box">
+        <div class="date-grid">
+          <div>
+            <label class="field-label">Från datum</label>
+            <input type="date" id="filter-date-from">
+          </div>
+          <div>
+            <label class="field-label">Till datum</label>
+            <input type="date" id="filter-date-to">
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Formulärtyp</label>
+          <div id="filter-formtypes" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="applyFilters()">Sök</button>
+          <button class="btn-secondary" onclick="resetFilters()">Återställ</button>
+        </div>
+      </div>
+
+      <div id="assessment-actions" class="hidden" style="margin-top:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <label style="font-size:13px; cursor:pointer;">
+          <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)"> Markera alla
+        </label>
+        <button class="btn-primary" onclick="exportSelected()">📄 Exportera markerade som Word</button>
+        <span id="selected-count" style="font-size:13px; color:#666;"></span>
+      </div>
+
+      <div id="my-assessments-list" style="margin-top:14px;"></div>
+      <div id="export-status" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ── PROFILE ────────────────────────────────────────────── -->
+
+    <div id="panel-profile" class="hidden">
+      <h2>Min profil</h2>
+
+      <div style="padding:14px; background:#f8f9fa; border-radius:6px; font-size:14px; margin-bottom:20px;">
+        <div><strong>Namn:</strong> <span id="profile-name"></span></div>
+        <div style="margin-top:6px;"><strong>E-post:</strong> <span id="profile-email"></span></div>
+        <div style="margin-top:6px;"><strong>Klinik:</strong> <span id="profile-clinic"></span></div>
+      </div>
+
+      <h3 style="color:#1a73e8; border-bottom:2px solid #EAF2FF; padding-bottom:6px;">Ändra roller</h3>
+      <div class="field">
+        <label class="field-label">Yrkesroll</label>
+        <select id="profile-jobrole">
+          <option value="ST">ST</option>
+          <option value="Spec">Spec</option>
+          <option value="AT">AT</option>
+          <option value="BT">BT</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Användarroll</label>
+        <select id="profile-userrole">
+          <option value="Registrerare">Registrerare</option>
+          <option value="Mottagare">Mottagare</option>
+          <option value="Blandbild">Blandbild</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveProfile()">Spara roller</button>
+      </div>
+      <div id="profile-role-status"></div>
+
+      <hr>
+
+      <h3 style="color:#1a73e8; border-bottom:2px solid #EAF2FF; padding-bottom:6px;">Ändra PIN</h3>
+      <div class="field">
+        <label class="field-label">Nuvarande PIN</label>
+        <input type="password" id="profile-current-pin" maxlength="6">
+      </div>
+      <div class="field">
+        <label class="field-label">Ny PIN (4–6 siffror)</label>
+        <input type="password" id="profile-new-pin" maxlength="6">
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="changePin()">Byt PIN</button>
+      </div>
+      <div id="profile-pin-status"></div>
+    </div>
+
+  </div><!-- /app -->
+
+  <script>
+    let appData = null;
+    let currentUser = null;
+    let currentFormData = null;
+    let currentSection = null;
+    let savedAnswers = {};
+    let currentAssessmentRole = 'sent';
+    let currentAssessments = [];
+    let availableFormTypes = [];
+
+    const hierarchy = ['Spec', 'ST', 'BT', 'AT'];
+    const formsSTSpec = [
+      'Operationsspecifik DOPS','360 GRADER','Återkoppling till ST-läkare efter muntlig presentation',
+      'Mini-CEX','DOPS (allmän mall för mindre ingrepp/åtgärder)','Videogranskning',
+      'Självskattning inför specialistkollegium','Rapport från specialistkollegium'
+    ];
+    const formsATBT = [
+      'DOPS (allmän mall för mindre ingrepp/åtgärder)','Mini-CEX','360 GRADER',
+      'Återkoppling till ST-läkare efter muntlig presentation','Operationsspecifik DOPS'
+    ];
+
+    // ── GAS backend URL — BYTA UT MOT DIN /exec URL ─────────────
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxRcUgHOhJ9mGpD9IiSK282D22djPq5IWKhJ8Hkbcg6Cwhy_pkKXLIaLI530uCqqfg/exec';
+    // Exempel: 'https://script.google.com/macros/s/AKfyc.../exec'
+
+    // ── API helper via fetch ──────────────────────────────────────
+    async function api(action, params) {
+      const body = JSON.stringify({ action, ...(params || {}) });
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain' }, // text/plain undviker CORS preflight
+        body
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || 'Serverfel');
+      return json.result;
+    }
+
+    // ── Boot ─────────────────────────────────────────────────────
+    window.onload = async function() {
+      const saved = localStorage.getItem('dops_user');
+      try {
+        appData = await api('getData');
+        populateLocationDropdown();
+        if (saved) {
+          currentUser = JSON.parse(saved);
+          bootApp();
+        } else {
+          document.getElementById('login-panel').classList.remove('hidden');
+        }
+      } catch(err) {
+        document.getElementById('login-panel').classList.remove('hidden');
+        console.error(err);
+      }
+    };
+
+    function bootApp() {
+      document.getElementById('login-panel').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('nav-user').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+      prefillAssessment();
+      prefillProfile();
+      showPanel('assessment');
+    }
+
+    // ── Login views ───────────────────────────────────────────────
+    function showLoginView(view) {
+      ['login-view','forgot-view','register-view'].forEach(v =>
+        document.getElementById(v).classList.toggle('hidden', v !== `${view}-view`)
+      );
+    }
+
+    // ── Login ─────────────────────────────────────────────────────
+    async function doLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const pin   = document.getElementById('login-pin').value.trim();
+      if (!email || !pin) { setStatus('login-status', 'Fyll i e-post och PIN.', true); return; }
+      try {
+        const user = await api('login', { email, pin });
+        if (!user) { setStatus('login-status', 'Felaktig e-post eller PIN.', true); return; }
+        currentUser = user;
+        localStorage.setItem('dops_user', JSON.stringify(user));
+        bootApp();
+      } catch(err) { setStatus('login-status', err.message, true); }
+    }
+
+    function doLogout() {
+      localStorage.removeItem('dops_user');
+      location.reload();
+    }
+
+    // ── Forgot PIN ────────────────────────────────────────────────
+    async function sendResetCode() {
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!email) { setStatus('forgot-status1', 'Ange e-postadress.', true); return; }
+      try {
+        const result = await api('sendResetCode', { email });
+        if (result.error) { setStatus('forgot-status1', result.error, true); return; }
+        setStatus('forgot-status1', '✓ Kod skickad till din e-post.', false);
+        document.getElementById('forgot-step2').classList.remove('hidden');
+      } catch(err) { setStatus('forgot-status1', err.message, true); }
+    }
+
+    async function doResetPin() {
+      const email  = document.getElementById('forgot-email').value.trim();
+      const code   = document.getElementById('forgot-code').value.trim();
+      const newPin = document.getElementById('forgot-newpin').value.trim();
+      if (!code || !newPin) { setStatus('forgot-status2', 'Fyll i kod och ny PIN.', true); return; }
+      try {
+        const result = await api('resetPin', { email, code, newPin });
+        if (result.error) { setStatus('forgot-status2', result.error, true); return; }
+        setStatus('forgot-status2', '✓ PIN ändrad! Du kan nu logga in.', false);
+        setTimeout(() => showLoginView('login'), 2000);
+      } catch(err) { setStatus('forgot-status2', err.message, true); }
+    }
+
+    // ── Assessment ────────────────────────────────────────────────
+    function prefillAssessment() {
+      document.getElementById('clinic-display').textContent = currentUser.clinic;
+      document.getElementById('registrar-display').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+      const userIdx = hierarchy.indexOf(currentUser.jobRole);
+      document.querySelectorAll('input[name="category"]').forEach(radio => {
+        const catIdx = hierarchy.indexOf(radio.value);
+        radio.disabled = userIdx === -1 || catIdx < userIdx;
+        radio.closest('label').style.opacity = radio.disabled ? '0.4' : '1';
+      });
+      // Show f4 (empty) and f5 with all form types visible from start
+      show('f4', true);
+      show('f5', true);
+      populateAllFormTypes();
+    }
+
+    function populateAllFormTypes() {
+      const group = document.getElementById('form-type-group');
+      group.innerHTML = '';
+      const allForms = [...new Set([...formsSTSpec, ...formsATBT])];
+      allForms.forEach(f => {
+        const lbl = document.createElement('label');
+        lbl.innerHTML = `<input type="radio" name="formtype" value="${f}" onchange="loadForm('${f}')"> ${f}`;
+        group.appendChild(lbl);
+      });
+    }
+
+    function updateRecipients() {
+      const clinic   = currentUser.clinic;
+      const category = document.querySelector('input[name="category"]:checked')?.value;
+      const sel = document.getElementById('recipient');
+      sel.innerHTML = '<option value="">-- Välj mottagare --</option>';
+      show('f4', true); show('f5', true); show('f6-container', false); show('submit-btn', false);
+      // Reset form types to category-appropriate list (or full list if no category)
+      const group = document.getElementById('form-type-group');
+      group.innerHTML = '';
+      const checkedFormType = document.querySelector('input[name="formtype"]:checked')?.value;
+      if (!category) {
+        populateAllFormTypes();
+        return;
+      }
+      const catNames = new Set(appData.lists[category][clinic] || []);
+      const recNames = new Set(appData.lists['Mottagare'][clinic] || []);
+      [...catNames].filter(n => recNames.has(n)).forEach(n => sel.appendChild(newOption(n, n)));
+      const list = (category === 'ST' || category === 'Spec') ? formsSTSpec : formsATBT;
+      list.forEach(f => {
+        const lbl = document.createElement('label');
+        lbl.innerHTML = `<input type="radio" name="formtype" value="${f}" onchange="loadForm('${f}')"> ${f}`;
+        group.appendChild(lbl);
+      });
+      // Restore previously checked form type if still in list
+      if (checkedFormType) {
+        const r = group.querySelector(`input[value="${checkedFormType}"]`);
+        if (r) r.checked = true;
+      }
+    }
+
+    function updateFormTypes() {
+      // Recipient chosen — list is already correct from updateRecipients, nothing extra needed
+      show('f5', true); show('f6-container', false); show('submit-btn', false);
+    }
+
+    async function loadForm(formName) {
+      savedAnswers = {};
+      document.getElementById('form-questions').innerHTML = '<p style="color:#888">Laddar frågor...</p>';
+      show('f6-container', true); show('submit-btn', false);
+      ['f-intro','f1','f2','f3','f4','f5'].forEach(id => show(id, false));
+      try {
+        const data = await api('getFormQuestions', { formName });
+        renderForm(data);
+      } catch(err) { alert('Fel: ' + err.message); }
+    }
+
+    function renderForm(questions) {
+      currentFormData = questions;
+      const first = questions.length > 0 ? questions[0].section : null;
+      currentSection = first;
+      showSection(first);
+    }
+
+    function showSection(sectionName) {
+      currentSection = sectionName;
+      const container = document.getElementById('form-questions');
+      container.innerHTML = '';
+      show('submit-btn', false);
+      const questions = currentFormData.filter(q => q.section === sectionName);
+      if (!questions.length) { container.innerHTML = '<p>Inga frågor.</p>'; return; }
+      const sDiv = document.createElement('div');
+      sDiv.className = 'section-header';
+      sDiv.textContent = sectionName;
+      container.appendChild(sDiv);
+      questions.forEach((q, idx) => {
+        if (q.type === 'rubrik') {
+          const h = document.createElement('h4');
+          h.textContent = q.question;
+          container.appendChild(h);
+          return;
+        }
+        const div = document.createElement('div');
+        div.className = 'field';
+        const lbl = document.createElement('div');
+        lbl.className = 'question-label';
+        lbl.textContent = q.question;
+        div.appendChild(lbl);
+        if (q.description) {
+          const desc = document.createElement('div');
+          desc.className = 'field-description';
+          desc.textContent = q.description;
+          div.appendChild(desc);
+        }
+        const fieldId = `q_${sectionName}_${idx}`.replace(/[^a-zA-Z0-9_]/g, '_');
+        const savedVal = savedAnswers[`${sectionName}__${q.question}`]?.answer;
+        if (q.type === 'radio') {
+          const group = document.createElement('div');
+          group.className = 'radio-group';
+          q.options.forEach(opt => {
+            const lbl2 = document.createElement('label');
+            const input = document.createElement('input');
+            input.type = 'radio'; input.name = fieldId; input.value = opt;
+            input.dataset.question = q.question;
+            input.dataset.section  = q.section;
+            input.dataset.jumpTo   = q.jumpTo;
+            if (savedVal === opt) input.checked = true;
+            lbl2.appendChild(input);
+            lbl2.appendChild(document.createTextNode(' ' + opt));
+            group.appendChild(lbl2);
+          });
+          div.appendChild(group);
+        } else if (q.type === 'fritext') {
+          const ta = document.createElement('textarea');
+          ta.dataset.question = q.question;
+          ta.dataset.section  = q.section;
+          if (savedVal) ta.value = savedVal;
+          div.appendChild(ta);
+        } else if (q.type === 'multi') {
+          // Multi-checkbox: options från autofill-kolumn eller manuella options
+          const group = document.createElement('div');
+          group.className = 'checkbox-group';
+          let opts = [];
+          if (q.autofill && appData.lists[q.autofill]) {
+            const clinic = currentUser.clinic;
+            opts = appData.lists[q.autofill][clinic] || [];
+          } else {
+            opts = q.options;
+          }
+          const savedVals = savedVal ? savedVal.split(', ') : [];
+          opts.forEach(opt => {
+            const lbl2 = document.createElement('label');
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.name = fieldId;
+            input.value = opt;
+            input.dataset.question = q.question;
+            input.dataset.section  = q.section;
+            if (savedVals.includes(opt)) input.checked = true;
+            lbl2.appendChild(input);
+            lbl2.appendChild(document.createTextNode(' ' + opt));
+            group.appendChild(lbl2);
+          });
+          div.appendChild(group);
+        } else if (q.type === 'skala') {
+          const [min, max] = q.options[0]?.split('-').map(Number) || [1, 5];
+          const group = document.createElement('div');
+          group.className = 'scale-group';
+          for (let i = min; i <= max; i++) {
+            const lbl2 = document.createElement('label');
+            const input = document.createElement('input');
+            input.type = 'radio'; input.name = fieldId; input.value = i;
+            input.dataset.question = q.question;
+            input.dataset.section  = q.section;
+            if (savedVal == i) input.checked = true;
+            lbl2.appendChild(input);
+            lbl2.appendChild(document.createTextNode(i));
+            group.appendChild(lbl2);
+          }
+          div.appendChild(group);
+        }
+        container.appendChild(div);
+      });
+      const nextSection = questions[0].nextSection;
+      const btnRow = document.createElement('div');
+      btnRow.className = 'btn-row';
+      if (nextSection) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-primary';
+        btn.textContent = 'Nästa avsnitt →';
+        btn.onclick = () => navigateFrom(sectionName, nextSection);
+        btnRow.appendChild(btn);
+      } else {
+        show('submit-btn', true);
+      }
+      container.appendChild(btnRow);
+      window.scrollTo({ top: container.offsetTop - 20, behavior: 'smooth' });
+    }
+
+    function saveCurrentSectionAnswers(sectionName) {
+      document.querySelectorAll(`input[type=radio][data-section="${sectionName}"]:checked`).forEach(input => {
+        savedAnswers[`${sectionName}__${input.dataset.question}`] = {
+          section: sectionName, question: input.dataset.question,
+          answer: input.value, jumpTo: input.dataset.jumpTo || ''
+        };
+      });
+      document.querySelectorAll(`textarea[data-section="${sectionName}"]`).forEach(ta => {
+        if (ta.value.trim()) {
+          savedAnswers[`${sectionName}__${ta.dataset.question}`] = {
+            section: sectionName, question: ta.dataset.question,
+            answer: ta.value.trim(), jumpTo: ''
+          };
+        }
+      });
+      // Multi-checkbox: samla alla checkade per fråga
+      const checkboxQuestions = new Set(
+        [...document.querySelectorAll(`input[type=checkbox][data-section="${sectionName}"]`)]
+          .map(cb => cb.dataset.question)
+      );
+      checkboxQuestions.forEach(qName => {
+        const checked = [...document.querySelectorAll(
+          `input[type=checkbox][data-section="${sectionName}"][data-question="${qName}"]:checked`
+        )].map(cb => cb.value);
+        if (checked.length) {
+          savedAnswers[`${sectionName}__${qName}`] = {
+            section: sectionName, question: qName,
+            answer: checked.join(', '), jumpTo: ''
+          };
+        }
+      });
+    }
+
+    function navigateFrom(fromSection, defaultNext) {
+      saveCurrentSectionAnswers(fromSection);
+      let next = defaultNext;
+      Object.values(savedAnswers)
+        .filter(a => a.section === fromSection && a.jumpTo)
+        .forEach(a => {
+          a.jumpTo.split(',').forEach(rule => {
+            const [val, target] = rule.split('→').map(s => s.trim());
+            if (a.answer === val) next = target;
+          });
+        });
+      showSection(next);
+    }
+
+    async function submitAssessment() {
+      const category  = document.querySelector('input[name="category"]:checked')?.value;
+      const recipient = document.getElementById('recipient').value;
+      const formType  = document.querySelector('input[name="formtype"]:checked')?.value;
+      if (!category || !recipient || !formType) { alert('Fyll i alla obligatoriska fält.'); return; }
+      saveCurrentSectionAnswers(currentSection);
+      const answerList = Object.values(savedAnswers).map(a => ({
+        clinic: currentUser.clinic,
+        registrar: `${currentUser.firstName} ${currentUser.lastName}`,
+        category, recipient, formType,
+        section: a.section, question: a.question, answer: a.answer
+      }));
+      if (!answerList.length) { alert('Inga svar att spara.'); return; }
+      try {
+        const recipientEmail = await api('getRecipientEmail', { recipientFullName: recipient });
+        const recipientName  = recipient.split(' -- ')[0];
+        const registrarName  = `${currentUser.firstName} ${currentUser.lastName}`;
+        await api('saveAnswers', { answerList, recipientEmail, recipientName, registrarName, formType });
+        // Återställ och gå tillbaka till startvyn
+        savedAnswers = {};
+        currentFormData = null;
+        document.querySelectorAll('input[name="category"]').forEach(r => r.checked = false);
+        document.querySelectorAll('input[name="formtype"]').forEach(r => r.checked = false);
+        document.getElementById('recipient').innerHTML = '<option value="">-- Välj mottagare --</option>';
+        document.getElementById('form-type-group').innerHTML = '';
+        document.getElementById('form-questions').innerHTML = '';
+        show('f4', false); show('f5', false); show('f6-container', false); show('submit-btn', false);
+        showSelectionFields();
+        const status = document.getElementById('assessment-status');
+        status.textContent = '✓ Bedömning sparad och skickad!';
+        status.className = 'status-ok';
+        setTimeout(() => { status.textContent = ''; }, 4000);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } catch(err) { setStatus('assessment-status', err.message, true); }
+    }
+
+    // ── My assessments ────────────────────────────────────────────
+    function setAssessmentTab(role) {
+      currentAssessmentRole = role;
+      document.getElementById('tab-sent').className     = role === 'sent'     ? 'btn-primary' : 'btn-secondary';
+      document.getElementById('tab-received').className = role === 'received' ? 'btn-primary' : 'btn-secondary';
+      applyFilters();
+    }
+
+    async function applyFilters() {
+      const dateFrom     = document.getElementById('filter-date-from').value;
+      const dateTo       = document.getElementById('filter-date-to').value;
+      const checkedTypes = [...document.querySelectorAll('#filter-formtypes input:checked')].map(cb => cb.value);
+      const filters = { dateFrom: dateFrom || null, dateTo: dateTo || null, formTypes: checkedTypes };
+      document.getElementById('my-assessments-list').innerHTML = '<p style="color:#888">Hämtar...</p>';
+      document.getElementById('select-all').checked = false;
+      show('assessment-actions', false);
+      try {
+        const assessments = await api('getMyAssessments', { email: currentUser.email, role: currentAssessmentRole, filters });
+        currentAssessments = assessments;
+        renderAssessments(assessments, currentAssessmentRole);
+        updateFormTypeFilters(assessments);
+      } catch(err) {
+        document.getElementById('my-assessments-list').innerHTML = `<p class="status-err">${err.message}</p>`;
+      }
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-date-from').value = '';
+      document.getElementById('filter-date-to').value   = '';
+      document.querySelectorAll('#filter-formtypes input').forEach(cb => cb.checked = false);
+      applyFilters();
+    }
+
+    function updateFormTypeFilters(assessments) {
+      const types = [...new Set(assessments.map(a => a.formType))].sort();
+      if (JSON.stringify(types) === JSON.stringify(availableFormTypes)) return;
+      availableFormTypes = types;
+      const container = document.getElementById('filter-formtypes');
+      container.innerHTML = '';
+      types.forEach(t => {
+        const lbl = document.createElement('label');
+        lbl.className = 'filter-chip';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.value = t;
+        lbl.appendChild(cb);
+        lbl.appendChild(document.createTextNode(t));
+        container.appendChild(lbl);
+      });
+    }
+
+    function renderAssessments(assessments, role) {
+      const list = document.getElementById('my-assessments-list');
+      if (!assessments.length) {
+        list.innerHTML = '<p style="color:#888">Inga bedömningar hittades.</p>';
+        show('assessment-actions', false);
+        return;
+      }
+      list.innerHTML = `<p style="color:#666; font-size:13px;">${assessments.length} bedömning(ar) — ${role === 'sent' ? 'skickade' : 'mottagna'}</p>`;
+      show('assessment-actions', true);
+      updateSelectedCount();
+      assessments.forEach((a, idx) => {
+        const card = document.createElement('div');
+        card.className = 'assessment-card';
+        const topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex; align-items:center; gap:10px;';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.className = 'assessment-checkbox'; cb.dataset.idx = idx;
+        cb.onchange = updateSelectedCount;
+        if (document.getElementById('select-all').checked) cb.checked = true;
+        topRow.appendChild(cb);
+        const title = document.createElement('h4');
+        title.textContent = a.formType; title.style.margin = '0';
+        topRow.appendChild(title);
+        card.appendChild(topRow);
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = role === 'sent'
+          ? `${a.timestamp} — Mottagare: ${a.recipient.split(' -- ')[0]}`
+          : `${a.timestamp} — Registrerare: ${a.registrar}`;
+        card.appendChild(meta);
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'btn-secondary btn-small';
+        toggleBtn.textContent = 'Visa svar';
+        const answersDiv = document.createElement('div');
+        answersDiv.className = 'assessment-answers hidden';
+        let lastSection = '';
+        a.answers.forEach(ans => {
+          if (ans.section !== lastSection) {
+            lastSection = ans.section;
+            const s = document.createElement('div');
+            s.className = 'ans-section'; s.textContent = ans.section;
+            answersDiv.appendChild(s);
+          }
+          const r = document.createElement('div');
+          r.className = 'ans-row'; r.textContent = `${ans.question}: ${ans.answer}`;
+          answersDiv.appendChild(r);
+        });
+        toggleBtn.onclick = () => {
+          const hidden = answersDiv.classList.toggle('hidden');
+          toggleBtn.textContent = hidden ? 'Visa svar' : 'Dölj svar';
+        };
+        card.appendChild(toggleBtn);
+        card.appendChild(answersDiv);
+        list.appendChild(card);
+      });
+    }
+
+    function toggleSelectAll(checked) {
+      document.querySelectorAll('.assessment-checkbox').forEach(cb => cb.checked = checked);
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      const count = document.querySelectorAll('.assessment-checkbox:checked').length;
+      document.getElementById('selected-count').textContent = count > 0 ? `${count} markerade` : '';
+    }
+
+    async function exportSelected() {
+      const selected = [...document.querySelectorAll('.assessment-checkbox:checked')]
+        .map(cb => currentAssessments[parseInt(cb.dataset.idx)]);
+      if (!selected.length) { alert('Markera minst en bedömning.'); return; }
+      const dateFrom = document.getElementById('filter-date-from').value;
+      const dateTo   = document.getElementById('filter-date-to').value;
+      const period   = (dateFrom || dateTo)
+        ? `${dateFrom || '…'} – ${dateTo || new Date().toISOString().slice(0,10)}`
+        : `Alla — ${new Date().toISOString().slice(0,10)}`;
+      const filterInfo = {
+        name:   `${currentUser.firstName} ${currentUser.lastName}`,
+        clinic:  currentUser.clinic,
+        period
+      };
+      setStatus('export-status', '⏳ Genererar dokument och skickar mail...', false);
+      try {
+        const result = await api('exportAssessmentsToDoc', { email: currentUser.email, assessments: selected, filterInfo });
+        setStatus('export-status', `✓ ${result.count} bedömning(ar) skickade till ${currentUser.email}`, false);
+      } catch(err) { setStatus('export-status', err.message, true); }
+    }
+
+    // ── Profile ───────────────────────────────────────────────────
+    function prefillProfile() {
+      document.getElementById('profile-name').textContent   = `${currentUser.firstName} ${currentUser.lastName}`;
+      document.getElementById('profile-email').textContent  = currentUser.email;
+      document.getElementById('profile-clinic').textContent = currentUser.clinic;
+      document.getElementById('profile-jobrole').value      = currentUser.jobRole;
+      document.getElementById('profile-userrole').value     = currentUser.userRole;
+    }
+
+    async function saveProfile() {
+      const jobRole  = document.getElementById('profile-jobrole').value;
+      const userRole = document.getElementById('profile-userrole').value;
+      try {
+        const result = await api('updateProfile', { email: currentUser.email, jobRole, userRole });
+        if (result.error) { setStatus('profile-role-status', result.error, true); return; }
+        currentUser.jobRole  = result.jobRole;
+        currentUser.userRole = result.userRole;
+        localStorage.setItem('dops_user', JSON.stringify(currentUser));
+        prefillAssessment();
+        setStatus('profile-role-status', '✓ Roller uppdaterade!', false);
+      } catch(err) { setStatus('profile-role-status', err.message, true); }
+    }
+
+    async function changePin() {
+      const currentPin = document.getElementById('profile-current-pin').value.trim();
+      const newPin     = document.getElementById('profile-new-pin').value.trim();
+      if (!currentPin || !newPin) { setStatus('profile-pin-status', 'Fyll i båda fälten.', true); return; }
+      if (!/^\d{4,6}$/.test(newPin)) { setStatus('profile-pin-status', 'Ny PIN måste vara 4–6 siffror.', true); return; }
+      try {
+        const user = await api('login', { email: currentUser.email, pin: currentPin });
+        if (!user) { setStatus('profile-pin-status', 'Nuvarande PIN är felaktig.', true); return; }
+        const result = await api('resetPin', { email: currentUser.email, code: 'BYPASS', newPin });
+        if (result.error) { setStatus('profile-pin-status', result.error, true); return; }
+        setStatus('profile-pin-status', '✓ PIN ändrad!', false);
+        document.getElementById('profile-current-pin').value = '';
+        document.getElementById('profile-new-pin').value = '';
+      } catch(err) { setStatus('profile-pin-status', err.message, true); }
+    }
+
+    // ── Registration ──────────────────────────────────────────────
+    function populateLocationDropdown() {
+      if (!appData) return;
+      const sel = document.getElementById('reg-location');
+      while (sel.options.length > 2) sel.remove(1);
+      appData.locations.forEach(loc => sel.insertBefore(newOption(loc, loc), sel.options[sel.options.length - 1]));
+    }
+
+    function updateClinicDropdown() {
+      const locVal = document.getElementById('reg-location').value;
+      show('reg-location-new', locVal === '__new__');
+      const clinicSel = document.getElementById('reg-clinic');
+      clinicSel.innerHTML = '<option value="">-- Välj klinik --</option><option value="__new__">+ Ny klinik</option>';
+      document.getElementById('reg-clinic-new').classList.add('hidden');
+      if (!locVal || locVal === '__new__') return;
+      appData.clinics
+        .filter(c => c.startsWith(locVal + ' - ') || c === locVal)
+        .forEach(c => {
+          const label = c.includes(' - ') ? c.split(' - ').slice(1).join(' - ') : c;
+          clinicSel.insertBefore(newOption(c, label), clinicSel.options[clinicSel.options.length - 1]);
+        });
+    }
+
+    function checkNewClinic() {
+      show('reg-clinic-new', document.getElementById('reg-clinic').value === '__new__');
+    }
+
+    async function doRegister() {
+      const locVal    = document.getElementById('reg-location').value;
+      const locNew    = document.getElementById('reg-location-new').value.trim();
+      const clinicVal = document.getElementById('reg-clinic').value;
+      const clinicNew = document.getElementById('reg-clinic-new').value.trim();
+      const pin       = document.getElementById('reg-pin').value.trim();
+      const location  = locVal === '__new__' ? locNew : locVal;
+      const fullClinic = clinicVal === '__new__'
+        ? (location ? `${location} - ${clinicNew}` : clinicNew)
+        : clinicVal;
+      const user = {
+        firstName: document.getElementById('reg-firstname').value.trim(),
+        lastName:  document.getElementById('reg-lastname').value.trim(),
+        email:     document.getElementById('reg-email').value.trim(),
+        pin, jobRole: document.getElementById('reg-jobrole').value,
+        clinic: fullClinic,
+        userRole: document.getElementById('reg-userrole').value
+      };
+      if (!user.firstName || !user.lastName || !user.email || !user.pin ||
+          !user.jobRole || !user.clinic || !user.userRole) {
+        setStatus('reg-status', 'Fyll i alla fält.', true); return;
+      }
+      if (!/^\d{4,6}$/.test(pin)) {
+        setStatus('reg-status', 'PIN måste vara 4–6 siffror.', true); return;
+      }
+      try {
+        const result = await api('registerUser', { user });
+        if (result.error) { setStatus('reg-status', result.error, true); return; }
+        setStatus('reg-status', '✓ Konto skapat! Du kan nu logga in.', false);
+        setTimeout(() => showLoginView('login'), 2000);
+      } catch(err) { setStatus('reg-status', err.message, true); }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────
+    function showSelectionFields() {
+      ['f-intro','f1','f2','f3','f4','f5'].forEach(id => show(id, true));
+      show('f6-container', false);
+      show('submit-btn', false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showPanel(panel) {
+      ['assessment','my-assessments','profile'].forEach(p =>
+        show(`panel-${p}`, p === panel)
+      );
+      if (panel === 'assessment') {
+        const formOpen = !document.getElementById('f6-container').classList.contains('hidden');
+        if (!formOpen) showSelectionFields();
+      }
+    }
+
+    function show(id, visible) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('hidden', !visible);
+    }
+
+    function newOption(val, text) {
+      const o = document.createElement('option');
+      o.value = val; o.textContent = text; return o;
+    }
+
+    function setStatus(id, msg, isError) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      el.className = isError ? 'status-err' : 'status-ok';
+    }
+
+  </script>
+</body>
+</html>
