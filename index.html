@@ -43,7 +43,6 @@
       padding-bottom: 16px; border-bottom: 1.5px solid #c4b8ac;
     }
     .nav button { flex-shrink: 0; }
-    .nav-desktop { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .nav-right {
       margin-left: auto; display: flex; gap: 8px;
       align-items: center; font-size: 15px; color: #6b5c52;
@@ -143,15 +142,13 @@
       .btn-row { flex-direction: column; gap: 8px; }
       .btn-row button { width: 100%; text-align: center; }
       .btn-row button.btn-small { width: auto; }
-      .nav { gap: 6px; }
-      .nav-right { margin-left: auto; }
-      #nav-user { font-size: 14px; }
-      .hamburger { display: block; }
-      .nav-menu { display: none; width: 100%; flex-direction: column; align-items: stretch; margin-top: 8px; }
+      .hamburger { display: flex; }
+      .nav-menu { display: none; flex-direction: column; align-items: stretch; width: 100%; margin-top: 8px; }
       .nav-menu.open { display: flex; }
-      .nav-menu button { width: 100%; text-align: left; }
-      .nav { gap: 6px; border-bottom: none; padding-bottom: 8px; }
-      .nav-right { margin-left: auto; }
+      .nav-menu button { width: 100%; text-align: left; padding: 14px 18px; }
+      .nav-desktop-btns { display: none; }
+      .nav { gap: 6px; border-bottom: none; padding-bottom: 8px; flex-wrap: wrap; }
+      .nav-right { display: none; }
       #nav-user { font-size: 15px; }
       .date-grid { grid-template-columns: 1fr; }
       #login-panel { margin: 16px auto; padding: 16px; border: none; border-radius: 0; }
@@ -279,15 +276,24 @@
   <div id="app" class="hidden">
 
     <div class="nav">
+      <!-- Desktop -->
+      <div class="nav-desktop-btns">
+        <button class="btn-primary"   onclick="showPanel('assessment')">Registrera bedömning</button>
+        <button class="btn-secondary" onclick="showPanel('my-assessments')">Mina bedömningar</button>
+        <button class="btn-secondary" onclick="showPanel('profile')">Min profil</button>
+      </div>
+      <!-- Mobil -->
       <button class="hamburger" onclick="toggleMenu()" aria-label="Meny">☰</button>
+      <div class="nav-right">
+        <span id="nav-user"></span>
+        <button class="btn-danger" onclick="doLogout()">Logga ut</button>
+      </div>
+      <!-- Mobil dropdown -->
       <div class="nav-menu" id="nav-menu">
         <button class="btn-primary"   onclick="showPanel('assessment'); closeMenu()">Registrera bedömning</button>
         <button class="btn-secondary" onclick="showPanel('my-assessments'); closeMenu()">Mina bedömningar</button>
         <button class="btn-secondary" onclick="showPanel('profile'); closeMenu()">Min profil</button>
-      </div>
-      <div class="nav-right">
-        <span id="nav-user"></span>
-        <button class="btn-danger" onclick="doLogout()">Logga ut</button>
+        <button class="btn-danger"    onclick="doLogout(); closeMenu()">Logga ut</button>
       </div>
     </div>
 
