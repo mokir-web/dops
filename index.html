@@ -882,10 +882,19 @@
       const pin   = document.getElementById('login-pin').value.trim();
       if (!email || !pin) { setStatus('login-status', 'Fyll i e-post och PIN.', true); return; }
       try {
-        const user = await api('login', { email, pin });
-        if (!user) { setStatus('login-status', 'Felaktig e-post eller PIN.', true); return; }
-        currentUser = user;
-        localStorage.setItem('dops_user', JSON.stringify(user));
+        const result = await api('login', { email, pin });
+        if (!result) { setStatus('login-status', 'Felaktig e-post eller PIN.', true); return; }
+        if (result.locked) {
+          setStatus('login-status', `Kontot är tillfälligt låst. Försök igen om ${result.minutesLeft} minut${result.minutesLeft !== 1 ? 'er' : ''}.`, true);
+          return;
+        }
+        if (result.failed) {
+          const left = result.attemptsLeft;
+          setStatus('login-status', `Felaktig PIN. ${left} försök kvar innan kontot låses i 10 minuter.`, true);
+          return;
+        }
+        currentUser = result;
+        localStorage.setItem('dops_user', JSON.stringify(result));
         bootApp();
       } catch(err) { setStatus('login-status', err.message, true); }
     }
@@ -1333,8 +1342,8 @@
         const meta = document.createElement('div');
         meta.className = 'meta';
         meta.textContent = role === 'sent'
-          ? `${a.timestamp} — Mottagare: ${a.recipient.split(' -- ')[0]}`
-          : `${a.timestamp} — Registrerare: ${a.registrar}`;
+          ? `${a.timestamp} — Mottagare: ${(a.recipient || '').split(' -- ')[0]}`
+          : `${a.timestamp} — Registrerare: ${a.registrar || ''}`;
         card.appendChild(meta);
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'btn-secondary btn-small';
@@ -1350,7 +1359,7 @@
             answersDiv.appendChild(s);
           }
           const r = document.createElement('div');
-          r.className = 'ans-row'; r.textContent = `${ans.question}: ${ans.answer}`;
+          r.className = 'ans-row'; r.textContent = `${ans.question || ''}: ${ans.answer || ''}`;
           answersDiv.appendChild(r);
         });
         toggleBtn.onclick = () => {
@@ -1453,7 +1462,7 @@
         card.appendChild(topRow);
         const meta = document.createElement('div');
         meta.className = 'meta';
-        meta.textContent = `${a.timestamp} · ${a.recipient ? a.recipient.split(' -- ')[0] : ''} (${a.category}) · Registr: ${a.registrar}`;
+        meta.textContent = `${a.timestamp || ''} · ${a.recipient ? a.recipient.split(' -- ')[0] : ''} (${a.category || ''}) · Registr: ${a.registrar || ''}`;
         card.appendChild(meta);
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'btn-secondary btn-small';
@@ -1605,10 +1614,10 @@
         const card = document.createElement('div');
         card.className = 'assessment-card';
         card.style.cssText = 'margin-top:10px; cursor:pointer;';
-        card.innerHTML = '<div style="font-weight:bold;font-size:16px;">' + u.firstName + ' ' + u.lastName + '</div>'
-          + '<div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + u.email + '</div>'
-          + '<div style="font-size:14px;margin-top:4px;">' + u.jobRole + ' · ' + u.clinic + ' · ' + u.userRole + '</div>'
-          + '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">KlinikID: ' + (u.klinikId || '–') + '</div>';
+        card.innerHTML = '<div style="font-weight:bold;font-size:16px;">' + esc(u.firstName) + ' ' + esc(u.lastName) + '</div>'
+          + '<div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + esc(u.email) + '</div>'
+          + '<div style="font-size:14px;margin-top:4px;">' + esc(u.jobRole) + ' · ' + esc(u.clinic) + ' · ' + esc(u.userRole) + '</div>'
+          + '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">KlinikID: ' + esc(u.klinikId || '–') + '</div>';
         card.onclick = () => openUserEdit(u);
         el.appendChild(card);
       });
@@ -1948,6 +1957,16 @@
     }
 
     // ── Helpers ───────────────────────────────────────────────────
+    function esc(str) {
+      if (!str) return '';
+      return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function toggleMenu() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('mob-sidebar-overlay');
