@@ -357,6 +357,8 @@
           <option value="Spec">Spec</option>
           <option value="AT">AT</option>
           <option value="BT">BT</option>
+          <option value="Admin">Admin (ej läkare)</option>
+          <option value="Admin">Admin (ej läkare)</option>
         </select>
       </div>
       <div class="field">
@@ -684,7 +686,7 @@
           <div class="field"><label class="field-label">Förnamn</label><input type="text" id="edit-firstname"></div>
           <div class="field"><label class="field-label">Efternamn</label><input type="text" id="edit-lastname"></div>
           <div class="field"><label class="field-label">Yrkesroll</label>
-            <select id="edit-jobrole"><option value="ST">ST</option><option value="Spec">Spec</option><option value="AT">AT</option><option value="BT">BT</option></select>
+            <select id="edit-jobrole"><option value="ST">ST</option><option value="Spec">Spec</option><option value="AT">AT</option><option value="BT">BT</option><option value="Admin">Admin (ej läkare)</option></select>
           </div>
           <div class="field"><label class="field-label">Användarroll</label>
             <select id="edit-userrole"><option value="Registrerare">Registrerare</option><option value="Mottagare">Mottagare</option><option value="Blandbild">Blandbild</option></select>
@@ -693,6 +695,23 @@
           <div class="field"><label class="field-label">KlinikID</label><input type="text" id="edit-klinikid"></div>
           <div class="field"><label class="field-label">Nytt lösenord (lämna tomt för oförändrat)</label><input type="password" id="edit-pin" maxlength="6" placeholder="4–6 siffror"></div>
           <input type="hidden" id="edit-email">
+          <hr style="margin:16px 0;">
+          <div style="font-weight:bold;font-size:16px;margin-bottom:10px;">Privilegier</div>
+          <div id="edit-privileges-list" style="margin-bottom:10px;"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+            <div>
+              <label class="field-label" style="font-size:14px;">Lägg till</label>
+              <select id="edit-priv-type" style="font-size:15px;padding:6px;">
+                <option value="Studierektor">Studierektor</option>
+                <option value="Administratör">Administratör</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" style="font-size:14px;">KlinikID</label>
+              <input type="text" id="edit-priv-klinik" placeholder="mora-kirurgi eller *" style="max-width:180px;font-size:15px;padding:6px;">
+            </div>
+            <button class="btn-primary btn-small" onclick="addPrivilegeToUser()">Lägg till</button>
+          </div>
           <div class="btn-row" style="margin-top:20px;">
             <button class="btn-primary" onclick="saveUserEdit()">Spara</button>
             <button class="btn-secondary" onclick="closeUserEdit()">Avbryt</button>
@@ -872,7 +891,9 @@
       renderPrivilegeToggle();
       closeMenu();
       updateSidebarPrivButtons(privilege);
-      showPanel('assessment');
+      if (privilege === 'Administratör') showPanel('admin');
+      else if (privilege === 'Studierektor') showPanel('clinic-overview');
+      else showPanel('assessment');
     }
 
     function updateSidebarPrivButtons(privilege) {
@@ -901,7 +922,7 @@
       const pin   = document.getElementById('login-pin').value.trim();
       if (!email || !pin) { setStatus('login-status', 'Fyll i e-post och PIN.', true); return; }
       try {
-        const result = await api('login', { email, pin });
+        const result = await api('login', { email: email.trim().toLowerCase(), pin: pin.trim() });
         if (!result) { setStatus('login-status', 'Felaktig e-post eller PIN.', true); return; }
         if (result.locked) {
           setStatus('login-status', `Kontot är tillfälligt låst. Försök igen om ${result.minutesLeft} minut${result.minutesLeft !== 1 ? 'er' : ''}.`, true);
@@ -1669,6 +1690,37 @@
       if (jobRoleSel)  { jobRoleSel.value  = u.jobRole  || ''; }
       if (userRoleSel) { userRoleSel.value = u.userRole || ''; }
       show('admin-edit-overlay', true);
+      // Ladda befintliga privilegier
+      loadUserPrivileges(u.email);
+    }
+
+    async function loadUserPrivileges(email) {
+      const el = document.getElementById('edit-privileges-list');
+      el.innerHTML = '<span style="color:#888;font-size:14px;">Hämtar...</span>';
+      try {
+        const privs = await api('getPrivilegesForUser', { targetEmail: email });
+        if (!privs.length) { el.innerHTML = '<span style="color:#888;font-size:14px;">Inga privilegier</span>'; return; }
+        el.innerHTML = privs.map(p =>
+          `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:15px;">${esc(p.privilege)} <span style="color:#6b5c52;">(${esc(p.klinikId)})</span></span>
+            <button class="btn-danger btn-small" onclick="removePrivilege('${esc(email)}','${esc(p.privilege)}')">Ta bort</button>
+          </div>`
+        ).join('');
+      } catch(err) { el.innerHTML = '<span style="color:#c00;font-size:14px;">' + esc(err.message) + '</span>'; }
+    }
+
+    async function addPrivilegeToUser() {
+      const email   = document.getElementById('edit-email').value;
+      const priv    = document.getElementById('edit-priv-type').value;
+      const klinikId = document.getElementById('edit-priv-klinik').value.trim();
+      if (!klinikId) { alert('Ange KlinikID (t.ex. mora-kirurgi eller * för global)'); return; }
+      await api('setUserPrivilege', { targetEmail: email, privilege: priv, klinikId, remove: false });
+      loadUserPrivileges(email);
+    }
+
+    async function removePrivilege(email, privilege) {
+      await api('setUserPrivilege', { targetEmail: email, privilege, klinikId: '', remove: true });
+      loadUserPrivileges(email);
     }
 
     function closeUserEdit() { const el = document.getElementById('admin-edit-overlay'); el.style.display = 'none'; el.classList.add('hidden'); }
@@ -1969,11 +2021,12 @@
       const user = {
         firstName: document.getElementById('reg-firstname').value.trim(),
         lastName:  document.getElementById('reg-lastname').value.trim(),
-        email:     document.getElementById('reg-email').value.trim(),
-        pin, jobRole: document.getElementById('reg-jobrole').value,
-        clinic: fullClinic,
-        userRole: document.getElementById('reg-userrole').value,
-        klinikId
+        email:     document.getElementById('reg-email').value.trim().toLowerCase(),
+        pin:       pin.trim(),
+        jobRole:   document.getElementById('reg-jobrole').value.trim(),
+        clinic:    fullClinic.trim(),
+        userRole:  document.getElementById('reg-userrole').value.trim(),
+        klinikId:  '' // auto-genereras i backend
       };
       if (!user.firstName || !user.lastName || !user.email || !user.pin ||
           !user.jobRole || !user.clinic || !user.userRole) {
