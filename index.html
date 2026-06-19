@@ -422,6 +422,7 @@
             Förfrågningar <span id="inbox-badge" class="hidden" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
           </button>
           <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')">Registrera bedömning</button>
+          <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')">Min översikt</button>
           <button class="sidebar-btn"        id="nav-btn-my-assessments"  onclick="showPanel('my-assessments')">Mina bedömningar</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')">Kliniköversikt</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')">Administration</button>
@@ -497,6 +498,25 @@
       </div>
 
       <div id="assessment-status"></div>
+    </div>
+
+    <!-- ── CONFIRMATION ─────────────────────────────────────────── -->
+    <div id="panel-confirmation" class="hidden">
+      <div style="max-width:560px;text-align:center;padding:40px 20px;">
+        <div style="font-size:56px;margin-bottom:16px;">✓</div>
+        <h2 style="color:#3d5c4a;margin-bottom:8px;">Bedömning skickad!</h2>
+        <p id="confirm-recipient" style="color:#6b5c52;font-size:16px;margin-bottom:24px;"></p>
+        <div id="confirm-time-saving" class="hidden" style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:20px;margin-bottom:28px;text-align:left;">
+          <div style="font-size:13px;color:#6b5c52;margin-bottom:6px;">UPPSKATTAD TIDSBESPARING</div>
+          <div id="confirm-time-this" style="font-size:22px;font-weight:bold;color:#3d5c4a;"></div>
+          <div id="confirm-time-total" style="font-size:14px;color:#6b5c52;margin-top:8px;padding-top:8px;border-top:1px solid #d8cfc5;"></div>
+          <div id="confirm-time-context" style="font-size:13px;color:#9e8e82;margin-top:4px;font-style:italic;"></div>
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn-primary" onclick="showPanel('assessment')">Ny bedömning</button>
+          <button class="btn-secondary" onclick="showPanel('overview')">Min översikt</button>
+        </div>
+      </div>
     </div>
 
     <!-- ── MY ASSESSMENTS ─────────────────────────────────────── -->
@@ -725,6 +745,12 @@
       </div>
     </div>
 
+    <!-- ── OVERVIEW ──────────────────────────────────────────────── -->
+    <div id="panel-overview" class="hidden">
+      <h2>Min översikt</h2>
+      <div id="overview-content"><p style="color:#888;">Laddar...</p></div>
+    </div>
+
     <!-- ── INBOX ────────────────────────────────────────────────── -->
     <div id="panel-inbox" class="hidden">
       <h2>Förfrågningar</h2>
@@ -924,6 +950,7 @@
       loadInboxBadge().then(() => {
         const hasUnread = (inboxData?.inbox || []).some(r => !r.read);
         if (hasUnread) showPanel('inbox');
+        else if (currentUser.userRole === 'Blandbild' || currentUser.userRole === 'Mottagare') showPanel('overview');
         else showPanel(isReceiverOnly ? 'my-assessments' : 'assessment');
       });
     }
@@ -1355,14 +1382,48 @@
         show('f4', false); show('f5', false); show('f6-container', false); show('submit-btn', false);
         showSelectionFields();
         const status = document.getElementById('assessment-status');
-        status.textContent = '✓ Bedömning sparad och skickad!';
-        status.className = 'status-ok';
+        // Hantera pending request
         if (pendingRequestId) {
           api('markRequestDone', { id: pendingRequestId }).then(() => {
             pendingRequestId = null; inboxData = null; updateInboxBadge();
           }).catch(() => {});
         }
-        setTimeout(() => { status.textContent = ''; }, 4000);
+
+        // Visa bekräftelsepanel
+        const recipientShortName = recipient.split(' -- ')[0];
+        document.getElementById('confirm-recipient').textContent =
+          formType + ' · Mottagare: ' + recipientShortName;
+
+        // Tidsbesparing
+        const savedMins = (appData && appData.timeSavings && appData.timeSavings[formType]) || 0;
+        const confirmTimeEl = document.getElementById('confirm-time-saving');
+        if (savedMins > 0 && confirmTimeEl) {
+          confirmTimeEl.classList.remove('hidden');
+          document.getElementById('confirm-time-this').textContent =
+            savedMins + ' minuter sparade denna gång';
+          api('getMyOverview', { email: currentUser.email }).then(ov => {
+            const tot = (ov.totalMinutesSaved || 0) + savedMins;
+            const h = Math.floor(tot / 60);
+            const m = tot % 60;
+            const totStr = h > 0 ? h + ' tim ' + m + ' min' : m + ' min';
+            document.getElementById('confirm-time-total').textContent =
+              'Totalt sparat med MoraDOPS: ' + totStr;
+            const contexts = [
+              tot >= 120 ? 'Tid nog för ett operationspass.' : null,
+              tot >= 60  ? 'Ungefär lika lång tid som en lunch.' : null,
+              tot >= 30  ? 'Tillräckligt för en fika och en rond.' : null,
+              tot >= 10  ? 'Tid du lagt på patienter istället.' : null,
+            ].filter(Boolean);
+            const ctx = contexts[0] || '';
+            document.getElementById('confirm-time-context').textContent = ctx;
+          }).catch(() => {});
+        } else if (confirmTimeEl) {
+          confirmTimeEl.classList.add('hidden');
+        }
+
+        showPanel('confirmation');
+
+                setTimeout(() => { status.textContent = ''; }, 4000);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch(err) { setStatus('assessment-status', err.message, true); document.getElementById('submit-btn').disabled = false; }
     }
@@ -2344,6 +2405,111 @@
       }
     }
 
+    // ── Min översikt ──────────────────────────────────────────────────
+    async function loadMyOverview() {
+      const el = document.getElementById('overview-content');
+      el.innerHTML = '<p style="color:#888;">Hämtar data...</p>';
+      try {
+        const data = await api('getMyOverview', { email: currentUser.email, klinikId: currentUser.klinikId });
+        renderOverview(data);
+      } catch(err) {
+        el.innerHTML = '<p class="status-err">Fel: ' + esc(err.message) + '</p>';
+      }
+    }
+
+    function renderOverview(data) {
+      const el = document.getElementById('overview-content');
+      const userRole = currentUser.userRole;
+      // totalMinutesSaved block
+      if (data.totalMinutesSaved > 0 && (userRole === 'Registrerare' || userRole === 'Blandbild')) {
+        const h = Math.floor(data.totalMinutesSaved / 60);
+        const m = data.totalMinutesSaved % 60;
+        const totStr = h > 0 ? `${h} tim ${m} min` : `${m} min`;
+        html += `<div style="background:#3d5c4a;color:#f0ede8;border-radius:8px;padding:16px 20px;margin-bottom:20px;display:inline-block;min-width:220px;">
+          <div style="font-size:12px;opacity:0.8;letter-spacing:1px;">TOTALT SPARAT MED MORADOPS</div>
+          <div style="font-size:28px;font-weight:bold;margin-top:4px;">${totStr}</div>
+        </div>`;
+      }
+      const showSent     = userRole === 'Registrerare' || userRole === 'Blandbild';
+      const showReceived = userRole === 'Mottagare'    || userRole === 'Blandbild';
+      if (!html) html = '';
+
+      function goalBar(count, goal) {
+        if (!goal) return '';
+        const pct = Math.min(100, Math.round(count / goal * 100));
+        const color = count >= goal ? '#4a9e62' : count > 0 ? '#c8a96e' : '#9e2a18';
+        return `<div style="margin-top:4px;background:#d8cfc5;border-radius:4px;height:8px;max-width:200px;">
+          <div style="background:${color};border-radius:4px;height:8px;width:${pct}%;transition:width 0.4s;"></div>
+        </div>
+        <div style="font-size:12px;color:#6b5c52;margin-top:2px;">${count} / ${goal} <span style="color:${color};">${count >= goal ? '✓ Uppnått' : ''}</span></div>`;
+      }
+
+      function renderFormGroup(title, forms, subGoals) {
+        if (!Object.keys(forms).length) return '';
+        let s = `<div class="section-header" style="margin-top:24px;">${title}</div>`;
+        s += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:14px;">';
+        Object.entries(forms).sort((a,b) => a[0].localeCompare(b[0])).forEach(([ft, v]) => {
+          const isDOPS = ft === 'DOPS' || ft === 'Operationsspecifik DOPS';
+          const color  = v.goal ? (v.count >= v.goal ? '#4a9e62' : v.count > 0 ? '#c8a96e' : '#9e2a18') : '#3d5c4a';
+          s += `<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:14px;border-left:4px solid ${color};">`;
+          s += `<div style="font-weight:bold;font-size:16px;">${esc(ft)}</div>`;
+          s += `<div style="font-size:22px;font-weight:bold;color:${color};margin-top:4px;">${v.count}</div>`;
+          s += goalBar(v.count, v.goal);
+
+          // Subingrepp för DOPS
+          if (isDOPS && Object.keys(v.subCounts).length) {
+            s += '<div style="margin-top:10px;border-top:1px solid #d8cfc5;padding-top:8px;">';
+            s += '<div style="font-size:13px;color:#6b5c52;margin-bottom:6px;">Per ingrepp:</div>';
+            Object.entries(v.subCounts).sort((a,b) => b[1]-a[1]).forEach(([ingrepp, cnt]) => {
+              const subKey = 'DOPS:' + ingrepp;
+              const subGoal = subGoals && subGoals[subKey] ? subGoals[subKey] : 0;
+              const subColor = subGoal ? (cnt >= subGoal ? '#4a9e62' : cnt > 0 ? '#c8a96e' : '#9e2a18') : '#6b5c52';
+              s += `<div style="display:flex;align-items:center;justify-content:space-between;padding:3px 0;font-size:14px;">
+                <span>${esc(ingrepp)}</span>
+                <span style="font-weight:bold;color:${subColor};">${cnt}${subGoal ? '/' + subGoal : ''}</span>
+              </div>`;
+            });
+            s += '</div>';
+          }
+          s += '</div>';
+        });
+        s += '</div>';
+        return s;
+      }
+
+      // Trendgraf
+      const months = Object.values(data.byMonth || {});
+      if (months.length > 0) {
+        html += '<div class="section-header">Trend</div>';
+        html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;margin-top:14px;max-width:700px;">';
+        html += '<canvas id="overview-chart" height="160"></canvas></div>';
+      }
+
+      if (showReceived) html += renderFormGroup('Mottagna bedömningar', data.received, data.subGoals);
+      if (showSent)     html += renderFormGroup('Registrerade bedömningar', data.sent, data.subGoals);
+
+      el.innerHTML = html;
+
+      // Rita trendgraf
+      if (months.length > 0) {
+        const ctx = document.getElementById('overview-chart')?.getContext('2d');
+        if (ctx) {
+          const datasets = [];
+          if (showReceived) datasets.push({ label: 'Mottagna', data: months.map(m => m.received), borderColor: '#3d5c4a', backgroundColor: '#3d5c4a22', tension: 0.3, fill: false });
+          if (showSent)     datasets.push({ label: 'Registrerade', data: months.map(m => m.sent), borderColor: '#9e7c68', backgroundColor: '#9e7c6822', tension: 0.3, fill: false });
+          new Chart(ctx, {
+            type: 'line',
+            data: { labels: months.map(m => m.label), datasets },
+            options: {
+              responsive: true, maintainAspectRatio: true,
+              plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } },
+              scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { grid: { color: '#d8cfc5' } } }
+            }
+          });
+        }
+      }
+    }
+
     function toggleMenu() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('mob-sidebar-overlay');
@@ -2392,10 +2558,10 @@
     let activeKlinikId = null;
 
     function showPanel(panel) {
-      ['assessment','my-assessments','clinic-overview','admin','statistics','documents','about','inbox','profile'].forEach(p =>
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','statistics','documents','about','inbox','profile'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','clinic-overview','admin','statistics','documents','about','inbox','profile'].forEach(p => {
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','statistics','documents','about','inbox','profile'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -2425,6 +2591,7 @@
       if (panel === 'clinic-overview')  { loadClinicOverview(); }
       if (panel === 'admin')            { loadAdminPanel(); }
       if (panel === 'documents')        { loadDocuments(); }
+      if (panel === 'overview')          { loadMyOverview(); }
       if (panel === 'inbox')            { loadInbox(); }
     }
 
