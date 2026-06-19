@@ -270,6 +270,7 @@
     }
   </style>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -495,8 +496,8 @@
         <!-- Vänster: entries -->
         <div class="panel-main">
           <div class="btn-row" style="margin-top:0;">
-            <button class="btn-secondary" id="tab-received" onclick="setAssessmentTab('received')">Mottagna</button>
-            <button class="btn-primary"   id="tab-sent"     onclick="setAssessmentTab('sent')">Skickade</button>
+            <button class="btn-primary"   id="tab-received" onclick="setAssessmentTab('received')">Mottagna</button>
+            <button class="btn-secondary" id="tab-sent"     onclick="setAssessmentTab('sent')">Skickade</button>
           </div>
           <div id="assessment-actions" class="hidden" style="margin-top:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
             <label style="font-size:13px; cursor:pointer;">
@@ -541,12 +542,27 @@
           <div><label class="field-label">Från datum</label><input type="date" id="stat-date-from"></div>
           <div><label class="field-label">Till datum</label><input type="date" id="stat-date-to"></div>
         </div>
+        <div style="margin-top:10px;">
+          <label class="field-label">Formulärtyper (lämna tomt = alla)</label>
+          <div id="stat-formtype-filter" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;"></div>
+        </div>
         <div class="btn-row" style="margin-top:14px;">
           <button class="btn-primary" onclick="loadStatistics()">Visa statistik</button>
-          <button class="btn-secondary" onclick="document.getElementById('stat-date-from').value=''; document.getElementById('stat-date-to').value=''; loadStatistics()">Alla</button>
+          <button class="btn-secondary" onclick="resetStatFilters()">Återställ</button>
         </div>
       </div>
-      <div id="statistics-content"><p style="color:#888;">Klicka "Visa statistik" för att ladda data.</p></div>
+      <!-- Grafer -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;" id="stat-charts">
+        <div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;">
+          <div style="font-weight:bold;font-size:16px;color:#2a1f18;margin-bottom:12px;">Bedömningar över tid</div>
+          <canvas id="chart-line" height="220"></canvas>
+        </div>
+        <div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;">
+          <div style="font-weight:bold;font-size:16px;color:#2a1f18;margin-bottom:12px;">Fördelning per formulärtyp</div>
+          <canvas id="chart-pie" height="220"></canvas>
+        </div>
+      </div>
+      <div id="statistics-content"></div>
     </div>
 
     <!-- ── DOCUMENTS ────────────────────────────────────────────── -->
@@ -561,25 +577,34 @@
       <h2>Om MoraDOPS</h2>
       <div style="max-width:720px;">
         <div class="section-header">Vad är MoraDOPS?</div>
-        <p>MoraDOPS är ett digitalt bedömningssystem för kirurgkliniken på Mora lasarett. Systemet ersätter tidigare pappersbaserade och Google Forms-baserade flöden och samlar alla bedömningar på ett ställe.</p>
+        <p>MoraDOPS är ett digitalt bedömningssystem för läkare under utbildning. Systemet ersätter tidigare bedömningsformulär i pappersform och samlar alla bedömningar på ett ställe för tillgänglighet och överblick.</p>
 
         <div class="section-header">Formulärtyper</div>
         <p><strong>DOPS</strong> (Direct Observation of Procedural Skills) – används för att bedöma praktiska färdigheter vid specifika kirurgiska ingrepp eller åtgärder.</p>
         <p><strong>Mini-CEX</strong> (Mini Clinical Evaluation Exercise) – en kortare strukturerad observation av kliniskt arbete, t.ex. ett patientmöte eller rond.</p>
         <p><strong>360 GRADER</strong> – strukturerad feedback från kollegor, sjuksköterskor och annan personal om professionellt bemötande och samarbete.</p>
         <p><strong>Återkoppling efter muntlig presentation</strong> – strukturerad bedömning efter journalgenomgång, fallpresentation eller liknande.</p>
-        <p><strong>Videogranskning</strong> – bedömning av inspelat operationsförlopp.</p>
-        <p><strong>Självskattning inför specialistkollegium</strong> – ST-läkarens egen bedömning av sina kompetenser inför kollegiet.</p>
-        <p><strong>Rapport från specialistkollegium</strong> – handledare och specialists samlade bedömning efter genomfört kollegium.</p>
+        <p><strong>Videogranskning</strong> – bedömning från analys av inspelad operation.</p>
+        <p><strong>Självskattning inför specialistkollegium</strong> – ST-läkarens egen bedömning av sina kompetenser inför specialistkollegium.</p>
+        <p><strong>Rapport från specialistkollegium</strong> – handledare och specialisters samlade bedömning efter genomfört specialistkollegium.</p>
 
         <div class="section-header">Behörighetsnivåer</div>
-        <p>Systemet använder en hierarki för vem som kan bedöma vem. Specialister (Spec) kan bedöma alla. ST-läkare kan bedöma AT- och BT-läkare. Rollen sätts vid registrering och kan ändras under Min profil.</p>
+        <p>Systemet använder en hierarki för vem som kan bedöma vem. Specialister (Spec) kan bedöma alla. ST-läkare kan bedöma AT- och BT-läkare. Rollen sätts vid registrering och kan ändras under Min profil. Det är vid registrering och under profil möjligt att välja om användaren ska både kunna registrera och ta emot bedömningar.</p>
+        <p>Utökad behörighet för klinikadministratör eller studierektor kan erhållas, vänligen kontakta systemansvarig.</p>
 
-        <div class="section-header">Kontakt och administration</div>
-        <p>För frågor om systemet, kontakta studierektor på kirurgkliniken, Mora lasarett.</p>
+        <div class="section-header">Hantering av personuppgifter</div>
+        <p>Användare kan när som helst radera sitt konto. För radering av bedömningar registrerade och/eller mottagna av användaren vänligen kontakta systemansvarig enligt nedan kontaktuppgifter. Användare har alltid full tillgång till samtliga insamlade uppgifter via "Min profil" samt "Mina bedömningar".</p>
+        <p>Klinikadministratör har behörighet att se användarinformation och bedömningar för samtliga klinikens användare samt ändra användarinställningar.</p>
+        <p>Studierektor har behörighet att se alla klinikens utförda bedömningar men inte specifika användaruppgifter annat än namn tillhörande aktuell bedömning.</p>
+
+        <div class="section-header">Systemadministratör och utvecklare</div>
+        <p>Simon Wigge<br>
+        <a href="mailto:simon@wigge.se" style="color:#3d5c4a;">simon@wigge.se</a><br>
+        02504 93 121<br>
+        ST-läkare Kirurgkliniken Mora</p>
 
         <div class="section-header">Version</div>
-        <p>MoraDOPS 3.1 · Mora lasarett · Kirurgi</p>
+        <p>MoraDOPS 3.1.1</p>
       </div>
     </div>
 
@@ -642,7 +667,7 @@
         <div id="admin-users-list" style="margin-top:12px;"></div>
       </div>
       <!-- Redigera användare modal -->
-      <div id="admin-edit-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;">
+      <div id="admin-edit-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
         <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
           <h3 style="margin-top:0;">Redigera användare</h3>
           <div class="field"><label class="field-label">Förnamn</label><input type="text" id="edit-firstname"></div>
@@ -737,7 +762,7 @@
     let currentFormData = null;
     let currentSection = null;
     let savedAnswers = {};
-    let currentAssessmentRole = 'sent';
+    let currentAssessmentRole = 'received';
     let currentAssessments = [];
     let availableFormTypes = [];
     let activePrivilege = null; // null = standardvy, 'Studierektor', 'Administratör'
@@ -1564,6 +1589,7 @@
     }
 
     function openUserEdit(u) {
+      document.getElementById('admin-edit-overlay').style.display = 'flex';
       document.getElementById('edit-firstname').value = u.firstName;
       document.getElementById('edit-lastname').value  = u.lastName;
       document.getElementById('edit-jobrole').value   = u.jobRole;
@@ -1576,7 +1602,7 @@
       show('admin-edit-overlay', true);
     }
 
-    function closeUserEdit() { show('admin-edit-overlay', false); }
+    function closeUserEdit() { const el = document.getElementById('admin-edit-overlay'); el.style.display = 'none'; el.classList.add('hidden'); }
 
     async function saveUserEdit() {
       const email = document.getElementById('edit-email').value;
@@ -1625,70 +1651,137 @@
       } catch(err) { el.innerHTML = '<p class="status-err">' + err.message + '</p>'; }
     }
 
+    let lineChart = null;
+    let pieChart  = null;
+
+    function resetStatFilters() {
+      document.getElementById('stat-date-from').value = '';
+      document.getElementById('stat-date-to').value   = '';
+      document.querySelectorAll('#stat-formtype-filter input').forEach(cb => cb.checked = false);
+      loadStatistics();
+    }
+
+    const CHART_COLORS = [
+      '#3d5c4a','#6b8f7a','#9e7c68','#c4a882','#d8cfc5',
+      '#2a4234','#5a7a6a','#8a6858','#b49872','#e8e0d8'
+    ];
+
     async function loadStatistics() {
-      const dateFrom = document.getElementById('stat-date-from')?.value || null;
-      const dateTo   = document.getElementById('stat-date-to')?.value || null;
+      const dateFrom    = document.getElementById('stat-date-from')?.value || null;
+      const dateTo      = document.getElementById('stat-date-to')?.value || null;
+      const checkedForms = [...document.querySelectorAll('#stat-formtype-filter input:checked')].map(cb => cb.value);
       const el = document.getElementById('statistics-content');
       el.innerHTML = '<p style="color:#888;">Hämtar data...</p>';
       try {
         const stats = await api('getStatistics', { filters: { dateFrom, dateTo } });
-        let html = '';
 
-        // Totalt
-        html += `<div class="section-header">Totalt antal bedömningar</div>`;
-        html += `<p style="font-size:28px; font-weight:bold; color:#3d5c4a; margin:12px 0;">${stats.total}</p>`;
-
-        // Per formulärtyp
-        html += `<div class="section-header">Per formulärtyp</div>`;
-        html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
-        Object.entries(stats.byFormType).sort((a,b) => b[1]-a[1]).forEach(([k,v]) => {
-          const pct = stats.total > 0 ? Math.round(v/stats.total*100) : 0;
-          html += `<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">${k}</td>
-            <td style="padding:7px 8px;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">${v}</td>
-            <td style="padding:7px 0 7px 12px;border-bottom:1px solid #d8d0c8;width:40%;">
-              <div style="background:#d8cfc5;border-radius:4px;height:10px;">
-                <div style="background:#3d5c4a;border-radius:4px;height:10px;width:${pct}%;"></div>
-              </div></td></tr>`;
-        });
-        html += '</table>';
-
-        // Per månad
-        const months = Object.entries(stats.byMonth).sort((a,b) => a[0].localeCompare(b[0]));
-        if (months.length > 0) {
-          html += `<div class="section-header">Per månad</div>`;
-          html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
-          months.forEach(([k,v]) => {
-            const pct = Math.round(v.count / Math.max(...months.map(m=>m[1].count)) * 100);
-            html += `<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;min-width:100px;">${v.label}</td>
-              <td style="padding:7px 8px;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">${v.count}</td>
-              <td style="padding:7px 0 7px 12px;border-bottom:1px solid #d8d0c8;width:40%;">
-                <div style="background:#d8cfc5;border-radius:4px;height:10px;">
-                  <div style="background:#3d5c4a;border-radius:4px;height:10px;width:${pct}%;"></div>
-                </div></td></tr>`;
+        // Uppdatera formulärfilter-chips
+        const filterContainer = document.getElementById('stat-formtype-filter');
+        if (filterContainer.children.length === 0) {
+          Object.keys(stats.byFormType).sort().forEach(ft => {
+            const lbl = document.createElement('label');
+            lbl.className = 'filter-chip';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.value = ft;
+            if (checkedForms.includes(ft)) cb.checked = true;
+            lbl.appendChild(cb);
+            lbl.appendChild(document.createTextNode(ft));
+            filterContainer.appendChild(lbl);
           });
-          html += '</table>';
         }
 
-        // Mest aktiva
-        html += `<div class="section-header">Mest aktiva registrerare</div>`;
+        // Filtrera data på valda formulär
+        const activeFormFilter = [...document.querySelectorAll('#stat-formtype-filter input:checked')].map(cb => cb.value);
+
+        // ── Linjediagram ─────────────────────────────────────────
+        const months = Object.values(stats.byFormTypeByMonth || {});
+        const monthLabels = months.map(m => m.label);
+
+        // Avgör vilka formulärtyper att visa
+        const formTypes = activeFormFilter.length > 0
+          ? activeFormFilter
+          : Object.keys(stats.byFormType).sort();
+
+        // Bygg datasets
+        const lineDatasets = formTypes.map((ft, i) => ({
+          label: ft,
+          data: months.map(m => m[ft] || 0),
+          borderColor: CHART_COLORS[i % CHART_COLORS.length],
+          backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + '22',
+          tension: 0.3,
+          fill: false,
+          pointRadius: 4,
+        }));
+
+        // Total-linje
+        lineDatasets.unshift({
+          label: 'Totalt',
+          data: months.map(m => Object.entries(m).filter(([k]) => k !== 'label').reduce((s,[,v]) => s + (typeof v === 'number' ? v : 0), 0)),
+          borderColor: '#2a1f18',
+          backgroundColor: '#2a1f1822',
+          tension: 0.3,
+          fill: false,
+          borderWidth: 2.5,
+          pointRadius: 5,
+        });
+
+        if (lineChart) lineChart.destroy();
+        const lineCtx = document.getElementById('chart-line').getContext('2d');
+        lineChart = new Chart(lineCtx, {
+          type: 'line',
+          data: { labels: monthLabels, datasets: lineDatasets },
+          options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } },
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } },
+              x: { grid: { color: '#d8cfc5' } }
+            }
+          }
+        });
+
+        // ── Pajdiagram ───────────────────────────────────────────
+        const pieLabels = Object.keys(stats.byFormType).filter(ft =>
+          activeFormFilter.length === 0 || activeFormFilter.includes(ft)
+        );
+        const pieData = pieLabels.map(ft => stats.byFormType[ft]);
+
+        if (pieChart) pieChart.destroy();
+        const pieCtx = document.getElementById('chart-pie').getContext('2d');
+        pieChart = new Chart(pieCtx, {
+          type: 'pie',
+          data: {
+            labels: pieLabels,
+            datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#f5f1ec', borderWidth: 2 }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: true,
+            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } }
+          }
+        });
+
+        // ── Tabeller ──────────────────────────────────────────────
+        let html = '';
+        html += '<div class="section-header">Totalt antal bedömningar</div>';
+        html += '<p style="font-size:28px;font-weight:bold;color:#3d5c4a;margin:12px 0;">' + stats.total + '</p>';
+
+        html += '<div class="section-header">Mest aktiva registrerare</div>';
         html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
         Object.entries(stats.byRegistrar).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
-          html += `<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">${k}</td>
-            <td style="padding:7px 0;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">${v}</td></tr>`;
+          html += '<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">' + v + '</td></tr>';
         });
         html += '</table>';
 
-        html += `<div class="section-header">Mest bedömda</div>`;
+        html += '<div class="section-header">Mest bedömda</div>';
         html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
         Object.entries(stats.byRecipient).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
-          html += `<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">${k}</td>
-            <td style="padding:7px 0;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">${v}</td></tr>`;
+          html += '<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">' + v + '</td></tr>';
         });
         html += '</table>';
 
         el.innerHTML = html;
       } catch(err) {
-        el.innerHTML = `<p class="status-err">Fel: ${err.message}</p>`;
+        el.innerHTML = '<p class="status-err">Fel: ' + err.message + '</p>';
       }
     }
 
