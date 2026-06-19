@@ -49,13 +49,11 @@
     .sidebar-logo-text { font-family: Arial,sans-serif; font-size: 16px; font-weight: 700; color: #2a1f18; }
     .sidebar-nav { display: flex; flex-direction: column; padding: 8px 0; flex: 1; overflow-y: auto; }
     .sidebar-nav-bottom { display: flex; flex-direction: column; padding: 0 0 4px; border-top: 1px solid #c4b8ac; }
-    .sidebar-version { padding: 6px 18px; font-size: 11px; color: #9e8e82; }
     .sidebar-btn { display: block; width: 100%; text-align: left; padding: 11px 18px; font-size: 16px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #2a1f18; font-family: Arial,sans-serif; }
     .sidebar-btn:hover { background: #cfc5b8; }
     .sidebar-btn.active { background: #3d5c4a; color: #f0ede8; border-left-color: #2a4234; font-weight: bold; }
     .sidebar-btn.hidden { display: none; }
     .sidebar-footer { padding: 14px 16px; border-top: 1.5px solid #c4b8ac; margin-top: auto; }
-    .sidebar-version { font-size: 11px; color: #9e8e82; padding: 0 18px 8px 18px; display: block; }
     .sidebar-nav-secondary { border-top: 1px solid #c4b8ac; padding: 6px 0; margin-top: auto; }
     .sidebar-btn-secondary { display: block; width: 100%; text-align: left; padding: 8px 18px; font-size: 14px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #6b5c52; font-family: Arial,sans-serif; }
     .sidebar-btn-secondary:hover { background: #cfc5b8; color: #2a1f18; }
@@ -126,9 +124,6 @@
     .ans-row { margin: 3px 0 3px 14px; color: #1e1612; font-size: 16px; }
 
     .filter-box { margin-top: 16px; padding: 16px; background: #d8cfc5; border-radius: 7px; }
-    .panel-split { display: flex; gap: 24px; align-items: flex-start; margin-top: 16px; }
-    .panel-main { flex: 1; min-width: 0; }
-    .panel-sidebar-right { width: 260px; flex-shrink: 0; }
     .filter-chip {
       font-size: 15px; cursor: pointer;
       background: #f5f1ec; border: 1.5px solid #c4b8ac;
@@ -267,8 +262,6 @@
       .nav { gap: 6px; border-bottom: none; padding-bottom: 8px; flex-wrap: wrap; }
       #nav-user { font-size: 15px; }
       .date-grid { grid-template-columns: 1fr; }
-      .panel-split { flex-direction: column-reverse; }
-      .panel-sidebar-right { width: 100%; order: -1; }
       #login-panel { margin: 16px auto; padding: 16px; border: none; border-radius: 0; }
       .assessment-card { padding: 12px; }
       .assessment-card h4 { font-size: 16px; }
@@ -438,7 +431,6 @@
           <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')">Om MoraDOPS</button>
         </div>
         <div class="sidebar-footer">
-          <div class="sidebar-version">v3.3.0</div>
           <div class="sidebar-user" id="nav-user"></div>
           <div class="sidebar-clinic" id="nav-clinic"></div>
           <div class="sidebar-priv" id="privilege-toggle"></div>
@@ -466,7 +458,7 @@
       </div>
 
       <div class="field" id="f3">
-        <label class="field-label">3. Mottagarens kategori *</label>
+        <label class="field-label">Mottagarens kategori *</label>
         <div class="radio-group" id="category-group">
           <label><input type="radio" name="category" value="Spec" onchange="updateRecipients(); updateTillBedomningBtn()"> Spec</label>
           <label><input type="radio" name="category" value="ST"   onchange="updateRecipients(); updateTillBedomningBtn()"> ST</label>
@@ -476,14 +468,14 @@
       </div>
 
       <div class="field hidden" id="f4">
-        <label class="field-label">4. Mottagare *</label>
+        <label class="field-label">Mottagare *</label>
         <select id="recipient" onchange="updateFormTypes(); updateTillBedomningBtn()">
           <option value="">-- Välj mottagare --</option>
         </select>
       </div>
 
       <div class="field hidden" id="f5">
-        <label class="field-label">5. Formulärtyp *</label>
+        <label class="field-label">Formulärtyp *</label>
         <div class="radio-group" id="form-type-group"></div>
       </div>
 
@@ -957,7 +949,7 @@
     function populateAllFormTypes() {
       const group = document.getElementById('form-type-group');
       group.innerHTML = '';
-      const allForms = appData.formTypes
+      const allForms = (appData && appData.formTypes)
         ? [...new Set(Object.values(appData.formTypes).flat())]
         : [];
       allForms.forEach(f => {
@@ -977,16 +969,13 @@
       const sel = document.getElementById('recipient');
       sel.innerHTML = '<option value="">-- Välj mottagare --</option>';
       show('f4', true); show('f5', true); show('f6-container', false); show('submit-btn', false);
-      // Reset form types to category-appropriate list (or full list if no category)
       const group = document.getElementById('form-type-group');
       group.innerHTML = '';
       const checkedFormType = document.querySelector('input[name="formtype"]:checked')?.value;
-      if (!category) {
-        populateAllFormTypes();
-        return;
-      }
-      const catNames = new Set(appData.lists[category][clinic] || []);
-      const recNames = new Set(appData.lists['Mottagare'][clinic] || []);
+      if (!appData) { populateAllFormTypes(); return; } // data inte klart ännu
+      if (!category) { populateAllFormTypes(); return; }
+      const catNames = new Set((appData.lists[category] && appData.lists[category][clinic]) ? appData.lists[category][clinic] : []);
+      const recNames = new Set((appData.lists['Mottagare'] && appData.lists['Mottagare'][clinic]) ? appData.lists['Mottagare'][clinic] : []);
       [...catNames].filter(n => recNames.has(n)).forEach(n => sel.appendChild(newOption(n, n)));
       const list = (appData.formTypes && appData.formTypes[category]) ? appData.formTypes[category] : [];
       list.forEach(f => {
@@ -1266,6 +1255,13 @@
     }
 
     // ── My assessments ────────────────────────────────────────────
+    function toggleAssessmentFilter() {
+      const panel = document.getElementById('assessment-filter-panel');
+      const btn   = document.getElementById('filter-toggle-btn');
+      const open  = panel.classList.toggle('hidden') === false;
+      btn.textContent = open ? '✕ Stäng filter' : '⚙ Filtrera';
+    }
+
     function setAssessmentTab(role) {
       currentAssessmentRole = role;
       document.getElementById('tab-sent').className     = role === 'sent'     ? 'btn-primary' : 'btn-secondary';
