@@ -426,6 +426,9 @@
         </div>
         <div class="sidebar-nav-bottom">
           <div class="sidebar-divider" style="display:none;" id="priv-divider"></div>
+          <button class="sidebar-btn-secondary" id="nav-btn-inbox"     onclick="showPanel('inbox')">
+            Inkorg <span id="inbox-badge" class="hidden" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
+          </button>
           <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')">Min profil</button>
           <div style="height:1px;background:#c4b8ac;margin:4px 0;"></div>
           <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')">Statistik</button>
@@ -471,7 +474,7 @@
 
       <div class="field hidden" id="f4">
         <label class="field-label">Mottagare *</label>
-        <select id="recipient" onchange="updateFormTypes(); updateTillBedomningBtn()">
+        <select id="recipient" onchange="updateFormTypes(); updateTillBedomningBtn()" onfocus="checkCategorySelected()">
           <option value="">-- Välj mottagare --</option>
         </select>
       </div>
@@ -708,7 +711,7 @@
             </div>
             <div>
               <label class="field-label" style="font-size:14px;">KlinikID</label>
-              <input type="text" id="edit-priv-klinik" placeholder="mora-kirurgi eller *" style="max-width:180px;font-size:15px;padding:6px;">
+              <input type="text" id="edit-priv-klinik" placeholder="mora-kirurgi eller *" style="max-width:180px;font-size:15px;padding:6px;" onfocus="prefillPrivKlinik()">
             </div>
             <button class="btn-primary btn-small" onclick="addPrivilegeToUser()">Lägg till</button>
           </div>
@@ -720,6 +723,33 @@
           <div id="edit-status" style="margin-top:10px;"></div>
         </div>
       </div>
+    </div>
+
+    <!-- ── INBOX ────────────────────────────────────────────────── -->
+    <div id="panel-inbox" class="hidden">
+      <h2>Inkorg</h2>
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <button class="btn-primary"   id="inbox-tab-inbox"  onclick="setInboxTab('inbox')">Mottagna förfrågningar</button>
+        <button class="btn-secondary" id="inbox-tab-outbox" onclick="setInboxTab('outbox')">Skickade</button>
+        <button class="btn-secondary btn-small" onclick="showRequestForm()" style="margin-left:auto;">+ Begär bedömning</button>
+      </div>
+      <!-- Ny förfrågan-formulär -->
+      <div id="request-form" class="hidden filter-box" style="margin-bottom:16px;">
+        <div class="field">
+          <label class="field-label">Kollega att begära bedömning av</label>
+          <select id="request-to" style="max-width:400px;"></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Meddelande</label>
+          <textarea id="request-message" placeholder="T.ex. Tacksam DOPS på appendektomin i fredags..." style="max-width:560px;"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="sendRequest()">Skicka förfrågan</button>
+          <button class="btn-secondary" onclick="hideRequestForm()">Avbryt</button>
+        </div>
+        <div id="request-status"></div>
+      </div>
+      <div id="inbox-list"></div>
     </div>
 
     <!-- ── PROFILE ────────────────────────────────────────────── -->
@@ -1736,10 +1766,15 @@
     }
 
     async function addPrivilegeToUser() {
-      const email   = document.getElementById('edit-email').value;
-      const priv    = document.getElementById('edit-priv-type').value;
-      const klinikId = document.getElementById('edit-priv-klinik').value.trim();
+      const email    = document.getElementById('edit-email').value;
+      const priv     = document.getElementById('edit-priv-type').value;
+      let klinikId   = document.getElementById('edit-priv-klinik').value.trim();
       if (!klinikId) { alert('Ange KlinikID (t.ex. mora-kirurgi eller * för global)'); return; }
+      // Lokal admin kan bara ge privilegier till sin egen klinik
+      if (activeKlinikId && activeKlinikId !== '*' && klinikId !== activeKlinikId && klinikId !== '') {
+        alert('Du kan bara tilldela privilegier för klinik: ' + activeKlinikId);
+        return;
+      }
       await api('setUserPrivilege', { targetEmail: email, privilege: priv, klinikId, remove: false });
       loadUserPrivileges(email);
     }
@@ -2110,6 +2145,146 @@
         .replace(/'/g, '&#039;');
     }
 
+    // ── Inkorg ────────────────────────────────────────────────────
+    let currentInboxTab = 'inbox';
+    let inboxData = null;
+
+    function setInboxTab(tab) {
+      currentInboxTab = tab;
+      document.getElementById('inbox-tab-inbox').className  = tab === 'inbox'  ? 'btn-primary' : 'btn-secondary';
+      document.getElementById('inbox-tab-outbox').className = tab === 'outbox' ? 'btn-primary' : 'btn-secondary';
+      renderInbox();
+    }
+
+    async function loadInbox() {
+      document.getElementById('inbox-list').innerHTML = '<p style="color:#888;">Hämtar...</p>';
+      try {
+        inboxData = await api('getAssessmentRequests', { email: currentUser.email });
+        renderInbox();
+        // Uppdatera badge
+        const unread = (inboxData.inbox || []).filter(r => !r.read).length;
+        const badge = document.getElementById('inbox-badge');
+        if (badge) {
+          badge.textContent = unread;
+          badge.classList.toggle('hidden', unread === 0);
+        }
+      } catch(err) {
+        document.getElementById('inbox-list').innerHTML = '<p class="status-err">' + esc(err.message) + '</p>';
+      }
+    }
+
+    function renderInbox() {
+      const el = document.getElementById('inbox-list');
+      const items = currentInboxTab === 'inbox' ? (inboxData?.inbox || []) : (inboxData?.outbox || []);
+      if (!items.length) { el.innerHTML = '<p style="color:#888;">Inga förfrågningar.</p>'; return; }
+      el.innerHTML = '';
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'assessment-card';
+        card.style.marginTop = '12px';
+        if (currentInboxTab === 'inbox' && !item.read) card.style.borderLeft = '4px solid #3d5c4a';
+        const isInbox = currentInboxTab === 'inbox';
+        card.innerHTML =
+          '<div style="font-weight:bold;font-size:16px;">' + esc(isInbox ? item.fromName : item.toName) + '</div>' +
+          '<div style="font-size:13px;color:#6b5c52;margin-top:2px;">' + esc(item.timestamp) + '</div>' +
+          '<div style="margin-top:8px;font-size:16px;">' + esc(item.message) + '</div>';
+        if (isInbox) {
+          const btn = document.createElement('button');
+          btn.className = 'btn-primary btn-small';
+          btn.style.marginTop = '10px';
+          btn.textContent = 'Utför bedömning';
+          btn.onclick = () => startRequestedAssessment(item);
+          card.appendChild(btn);
+        }
+        el.appendChild(card);
+        // Markera som läst
+        if (isInbox && !item.read) api('markRequestRead', { id: item.id }).catch(()=>{});
+      });
+    }
+
+    function showRequestForm() {
+      show('request-form', true);
+      // Fyll kollegor från appData
+      const sel = document.getElementById('request-to');
+      sel.innerHTML = '<option value="">-- Välj kollega --</option>';
+      if (appData && appData.lists) {
+        const clinic = currentUser.clinic;
+        const allNames = new Set();
+        ['Registrerare','Mottagare','ST','Spec','AT','BT'].forEach(cat => {
+          const names = appData.lists[cat]?.[clinic] || [];
+          names.forEach(n => { if (n !== currentUser.firstName + ' ' + currentUser.lastName) allNames.add(n); });
+        });
+        [...allNames].sort().forEach(name => {
+          const opt = document.createElement('option');
+          opt.value = name; opt.textContent = name;
+          sel.appendChild(opt);
+        });
+      }
+    }
+
+    function hideRequestForm() { show('request-form', false); }
+
+    async function sendRequest() {
+      const toName  = document.getElementById('request-to').value;
+      const message = document.getElementById('request-message').value.trim();
+      if (!toName)   { setStatus('request-status', 'Välj en kollega.', true); return; }
+      if (!message)  { setStatus('request-status', 'Skriv ett meddelande.', true); return; }
+      // Hitta email via Recipients
+      try {
+        const toEmail = await api('getRecipientEmail', { recipientFullName: toName });
+        if (!toEmail) { setStatus('request-status', 'Kunde inte hitta e-post för ' + esc(toName), true); return; }
+        setStatus('request-status', '⏳ Skickar...', false);
+        await api('sendAssessmentRequest', { fromEmail: currentUser.email, toEmail, message });
+        setStatus('request-status', '✓ Förfrågan skickad!', false);
+        document.getElementById('request-message').value = '';
+        document.getElementById('request-to').value = '';
+        setTimeout(() => { hideRequestForm(); loadInbox(); }, 1500);
+      } catch(err) { setStatus('request-status', err.message, true); }
+    }
+
+    function startRequestedAssessment(item) {
+      // Förifyll mottagare och gå till Registrera bedömning
+      showPanel('assessment');
+      resetAssessment();
+      // Vänta på reset, sedan förifyll
+      setTimeout(() => {
+        const fromName = item.fromName;
+        // Sätt mottagare direkt i recipient-select
+        const sel = document.getElementById('recipient');
+        // Klona ett option
+        const opt = document.createElement('option');
+        opt.value = fromName; opt.textContent = fromName; opt.selected = true;
+        sel.appendChild(opt);
+        updateFormTypes();
+        updateTillBedomningBtn();
+        show('f3', true); show('f4', true); show('f5', true);
+        // Markera inte kategori – användaren väljer själv
+      }, 300);
+    }
+
+    function prefillPrivKlinik() {
+      const input = document.getElementById('edit-priv-klinik');
+      if (!input.value && activeKlinikId && activeKlinikId !== '*') {
+        input.value = activeKlinikId;
+      }
+    }
+
+    function checkCategorySelected() {
+      const category = document.querySelector('input[name="category"]:checked')?.value;
+      if (!category) {
+        const f3 = document.getElementById('f3');
+        if (f3) {
+          f3.style.outline = '2px solid #9e2a18';
+          f3.style.borderRadius = '6px';
+          f3.style.padding = '8px';
+          setTimeout(() => {
+            f3.style.outline = '';
+            f3.style.padding = '';
+          }, 2000);
+        }
+      }
+    }
+
     function toggleMenu() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('mob-sidebar-overlay');
@@ -2154,10 +2329,10 @@
     let activeKlinikId = null;
 
     function showPanel(panel) {
-      ['assessment','my-assessments','clinic-overview','admin','statistics','documents','about','profile'].forEach(p =>
+      ['assessment','my-assessments','clinic-overview','admin','statistics','documents','about','inbox','profile'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','clinic-overview','admin','statistics','documents','about','profile'].forEach(p => {
+      ['assessment','my-assessments','clinic-overview','admin','statistics','documents','about','inbox','profile'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -2187,6 +2362,7 @@
       if (panel === 'clinic-overview')  { loadClinicOverview(); }
       if (panel === 'admin')            { loadAdminPanel(); }
       if (panel === 'documents')        { loadDocuments(); }
+      if (panel === 'inbox')            { loadInbox(); }
     }
 
     function show(id, visible) {
