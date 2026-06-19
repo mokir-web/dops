@@ -56,8 +56,8 @@
     .sidebar-user { font-size: 14px; font-weight: bold; color: #2a1f18; }
     .sidebar-clinic { font-size: 12px; color: #6b5c52; margin-top: 2px; }
     .sidebar-priv { margin-top: 8px; }
-    .sidebar-logout { margin-top: 10px; width: 100%; padding: 8px 12px; font-size: 14px; background: transparent; color: #9e8e82; border: 1.5px solid #c4b8ac; border-radius: 5px; cursor: pointer; text-align: left; }
-    .sidebar-logout:hover { background: rgba(176,48,32,0.10); color: #9e2a18; border-color: rgba(176,48,32,0.35); }
+    .sidebar-logout { margin-top: 10px; width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.08); color: #9e2a18; border: 1.5px solid rgba(176,48,32,0.25); border-radius: 5px; cursor: pointer; text-align: left; }
+    .sidebar-logout:hover { background: rgba(176,48,32,0.18); border-color: rgba(176,48,32,0.45); }
     .main-content { flex: 1; padding: 28px 36px; max-width: 900px; min-width: 0; }
     .nav button { flex-shrink: 0; }
     .nav-right {
@@ -117,6 +117,9 @@
     .ans-row { margin: 3px 0 3px 14px; color: #1e1612; font-size: 16px; }
 
     .filter-box { margin-top: 16px; padding: 16px; background: #d8cfc5; border-radius: 7px; }
+    .panel-split { display: flex; gap: 24px; align-items: flex-start; margin-top: 16px; }
+    .panel-main { flex: 1; min-width: 0; }
+    .panel-sidebar-right { width: 260px; flex-shrink: 0; }
     .filter-chip {
       font-size: 15px; cursor: pointer;
       background: #f5f1ec; border: 1.5px solid #c4b8ac;
@@ -255,6 +258,8 @@
       .nav { gap: 6px; border-bottom: none; padding-bottom: 8px; flex-wrap: wrap; }
       #nav-user { font-size: 15px; }
       .date-grid { grid-template-columns: 1fr; }
+      .panel-split { flex-direction: column; }
+      .panel-sidebar-right { width: 100%; }
       #login-panel { margin: 16px auto; padding: 16px; border: none; border-radius: 0; }
       .assessment-card { padding: 12px; }
       .assessment-card h4 { font-size: 16px; }
@@ -414,6 +419,7 @@
           <button class="sidebar-btn hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')">Kliniköversikt</button>
           <button class="sidebar-btn hidden" id="nav-btn-admin"           onclick="showPanel('admin')">Administration</button>
           <button class="sidebar-btn"        id="nav-btn-statistics"      onclick="showPanel('statistics')">Statistik</button>
+          <button class="sidebar-btn"        id="nav-btn-documents"       onclick="showPanel('documents')">Dokument</button>
           <button class="sidebar-btn"        id="nav-btn-about"           onclick="showPanel('about')">Om MoraDOPS</button>
           <button class="sidebar-btn"        id="nav-btn-profile"         onclick="showPanel('profile')">Min profil</button>
         </div>
@@ -466,14 +472,11 @@
         <div class="radio-group" id="form-type-group"></div>
       </div>
 
-      <div class="field hidden btn-row" id="f-till-bedomning">
-        <button class="btn-primary" id="till-bedomning-btn" onclick="tillBedomning()" disabled>Till bedömning →</button>
+      <div class="field hidden" id="f-till-bedomning" style="margin-top:16px;">
+        <button class="btn-primary" id="till-bedomning-btn" onclick="tillBedomning()" disabled style="width:auto;">Till bedömning →</button>
       </div>
 
       <div id="f6-container" class="hidden">
-        <div style="margin-bottom:12px;">
-          <button class="btn-secondary btn-small" onclick="showSelectionFields()">&#8592; Ändra val</button>
-        </div>
         <hr>
         <div id="form-questions"></div>
         <div class="btn-row">
@@ -488,43 +491,46 @@
 
     <div id="panel-my-assessments" class="hidden">
       <h2>Mina bedömningar</h2>
-
-      <div class="btn-row">
-        <button class="btn-secondary" id="tab-received" onclick="setAssessmentTab('received')">Mottagna</button>
-        <button class="btn-primary"   id="tab-sent"     onclick="setAssessmentTab('sent')">Skickade</button>
-      </div>
-
-      <div class="filter-box">
-        <div class="date-grid">
-          <div>
-            <label class="field-label">Från datum</label>
-            <input type="date" id="filter-date-from">
+      <div class="panel-split">
+        <!-- Vänster: entries -->
+        <div class="panel-main">
+          <div class="btn-row" style="margin-top:0;">
+            <button class="btn-secondary" id="tab-received" onclick="setAssessmentTab('received')">Mottagna</button>
+            <button class="btn-primary"   id="tab-sent"     onclick="setAssessmentTab('sent')">Skickade</button>
           </div>
-          <div>
-            <label class="field-label">Till datum</label>
-            <input type="date" id="filter-date-to">
+          <div id="assessment-actions" class="hidden" style="margin-top:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <label style="font-size:13px; cursor:pointer;">
+              <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)"> Markera alla
+            </label>
+            <button class="btn-primary" onclick="exportSelected()">📄 Exportera markerade</button>
+            <span id="selected-count" style="font-size:13px; color:#6b5c52;"></span>
+          </div>
+          <div id="my-assessments-list" style="margin-top:14px;"></div>
+          <div id="export-status" style="margin-top:12px;"></div>
+        </div>
+        <!-- Höger: filter -->
+        <div class="panel-sidebar-right">
+          <div class="filter-box" style="margin-top:0;">
+            <div style="font-weight:bold; font-size:15px; margin-bottom:12px; color:#2a1f18;">Filter</div>
+            <div>
+              <label class="field-label">Från datum</label>
+              <input type="date" id="filter-date-from" style="max-width:100%;">
+            </div>
+            <div style="margin-top:10px;">
+              <label class="field-label">Till datum</label>
+              <input type="date" id="filter-date-to" style="max-width:100%;">
+            </div>
+            <div style="margin-top:10px;">
+              <label class="field-label">Formulärtyp</label>
+              <div id="filter-formtypes" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;"></div>
+            </div>
+            <div class="btn-row" style="margin-top:14px; flex-direction:column; gap:6px;">
+              <button class="btn-primary" style="width:100%;" onclick="applyFilters()">Sök</button>
+              <button class="btn-secondary" style="width:100%;" onclick="resetFilters()">Återställ</button>
+            </div>
           </div>
         </div>
-        <div class="field">
-          <label class="field-label">Formulärtyp</label>
-          <div id="filter-formtypes" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
-        </div>
-        <div class="btn-row">
-          <button class="btn-primary" onclick="applyFilters()">Sök</button>
-          <button class="btn-secondary" onclick="resetFilters()">Återställ</button>
-        </div>
       </div>
-
-      <div id="assessment-actions" class="hidden" style="margin-top:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <label style="font-size:13px; cursor:pointer;">
-          <input type="checkbox" id="select-all" onchange="toggleSelectAll(this.checked)"> Markera alla
-        </label>
-        <button class="btn-primary" onclick="exportSelected()">📄 Exportera markerade som Word</button>
-        <span id="selected-count" style="font-size:13px; color:#666;"></span>
-      </div>
-
-      <div id="my-assessments-list" style="margin-top:14px;"></div>
-      <div id="export-status" style="margin-top:12px;"></div>
     </div>
 
     <!-- ── STATISTICS ───────────────────────────────────────────── -->
@@ -541,6 +547,13 @@
         </div>
       </div>
       <div id="statistics-content"><p style="color:#888;">Klicka "Visa statistik" för att ladda data.</p></div>
+    </div>
+
+    <!-- ── DOCUMENTS ────────────────────────────────────────────── -->
+    <div id="panel-documents" class="hidden">
+      <h2>Dokument</h2>
+      <p style="color:#6b5c52;">Nedladdningsbara mallar och avtal för kliniker som vill ansluta till MoraDOPS.</p>
+      <div id="documents-list" style="margin-top:16px;"><p style="color:#888;">Läser in...</p></div>
     </div>
 
     <!-- ── ABOUT ─────────────────────────────────────────────────── -->
@@ -615,13 +628,43 @@
     <!-- ── ADMIN ──────────────────────────────────────────────────── -->
     <div id="panel-admin" class="hidden">
       <h2>Administration</h2>
-      <div class="section-header">Kliniker</div>
-      <div id="admin-clinics-list" style="margin-top:12px;"><p style="color:#888;">Läser in...</p></div>
-      <div class="section-header" style="margin-top:24px;">Alla användare</div>
-      <div class="field">
-        <input type="text" id="admin-user-search" placeholder="Sök namn eller e-post..." oninput="filterAdminUsers()">
+      <div id="admin-clinic-view">
+        <div class="section-header">Välj klinik</div>
+        <div id="admin-clinic-list" style="margin-top:12px;"><p style="color:#888;">Läser in...</p></div>
       </div>
-      <div id="admin-users-list" style="margin-top:12px;"><p style="color:#888;">Läser in...</p></div>
+      <div id="admin-detail-view" class="hidden">
+        <button class="btn-secondary btn-small" onclick="showClinicList()" style="margin-bottom:16px;">← Alla kliniker</button>
+        <div id="admin-clinic-info"></div>
+        <div class="section-header" style="margin-top:20px;">Användare</div>
+        <div class="field">
+          <input type="text" id="admin-user-search" placeholder="Sök namn eller e-post..." oninput="filterAdminUsers()" style="max-width:400px;">
+        </div>
+        <div id="admin-users-list" style="margin-top:12px;"></div>
+      </div>
+      <!-- Redigera användare modal -->
+      <div id="admin-edit-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
+          <h3 style="margin-top:0;">Redigera användare</h3>
+          <div class="field"><label class="field-label">Förnamn</label><input type="text" id="edit-firstname"></div>
+          <div class="field"><label class="field-label">Efternamn</label><input type="text" id="edit-lastname"></div>
+          <div class="field"><label class="field-label">Yrkesroll</label>
+            <select id="edit-jobrole"><option value="ST">ST</option><option value="Spec">Spec</option><option value="AT">AT</option><option value="BT">BT</option></select>
+          </div>
+          <div class="field"><label class="field-label">Användarroll</label>
+            <select id="edit-userrole"><option value="Registrerare">Registrerare</option><option value="Mottagare">Mottagare</option><option value="Blandbild">Blandbild</option></select>
+          </div>
+          <div class="field"><label class="field-label">Klinik</label><input type="text" id="edit-clinic"></div>
+          <div class="field"><label class="field-label">KlinikID</label><input type="text" id="edit-klinikid"></div>
+          <div class="field"><label class="field-label">Nytt lösenord (lämna tomt för oförändrat)</label><input type="password" id="edit-pin" maxlength="6" placeholder="4–6 siffror"></div>
+          <input type="hidden" id="edit-email">
+          <div class="btn-row" style="margin-top:20px;">
+            <button class="btn-primary" onclick="saveUserEdit()">Spara</button>
+            <button class="btn-secondary" onclick="closeUserEdit()">Avbryt</button>
+            <button class="btn-danger" onclick="deleteUserFromAdmin()" style="margin-left:auto;">Radera</button>
+          </div>
+          <div id="edit-status" style="margin-top:10px;"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ── PROFILE ────────────────────────────────────────────── -->
@@ -635,7 +678,7 @@
         <div style="margin-top:6px;"><strong>Klinik:</strong> <span id="profile-clinic"></span></div>
       </div>
 
-      <h3 style="color:#1a73e8; border-bottom:2px solid #EAF2FF; padding-bottom:6px;">Ändra roller</h3>
+      <h3 style="color:#3d5c4a; border-bottom:2px solid #d8cfc5; padding-bottom:6px;">Ändra roller</h3>
       <div class="field">
         <label class="field-label">Yrkesroll</label>
         <select id="profile-jobrole">
@@ -660,7 +703,7 @@
 
       <hr>
 
-      <h3 style="color:#1a73e8; border-bottom:2px solid #EAF2FF; padding-bottom:6px;">Ändra PIN</h3>
+      <h3 style="color:#3d5c4a; border-bottom:2px solid #d8cfc5; padding-bottom:6px;">Ändra PIN</h3>
       <div class="field">
         <label class="field-label">Nuvarande PIN</label>
         <input type="password" id="profile-current-pin" maxlength="6">
@@ -673,6 +716,15 @@
         <button class="btn-primary" onclick="changePin()">Byt PIN</button>
       </div>
       <div id="profile-pin-status"></div>
+
+      <hr>
+
+      <h3 style="color:#9e2a18; border-bottom:2px solid rgba(176,48,32,0.2); padding-bottom:6px;">Radera profil</h3>
+      <p style="color:#6b5c52; font-size:15px;">Raderar ditt konto och all din data permanent. Bedömningar du registrerat finns kvar.</p>
+      <div class="btn-row">
+        <button class="btn-danger" onclick="confirmDeleteProfile()">Radera min profil</button>
+      </div>
+      <div id="profile-delete-status"></div>
     </div>
 
       </div><!-- /main-content -->
@@ -749,21 +801,22 @@
     function renderPrivilegeToggle() {
       const privs = currentUser.privileges || [];
       const container = document.getElementById('privilege-toggle');
-      const mobContainer = null; // Inte längre separat på mobil
       if (!container) return;
-      if (privs.length === 0) {
-        container.innerHTML = '';
-        if (mobContainer) mobContainer.innerHTML = '';
-        return;
-      }
-      let html = `<div class="priv-toggle">
-        <button class="priv-btn ${activePrivilege === null ? 'active' : ''}" onclick="setPrivilege(null)">Standardvy</button>`;
+      if (privs.length === 0) { container.innerHTML = ''; return; }
+      let html = '<div style="margin-top:8px;"><select id="priv-select" onchange="setPrivilegeFromSelect(this.value)" style="width:100%;padding:6px 8px;font-size:13px;border:1.5px solid #c4b8ac;border-radius:5px;background:#f5f1ec;color:#2a1f18;cursor:pointer;"><option value="">Standardvy</option>';
       privs.forEach(p => {
-        html += `<button class="priv-btn ${activePrivilege === p.privilege ? 'active' : ''}" onclick="setPrivilege('${p.privilege}', '${p.klinikId}')">${p.privilege}</button>`;
+        const val = p.privilege + '|' + p.klinikId;
+        const sel = activePrivilege === p.privilege ? 'selected' : '';
+        html += '<option value="' + val + '" ' + sel + '>' + p.privilege + '</option>';
       });
-      html += '</div>';
+      html += '</select></div>';
       container.innerHTML = html;
-      // Mob-container finns inte längre separat – privilege-toggle är i sidebar footer
+    }
+
+    function setPrivilegeFromSelect(val) {
+      if (!val) { setPrivilege(null, null); return; }
+      const parts = val.split('|');
+      setPrivilege(parts[0], parts[1]);
     }
 
     function setPrivilege(privilege, klinikId) {
@@ -935,6 +988,7 @@
       const submitBtn = document.getElementById('submit-btn');
       if (submitBtn) submitBtn.disabled = false;
       show('f6-container', true); show('submit-btn', false);
+      show('f-till-bedomning', false);
       ['f-intro','f1','f2','f3','f4','f5'].forEach(id => show(id, false));
       try {
         const data = await api('getFormQuestions', { formName });
@@ -1406,29 +1460,169 @@
     }
 
     let allAdminUsers = [];
+    let currentAdminKlinikId = null;
+
     async function loadAdminPanel() {
+      showClinicList();
+      const el = document.getElementById('admin-clinic-list');
+      el.innerHTML = '<p style="color:#888;">Hämtar kliniker...</p>';
       try {
-        const data = await api('getData');
-        const clinicsEl = document.getElementById('admin-clinics-list');
-        clinicsEl.innerHTML = data.clinics.map(c =>
-          `<div style="padding:8px 0;border-bottom:1px solid #d8d0c8;">${c}</div>`
-        ).join('') || '<p style="color:#888;">Inga kliniker.</p>';
+        const result = await api('getAllUsers');
+        allAdminUsers = result || [];
+        // Bygg kliniklist från användare + privilegier
+        const klinikIds = activeKlinikId === '*'
+          ? [...new Set(allAdminUsers.map(u => u.klinikId).filter(Boolean))]
+          : [activeKlinikId];
+        if (!klinikIds.length) { el.innerHTML = '<p style="color:#888;">Inga kliniker.</p>'; return; }
+        el.innerHTML = '';
+        // Lägg till "Alla"-knapp för admin
+        if (activeKlinikId === '*') {
+          const allBtn = document.createElement('div');
+          allBtn.className = 'assessment-card';
+          allBtn.style.cssText = 'cursor:pointer;';
+          allBtn.innerHTML = '<strong style="font-size:17px;">Alla kliniker</strong><div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + allAdminUsers.length + ' användare totalt</div>';
+          allBtn.onclick = () => loadClinicDetail('*');
+          el.appendChild(allBtn);
+        }
+        klinikIds.forEach(kid => {
+          const users = allAdminUsers.filter(u => u.klinikId === kid);
+          const card = document.createElement('div');
+          card.className = 'assessment-card';
+          card.style.cssText = 'cursor:pointer; margin-top:10px;';
+          card.innerHTML = '<strong style="font-size:17px;">' + (kid || '(okänd)') + '</strong><div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + users.length + ' användare</div>';
+          card.onclick = () => loadClinicDetail(kid);
+          el.appendChild(card);
+        });
       } catch(err) {
-        document.getElementById('admin-clinics-list').innerHTML = `<p class="status-err">${err.message}</p>`;
+        el.innerHTML = '<p class="status-err">' + err.message + '</p>';
       }
     }
 
+    function showClinicList() {
+      show('admin-clinic-view', true);
+      show('admin-detail-view', false);
+    }
+
+    async function loadClinicDetail(klinikId) {
+      currentAdminKlinikId = klinikId;
+      show('admin-clinic-view', false);
+      show('admin-detail-view', true);
+      const infoEl = document.getElementById('admin-clinic-info');
+      infoEl.innerHTML = '<p style="color:#888;">Hämtar...</p>';
+      try {
+        const data = await api('getClinicInfo', { klinikId });
+        let html = '';
+        if (data.info) {
+          html += '<div class="assessment-card">';
+          html += '<div style="font-size:18px;font-weight:bold;">' + data.info.namn + '</div>';
+          html += '<div style="font-size:14px;color:#6b5c52;margin-top:4px;">ID: ' + data.info.klinikId + '</div>';
+          html += '<div style="font-size:14px;margin-top:4px;">Kontakt: ' + data.info.kontakt + '</div>';
+          html += '<div style="font-size:14px;margin-top:4px;">Status: <strong>' + (data.info.aktiv === 'Ja' ? '✓ Aktiv' : '✗ Inaktiv') + '</strong></div>';
+          const toggleLabel = data.info.aktiv === 'Ja' ? 'Stäng tillgång' : 'Aktivera';
+          const toggleActive = data.info.aktiv !== 'Ja';
+          html += '<div class="btn-row" style="margin-top:12px;"><button class="btn-' + (toggleActive ? 'primary' : 'danger') + ' btn-small" onclick="toggleClinicAccess('' + klinikId + '',' + toggleActive + ')">' + toggleLabel + '</button></div>';
+          html += '</div>';
+        } else {
+          html = '<div class="assessment-card"><strong>' + (klinikId === '*' ? 'Alla kliniker' : klinikId) + '</strong></div>';
+        }
+        infoEl.innerHTML = html;
+        allAdminUsers = data.users;
+        filterAdminUsers();
+      } catch(err) {
+        infoEl.innerHTML = '<p class="status-err">' + err.message + '</p>';
+      }
+    }
+
+    async function toggleClinicAccess(klinikId, active) {
+      if (!confirm((active ? 'Aktivera' : 'Stäng') + ' tillgång för ' + klinikId + '?')) return;
+      try {
+        await api('setClinicActive', { klinikId, active });
+        loadClinicDetail(klinikId);
+      } catch(err) { alert(err.message); }
+    }
+
     function filterAdminUsers() {
-      const q = document.getElementById('admin-user-search').value.toLowerCase();
+      const q = document.getElementById('admin-user-search')?.value.toLowerCase() || '';
       const el = document.getElementById('admin-users-list');
+      if (!el) return;
       const filtered = allAdminUsers.filter(u =>
         `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(q)
       );
-      el.innerHTML = filtered.length
-        ? filtered.map(u => `<div style="padding:8px 0;border-bottom:1px solid #d8d0c8;">
-            <strong>${u.firstName} ${u.lastName}</strong> · ${u.email} · ${u.jobRole} · ${u.clinic}
-          </div>`).join('')
-        : '<p style="color:#888;">Inga användare hittades.</p>';
+      if (!filtered.length) { el.innerHTML = '<p style="color:#888;">Inga användare hittades.</p>'; return; }
+      el.innerHTML = '';
+      filtered.forEach(u => {
+        const card = document.createElement('div');
+        card.className = 'assessment-card';
+        card.style.cssText = 'margin-top:10px; cursor:pointer;';
+        card.innerHTML = '<div style="font-weight:bold;font-size:16px;">' + u.firstName + ' ' + u.lastName + '</div>'
+          + '<div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + u.email + '</div>'
+          + '<div style="font-size:14px;margin-top:4px;">' + u.jobRole + ' · ' + u.clinic + ' · ' + u.userRole + '</div>'
+          + '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">KlinikID: ' + (u.klinikId || '–') + '</div>';
+        card.onclick = () => openUserEdit(u);
+        el.appendChild(card);
+      });
+    }
+
+    function openUserEdit(u) {
+      document.getElementById('edit-firstname').value = u.firstName;
+      document.getElementById('edit-lastname').value  = u.lastName;
+      document.getElementById('edit-jobrole').value   = u.jobRole;
+      document.getElementById('edit-userrole').value  = u.userRole;
+      document.getElementById('edit-clinic').value    = u.clinic;
+      document.getElementById('edit-klinikid').value  = u.klinikId || '';
+      document.getElementById('edit-pin').value       = '';
+      document.getElementById('edit-email').value     = u.email;
+      document.getElementById('edit-status').textContent = '';
+      show('admin-edit-overlay', true);
+    }
+
+    function closeUserEdit() { show('admin-edit-overlay', false); }
+
+    async function saveUserEdit() {
+      const email = document.getElementById('edit-email').value;
+      const updates = {
+        firstName: document.getElementById('edit-firstname').value.trim(),
+        lastName:  document.getElementById('edit-lastname').value.trim(),
+        jobRole:   document.getElementById('edit-jobrole').value,
+        userRole:  document.getElementById('edit-userrole').value,
+        clinic:    document.getElementById('edit-clinic').value.trim(),
+        klinikId:  document.getElementById('edit-klinikid').value.trim(),
+      };
+      const pin = document.getElementById('edit-pin').value.trim();
+      if (pin) { if (!/^\d{4,6}$/.test(pin)) { setStatus('edit-status', 'PIN måste vara 4–6 siffror.', true); return; } updates.newPin = pin; }
+      setStatus('edit-status', '⏳ Sparar...', false);
+      try {
+        const result = await api('updateUserByAdmin', { targetEmail: email, updates });
+        if (result.error) { setStatus('edit-status', result.error, true); return; }
+        setStatus('edit-status', '✓ Sparat!', false);
+        setTimeout(() => { closeUserEdit(); loadClinicDetail(currentAdminKlinikId); }, 800);
+      } catch(err) { setStatus('edit-status', err.message, true); }
+    }
+
+    async function deleteUserFromAdmin() {
+      const email = document.getElementById('edit-email').value;
+      if (!confirm('Radera ' + email + '? Detta kan inte ångras.')) return;
+      try {
+        await api('deleteUser', { email });
+        closeUserEdit();
+        loadClinicDetail(currentAdminKlinikId);
+      } catch(err) { setStatus('edit-status', err.message, true); }
+    }
+
+    async function loadDocuments() {
+      const el = document.getElementById('documents-list');
+      el.innerHTML = '<p style="color:#888;">Hämtar dokument...</p>';
+      try {
+        const docs = await api('getDocuments');
+        if (!docs.length) { el.innerHTML = '<p style="color:#888;">Inga dokument tillgängliga ännu.</p>'; return; }
+        el.innerHTML = docs.map(d => `
+          <div class="assessment-card" style="margin-top:12px;">
+            <div style="font-weight:bold;font-size:17px;">${d.title}</div>
+            ${d.description ? '<div style="font-size:15px;color:#6b5c52;margin-top:4px;">' + d.description + '</div>' : ''}
+            <div style="font-size:13px;color:#9e8e82;margin-top:4px;">Version ${d.version || '–'} · ${d.date || ''}</div>
+            ${d.url ? '<div class="btn-row" style="margin-top:10px;"><a href="' + d.url + '" target="_blank" class="btn-secondary btn-small" style="text-decoration:none;display:inline-block;padding:7px 14px;">⬇ Ladda ned</a></div>' : ''}
+          </div>`).join('');
+      } catch(err) { el.innerHTML = '<p class="status-err">' + err.message + '</p>'; }
     }
 
     async function loadStatistics() {
@@ -1540,6 +1734,23 @@
         prefillAssessment();
         setStatus('profile-role-status', '✓ Roller uppdaterade!', false);
       } catch(err) { setStatus('profile-role-status', err.message, true); }
+    }
+
+    async function confirmDeleteProfile() {
+      const confirmed = confirm('Är du säker? Detta raderar ditt konto permanent. Åtgärden kan inte ångras.');
+      if (!confirmed) return;
+      const pin = prompt('Bekräfta med din PIN:');
+      if (!pin) return;
+      try {
+        const user = await api('login', { email: currentUser.email, pin });
+        if (!user) { setStatus('profile-delete-status', 'Felaktig PIN.', true); return; }
+        setStatus('profile-delete-status', '⏳ Raderar...', false);
+        const result = await api('deleteUser', { email: currentUser.email });
+        if (result.error) { setStatus('profile-delete-status', result.error, true); return; }
+        localStorage.removeItem('dops_user');
+        alert('Ditt konto har raderats.');
+        location.reload();
+      } catch(err) { setStatus('profile-delete-status', err.message, true); }
     }
 
     async function changePin() {
@@ -1662,10 +1873,10 @@
     let activeKlinikId = null;
 
     function showPanel(panel) {
-      ['assessment','my-assessments','clinic-overview','admin','statistics','about','profile'].forEach(p =>
+      ['assessment','my-assessments','clinic-overview','admin','statistics','documents','about','profile'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','clinic-overview','admin','statistics','about','profile'].forEach(p => {
+      ['assessment','my-assessments','clinic-overview','admin','statistics','documents','about','profile'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -1675,6 +1886,7 @@
       if (panel === 'statistics')       { loadStatistics(); }
       if (panel === 'clinic-overview')  { loadClinicOverview(); }
       if (panel === 'admin')            { loadAdminPanel(); }
+      if (panel === 'documents')        { loadDocuments(); }
     }
 
     function show(id, visible) {
