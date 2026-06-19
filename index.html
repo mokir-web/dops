@@ -454,6 +454,10 @@
         <div class="radio-group" id="form-type-group"></div>
       </div>
 
+      <div class="field hidden btn-row" id="f-till-bedomning">
+        <button class="btn-primary" onclick="tillBedomning()">Till bedömning →</button>
+      </div>
+
       <div id="f6-container" class="hidden">
         <div style="margin-bottom:12px;">
           <button class="btn-secondary btn-small" onclick="showSelectionFields()">&#8592; Ändra val</button>
@@ -575,15 +579,7 @@
     let availableFormTypes = [];
 
     const hierarchy = ['Spec', 'ST', 'BT', 'AT'];
-    const formsSTSpec = [
-      'Operationsspecifik DOPS','360 GRADER','Återkoppling till ST-läkare efter muntlig presentation',
-      'Mini-CEX','DOPS (allmän mall för mindre ingrepp/åtgärder)','Videogranskning',
-      'Självskattning inför specialistkollegium','Rapport från specialistkollegium'
-    ];
-    const formsATBT = [
-      'DOPS (allmän mall för mindre ingrepp/åtgärder)','Mini-CEX','360 GRADER',
-      'Återkoppling till ST-läkare efter muntlig presentation','Operationsspecifik DOPS'
-    ];
+    // Formulärtyper hämtas dynamiskt från Sheets via appData.formTypes
 
     // ── GAS backend URL — BYTA UT MOT DIN /exec URL ─────────────
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbxcXkJx8GrRcVeDDf095aqsf0n_uvkCDHfJeRLeFtUcx_Ti0GdH0Wf6MBUBA1sNoESx/exec';
@@ -703,19 +699,25 @@
         radio.closest('label').classList.toggle('disabled-option', isDisabled);
         radio.closest('label').style.opacity = '';
       });
-      // Show f4 (empty) and f5 with all form types visible from start
+      // Visa f4 och f5 direkt, men Till bedömning-knappen döljs till mottagare valts
       show('f4', true);
       show('f5', true);
+      show('f-till-bedomning', false);
       populateAllFormTypes();
     }
 
     function populateAllFormTypes() {
       const group = document.getElementById('form-type-group');
       group.innerHTML = '';
-      const allForms = [...new Set([...formsSTSpec, ...formsATBT])];
+      const allForms = appData.formTypes
+        ? [...new Set(Object.values(appData.formTypes).flat())]
+        : [];
       allForms.forEach(f => {
         const lbl = document.createElement('label');
-        lbl.innerHTML = `<input type="radio" name="formtype" value="${f}" onchange="loadForm('${f}')"> ${f}`;
+        const input = document.createElement('input');
+        input.type = 'radio'; input.name = 'formtype'; input.value = f;
+        lbl.appendChild(input);
+        lbl.appendChild(document.createTextNode(' ' + f));
         group.appendChild(lbl);
       });
     }
@@ -737,10 +739,13 @@
       const catNames = new Set(appData.lists[category][clinic] || []);
       const recNames = new Set(appData.lists['Mottagare'][clinic] || []);
       [...catNames].filter(n => recNames.has(n)).forEach(n => sel.appendChild(newOption(n, n)));
-      const list = (category === 'ST' || category === 'Spec') ? formsSTSpec : formsATBT;
+      const list = (appData.formTypes && appData.formTypes[category]) ? appData.formTypes[category] : [];
       list.forEach(f => {
         const lbl = document.createElement('label');
-        lbl.innerHTML = `<input type="radio" name="formtype" value="${f}" onchange="loadForm('${f}')"> ${f}`;
+        const input = document.createElement('input');
+        input.type = 'radio'; input.name = 'formtype'; input.value = f;
+        lbl.appendChild(input);
+        lbl.appendChild(document.createTextNode(' ' + f));
         group.appendChild(lbl);
       });
       // Restore previously checked form type if still in list
@@ -751,8 +756,17 @@
     }
 
     function updateFormTypes() {
-      // Recipient chosen — list is already correct from updateRecipients, nothing extra needed
-      show('f5', true); show('f6-container', false); show('submit-btn', false);
+      // Mottagare vald – visa f5 och Till bedömning-knappen
+      show('f5', true);
+      show('f-till-bedomning', true);
+      show('f6-container', false);
+      show('submit-btn', false);
+    }
+
+    function tillBedomning() {
+      const formType = document.querySelector('input[name="formtype"]:checked')?.value;
+      if (!formType) { alert('Välj formulärtyp först.'); return; }
+      loadForm(formType);
     }
 
     async function loadForm(formName) {
@@ -1242,6 +1256,9 @@
 
     function showSelectionFields() {
       ['f-intro','f1','f2','f3','f4','f5'].forEach(id => show(id, true));
+      // f-till-bedomning visas bara om mottagare är valt
+      const recipient = document.getElementById('recipient').value;
+      show('f-till-bedomning', !!recipient);
       show('f6-container', false);
       show('submit-btn', false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
