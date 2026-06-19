@@ -55,10 +55,13 @@
     .sidebar-btn.active { background: #3d5c4a; color: #f0ede8; border-left-color: #2a4234; font-weight: bold; }
     .sidebar-btn.hidden { display: none; }
     .sidebar-footer { padding: 14px 16px; border-top: 1.5px solid #c4b8ac; margin-top: auto; }
+    .sidebar-version { font-size: 11px; color: #9e8e82; padding: 0 0 8px 18px; }
     .sidebar-nav-secondary { border-top: 1px solid #c4b8ac; padding: 6px 0; margin-top: auto; }
     .sidebar-btn-secondary { display: block; width: 100%; text-align: left; padding: 8px 18px; font-size: 14px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #6b5c52; font-family: Arial,sans-serif; }
     .sidebar-btn-secondary:hover { background: #cfc5b8; color: #2a1f18; }
     .sidebar-btn-secondary.active { background: #3d5c4a; color: #f0ede8; border-left-color: #2a4234; font-weight: bold; }
+    .sidebar-btn-secondary.hidden { display: none; }
+    .sidebar-divider { height: 1px; background: #c4b8ac; margin: 6px 18px; display: none; }
     .sidebar-user { font-size: 14px; font-weight: bold; color: #2a1f18; }
     .sidebar-clinic { font-size: 12px; color: #6b5c52; margin-top: 2px; }
     .sidebar-priv { margin-top: 8px; }
@@ -433,7 +436,7 @@
           <button class="sidebar-btn" id="nav-btn-about"      onclick="showPanel('about')"      style="font-size:14px;">Om MoraDOPS</button>
         </div>
         <div class="sidebar-footer">
-          <div class="sidebar-version">MoraDOPS v3.2.0</div>
+          <div class="sidebar-version">v3.2.0</div>
           <div class="sidebar-user" id="nav-user"></div>
           <div class="sidebar-clinic" id="nav-clinic"></div>
           <div class="sidebar-priv" id="privilege-toggle"></div>
@@ -827,6 +830,7 @@
       const hbtn = document.getElementById('hamburger-btn');
       if (hbtn) hbtn.onclick = toggleMenu;
       renderPrivilegeToggle();
+      updateSidebarPrivButtons(null);
       prefillAssessment();
       prefillProfile();
       showPanel('assessment');
@@ -837,7 +841,7 @@
       const container = document.getElementById('privilege-toggle');
       if (!container) return;
       if (privs.length === 0) { container.innerHTML = ''; return; }
-      let html = '<div style="margin-top:8px;"><select id="priv-select" onchange="setPrivilegeFromSelect(this.value)" style="width:100%;padding:6px 8px;font-size:13px;border:1.5px solid #c4b8ac;border-radius:5px;background:#f5f1ec;color:#2a1f18;cursor:pointer;"><option value="">Standardvy</option>';
+      let html = '<div style="margin-top:8px;"><select id="priv-select" onchange="setPrivilegeFromSelect(this.value)" style="width:100%;padding:6px 8px;font-size:13px;border:1.5px solid #c4b8ac;border-radius:5px;background:#f5f1ec;color:#2a1f18;cursor:pointer;"><option value="">Mitt konto</option>';
       privs.forEach(p => {
         const val = p.privilege + '|' + p.klinikId;
         const sel = activePrivilege === p.privilege ? 'selected' : '';
@@ -858,12 +862,19 @@
       activeKlinikId = klinikId || null;
       renderPrivilegeToggle();
       closeMenu();
-      // Uppdatera nav-paneler baserat på privilegium
+      updateSidebarPrivButtons(privilege);
+      showPanel('assessment');
+    }
+
+    function updateSidebarPrivButtons(privilege) {
       const clinicBtn = document.getElementById('nav-btn-clinic-overview');
       const adminBtn  = document.getElementById('nav-btn-admin');
+      const divider   = document.querySelector('.sidebar-divider');
+      const hasPriv   = privilege === 'Studierektor' || privilege === 'Administratör';
       if (clinicBtn) clinicBtn.classList.toggle('hidden', privilege !== 'Studierektor' && privilege !== 'Administratör');
       if (adminBtn)  adminBtn.classList.toggle('hidden', privilege !== 'Administratör');
-      showPanel('assessment');
+      // Visa/dölj avdelaren beroende på om privilegier finns
+      if (divider) divider.style.display = hasPriv ? 'block' : 'none';
     }
 
     // ── Login views ───────────────────────────────────────────────
