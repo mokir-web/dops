@@ -120,6 +120,8 @@
     }
     #login-panel h2 { text-align: center; }
 
+    button:disabled { background: #ccc !important; color: #888 !important; border-color: #ccc !important; cursor: not-allowed !important; }
+
     /* Enhetlig display-fält (klinik, registrerare) */
     .display-field {
       width: 100%; max-width: 560px; padding: 11px 10px; font-size: 18px;
@@ -435,16 +437,16 @@
       <div class="field" id="f3">
         <label class="field-label">3. Mottagarens kategori *</label>
         <div class="radio-group" id="category-group">
-          <label><input type="radio" name="category" value="Spec" onchange="updateRecipients()"> Spec</label>
-          <label><input type="radio" name="category" value="ST"   onchange="updateRecipients()"> ST</label>
-          <label><input type="radio" name="category" value="BT"   onchange="updateRecipients()"> BT</label>
-          <label><input type="radio" name="category" value="AT"   onchange="updateRecipients()"> AT</label>
+          <label><input type="radio" name="category" value="Spec" onchange="updateRecipients(); updateTillBedomningBtn()"> Spec</label>
+          <label><input type="radio" name="category" value="ST"   onchange="updateRecipients(); updateTillBedomningBtn()"> ST</label>
+          <label><input type="radio" name="category" value="BT"   onchange="updateRecipients(); updateTillBedomningBtn()"> BT</label>
+          <label><input type="radio" name="category" value="AT"   onchange="updateRecipients(); updateTillBedomningBtn()"> AT</label>
         </div>
       </div>
 
       <div class="field hidden" id="f4">
         <label class="field-label">4. Mottagare *</label>
-        <select id="recipient" onchange="updateFormTypes()">
+        <select id="recipient" onchange="updateFormTypes(); updateTillBedomningBtn()">
           <option value="">-- Välj mottagare --</option>
         </select>
       </div>
@@ -455,7 +457,7 @@
       </div>
 
       <div class="field hidden btn-row" id="f-till-bedomning">
-        <button class="btn-primary" onclick="tillBedomning()">Till bedömning →</button>
+        <button class="btn-primary" id="till-bedomning-btn" onclick="tillBedomning()" disabled>Till bedömning →</button>
       </div>
 
       <div id="f6-container" class="hidden">
@@ -702,8 +704,9 @@
       // Visa f4 och f5 direkt, men Till bedömning-knappen döljs till mottagare valts
       show('f4', true);
       show('f5', true);
-      show('f-till-bedomning', false);
+      show('f-till-bedomning', true);
       populateAllFormTypes();
+      updateTillBedomningBtn();
     }
 
     function populateAllFormTypes() {
@@ -716,6 +719,7 @@
         const lbl = document.createElement('label');
         const input = document.createElement('input');
         input.type = 'radio'; input.name = 'formtype'; input.value = f;
+        input.onchange = updateTillBedomningBtn;
         lbl.appendChild(input);
         lbl.appendChild(document.createTextNode(' ' + f));
         group.appendChild(lbl);
@@ -744,6 +748,7 @@
         const lbl = document.createElement('label');
         const input = document.createElement('input');
         input.type = 'radio'; input.name = 'formtype'; input.value = f;
+        input.onchange = updateTillBedomningBtn;
         lbl.appendChild(input);
         lbl.appendChild(document.createTextNode(' ' + f));
         group.appendChild(lbl);
@@ -753,6 +758,7 @@
         const r = group.querySelector(`input[value="${checkedFormType}"]`);
         if (r) r.checked = true;
       }
+      updateTillBedomningBtn();
     }
 
     function updateFormTypes() {
@@ -761,11 +767,24 @@
       show('f-till-bedomning', true);
       show('f6-container', false);
       show('submit-btn', false);
+      updateTillBedomningBtn();
+    }
+
+    function updateTillBedomningBtn() {
+      const category  = document.querySelector('input[name="category"]:checked')?.value;
+      const recipient = document.getElementById('recipient').value;
+      const formType  = document.querySelector('input[name="formtype"]:checked')?.value;
+      const btn = document.getElementById('till-bedomning-btn');
+      if (btn) btn.disabled = !(category && recipient && formType);
     }
 
     function tillBedomning() {
-      const formType = document.querySelector('input[name="formtype"]:checked')?.value;
-      if (!formType) { alert('Välj formulärtyp först.'); return; }
+      const category  = document.querySelector('input[name="category"]:checked')?.value;
+      const recipient = document.getElementById('recipient').value;
+      const formType  = document.querySelector('input[name="formtype"]:checked')?.value;
+      if (!category)  { alert('Välj mottagarens kategori (fråga 3).'); return; }
+      if (!recipient) { alert('Välj mottagare (fråga 4).'); return; }
+      if (!formType)  { alert('Välj formulärtyp (fråga 5).'); return; }
       loadForm(formType);
     }
 
@@ -1256,9 +1275,7 @@
 
     function showSelectionFields() {
       ['f-intro','f1','f2','f3','f4','f5'].forEach(id => show(id, true));
-      // f-till-bedomning visas bara om mottagare är valt
-      const recipient = document.getElementById('recipient').value;
-      show('f-till-bedomning', !!recipient);
+      show('f-till-bedomning', true);
       show('f6-container', false);
       show('submit-btn', false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
