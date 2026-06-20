@@ -465,8 +465,10 @@
           <div id="privilege-inline" class="hidden" style="background:#ede8e2;border:1.5px solid #c4b8ac;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
           </div>
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
-          <button onclick="clearCache()" style="width:100%;background:transparent;border:1px solid #c4b8ac;border-radius:6px;padding:8px;cursor:pointer;font-size:13px;color:#6b5c52;margin-bottom:6px;">🗑 Rensa cache</button>
-          <button class="sidebar-logout" onclick="doLogout()">Logga ut</button>
+          <div style="display:flex;gap:6px;">
+            <button onclick="clearCache()" style="flex:1;background:transparent;border:1px solid #c4b8ac;border-radius:6px;padding:8px 4px;cursor:pointer;font-size:13px;color:#6b5c52;">Rensa cache</button>
+            <button class="sidebar-logout" onclick="doLogout()" style="flex:1;">Logga ut</button>
+          </div>
         </div>
       </div>
 
@@ -1513,10 +1515,20 @@
         const afterMark = () => {
           pendingRequestId = null; pendingRequestFrom = null; pendingRequestFormType = null;
           window._pendingAssessmentMeta = null;
-          inboxData = null; loadInboxBadge();
+          inboxData = null;
+          // Hämta färsk data och uppdatera lista om användaren är på Förfrågningar
+          api('getAssessmentRequests', { email: currentUser.email }).then(d => {
+            inboxData = d;
+            updateInboxBadge();
+            if (document.getElementById('panel-inbox') && !document.getElementById('panel-inbox').classList.contains('hidden')) {
+              renderInbox();
+            }
+          }).catch(() => {});
         };
-        if (pendingRequestId) {
-          api('markRequestDone', { id: pendingRequestId }).then(afterMark).catch(() => {});
+        // Hämta ID från pendingRequestId eller _pendingAssessmentMeta
+        const reqId = pendingRequestId;
+        if (reqId) {
+          api('markRequestDone', { id: reqId }).then(afterMark).catch(() => {});
         } else {
           // Direkt-läge: matcha via mottagarens email
           const recip = (window._pendingAssessmentMeta?.recipient) || document.getElementById('recipient')?.value || '';
@@ -3076,24 +3088,8 @@
     }
 
     function clearCache() {
-      // Rensa appData så getData() körs om vid nästa behov
-      appData = null;
-      inboxData = null;
-      // Rensa localStorage utom användarens session
-      const savedUser = localStorage.getItem('dops_user');
       localStorage.clear();
-      if (savedUser) localStorage.setItem('dops_user', savedUser);
-      // Ladda om appData i bakgrunden
-      api('getData').then(d => {
-        appData = d;
-        populateLocationDropdown();
-        loadInboxBadge();
-      }).catch(err => console.error(err));
-      // Visuell feedback
-      const btn = event.currentTarget;
-      const orig = btn.textContent;
-      btn.textContent = '✓ Rensat!';
-      setTimeout(() => btn.textContent = orig, 2000);
+      location.reload();
     }
 
     function toggleMenu() {
