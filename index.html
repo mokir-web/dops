@@ -964,7 +964,9 @@
     let currentAssessments = [];
     let availableFormTypes = [];
     let activePrivilege = null; // null = standardvy, 'Studierektor', 'Administratör'
-    let pendingRequestId = null; // ID på förfrågan som initierat pågående bedömning
+    let pendingRequestId       = null; // ID på förfrågan
+    let pendingRequestFrom     = null; // Avsändarens namn
+    let pendingRequestFormType = null; // Formulärtyp från förfrågan
     let clinicAssessments = [];
 
     const hierarchy = ['Spec', 'ST', 'BT', 'AT'];
@@ -1471,9 +1473,11 @@
     }
 
     async function submitAssessment() {
-      const category  = document.querySelector('input[name="category"]:checked')?.value;
-      const recipient = document.getElementById('recipient').value;
-      const formType  = document.querySelector('input[name="formtype"]:checked')?.value;
+      // Kolla om vi är i direkt-läge (från förfrågan med känd formulärtyp)
+      const meta = window._pendingAssessmentMeta;
+      const category  = meta?.category  || document.querySelector('input[name="category"]:checked')?.value;
+      const recipient = meta?.recipient || document.getElementById('recipient').value;
+      const formType  = meta?.formType  || document.querySelector('input[name="formtype"]:checked')?.value;
       if (!category || !recipient || !formType) { alert('Fyll i alla obligatoriska fält.'); return; }
       setStatus('assessment-status', '⏳ Skickar bedömning...', false);
       document.getElementById('submit-btn').disabled = true;
@@ -1508,7 +1512,7 @@
         // Markera förfrågan som utförd – via ID om känd, annars via deltagare
         if (pendingRequestId) {
           api('markRequestDone', { id: pendingRequestId }).then(() => {
-            pendingRequestId = null; inboxData = null; updateInboxBadge();
+            pendingRequestId = null; pendingRequestFrom = null; pendingRequestFormType = null; window._pendingAssessmentMeta = null; inboxData = null; updateInboxBadge();
           }).catch(() => {});
         } else {
           // Försök matcha utan känt ID (t.ex. om användaren navigerat bort och tillbaka)
@@ -2528,15 +2532,21 @@
     }
 
     function startRequestedAssessment(item) {
-      // Spara request-ID, markera som utförd FÖRST när bedömning skickas
       pendingRequestId = item.id;
+      pendingRequestFrom = item.fromName;
+      pendingRequestFormType = item.formType || '';
 
+      // Om formulärtyp är känd: hoppa direkt till formuläret
+      if (item.formType) {
+        startRequestedAssessmentDirect(item);
+        return;
+      }
+
+      // Annars: visa val-sidan med förifylld mottagare
       showPanel('assessment');
       resetAssessment();
       setTimeout(() => {
         const fromName = item.fromName;
-        // Förifyll och lås kategori (vi vet inte kategorin, men lås mottagaren)
-        // Hitta rätt kategori för avsändaren från appData
         const clinic = currentUser.clinic;
         let senderCategory = null;
         if (appData && appData.lists) {
@@ -2545,39 +2555,66 @@
             if (names.some(n => n.startsWith(fromName.split(' -- ')[0]))) senderCategory = cat;
           });
         }
-
-        // Sätt kategori om hittad
         if (senderCategory) {
           const catRadio = document.querySelector(`input[name="category"][value="${senderCategory}"]`);
           if (catRadio) { catRadio.checked = true; catRadio.dispatchEvent(new Event('change')); }
         }
-
-        // Vänta på att mottagarlistan fylls, sätt sedan mottagare
         setTimeout(() => {
           const sel = document.getElementById('recipient');
-          // Sök efter rätt alternativ
           let found = false;
           for (let opt of sel.options) {
-            if (opt.value.startsWith(fromName.split(' -- ')[0])) {
-              opt.selected = true; found = true; break;
-            }
+            if (opt.value.startsWith(fromName.split(' -- ')[0])) { opt.selected = true; found = true; break; }
           }
           if (!found) {
             const opt = document.createElement('option');
-            const shortName = fromName.split(' -- ')[0];
-            opt.value = fromName; opt.textContent = shortName; opt.selected = true;
+            opt.value = fromName; opt.textContent = fromName.split(' -- ')[0]; opt.selected = true;
             sel.appendChild(opt);
           }
-          // Lås kategori och mottagare
           document.querySelectorAll('input[name="category"]').forEach(r => r.disabled = true);
           sel.disabled = true;
-          // Uppdatera formulärtypslista
           updateFormTypes();
           updateTillBedomningBtn();
-          show('f5', true);
-          show('f-till-bedomning', true);
+          show('f5', true); show('f-till-bedomning', true);
         }, 400);
       }, 300);
+    }
+
+    async function startRequestedAssessmentDirect(item) {
+      // Hoppa direkt till formuläret – fyll i dold metadata
+      showPanel('assessment');
+      resetAssessment();
+
+      // Sätt dold mottagardata för submit
+      window._pendingAssessmentMeta = {
+        recipient: item.fromName,
+        formType:  item.formType,
+        category:  null // sätts nedan
+      };
+
+      // Hitta kategori
+      const fromName = item.fromName;
+      const clinic = currentUser.clinic;
+      let senderCategory = 'ST';
+      if (appData && appData.lists) {
+        ['Spec','ST','AT','BT'].forEach(cat => {
+          const names = appData.lists[cat]?.[clinic] || [];
+          if (names.some(n => n.split(' -- ')[0].trim() === fromName.split(' -- ')[0].trim())) senderCategory = cat;
+        });
+      }
+      window._pendingAssessmentMeta.category = senderCategory;
+
+      // Dölj val-sidan, ladda formuläret direkt
+      ['f-intro','f1','f2','f3','f4','f5','f-till-bedomning'].forEach(id => show(id, false));
+      show('f6-container', true);
+
+      try {
+        const data = await api('getFormQuestions', { formName: item.formType });
+        if (!data || !data.length) {
+          alert('Inga frågor hittades för ' + item.formType);
+          showPanel('inbox'); return;
+        }
+        renderForm(data);
+      } catch(err) { alert('Fel: ' + err.message); showPanel('inbox'); }
     }
 
     function prefillPrivKlinik() {
