@@ -401,16 +401,17 @@
     <div id="app-loading" style="position:fixed;inset:0;background:#e6e0d8;z-index:500;display:flex;align-items:center;justify-content:center;"><div style="color:#6b5c52;font-size:16px;">Laddar...</div></div>
 
     <!-- Mobil hamburger + logo -->
-    <div id="mobile-topbar" style="display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#e6e0d8;z-index:140;align-items:center;padding:0 16px;gap:12px;">
+    <div id="mobile-topbar" style="display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#e6e0d8;z-index:140;align-items:center;padding:0 16px;">
       <button class="hamburger" id="hamburger-btn" aria-label="Meny" style="position:static;min-height:44px;">☰</button>
-      <div style="display:flex;align-items:center;gap:8px;" onclick="showPanel('overview')">
-        <svg width="32" height="32" viewBox="0 0 44 44" style="overflow:visible;cursor:pointer;">
+      <!-- Logga centrerad i topbar -->
+      <div onclick="showPanel('overview')" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;cursor:pointer;">
+        <svg width="30" height="30" viewBox="0 0 44 44" style="overflow:visible;">
           <circle cx="22" cy="22" r="17" fill="none" stroke="#2a1f18" stroke-width="2"/>
           <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#2a1f18" text-anchor="middle">MD</text>
           <circle cx="35" cy="35" r="8" fill="#4a9e62"/>
           <polyline points="30,35 33,38 40,31" fill="none" stroke="#f0ede8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span style="font-weight:700;font-size:16px;color:#2a1f18;cursor:pointer;">MoraDOPS</span>
+        <span style="font-weight:700;font-size:15px;color:#2a1f18;">MoraDOPS</span>
       </div>
     </div>
 
@@ -436,7 +437,9 @@
           </button>
           <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')">Registrera bedömning</button>
           <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')">Min översikt</button>
-          <button class="sidebar-btn"        id="nav-btn-my-assessments"  onclick="showPanel('my-assessments')">Mina bedömningar</button>
+          <button class="sidebar-btn" id="nav-btn-my-assessments" onclick="showPanel('my-assessments')">
+            Mina bedömningar <span id="my-assessments-badge" class="hidden" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
+          </button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')">Kliniköversikt</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')">Förfrågningsöversikt</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')">Administration</button>
@@ -1023,6 +1026,8 @@
       if (assessmentBtn) assessmentBtn.classList.toggle('hidden', isReceiverOnly);
       prefillAssessment();
       prefillProfile();
+      // Polling: uppdatera badges var 60:e sekund
+      setInterval(pollForUpdates, 60000);
       // Ladda inkorg direkt, landa där om olästa finns
       loadInboxBadge().then(() => {
         const hasUnread = (inboxData?.inbox || []).some(r => !r.read);
@@ -2589,12 +2594,21 @@
         if (!Object.keys(forms).length) return '';
         let s = `<div class="section-header" style="margin-top:24px;">${title}</div>`;
         s += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:14px;margin-top:14px;max-width:600px;">';
-        Object.entries(forms).sort((a,b) => a[0].localeCompare(b[0])).forEach(([ft, v], idx, arr) => {
-          const isDOPS = ft === 'DOPS' || ft === 'Operationsspecifik DOPS';
-          const color  = v.goal ? (v.count >= v.goal ? '#4a9e62' : v.count > 0 ? '#c8a96e' : '#9e2a18') : '#3d5c4a';
+        // Sortera: DOPS först, DOPS:Allmän direkt efter, resten alfabetiskt
+        const sortedForms = Object.entries(forms).sort((a,b) => {
+          if (a[0] === 'DOPS') return -1;
+          if (b[0] === 'DOPS') return 1;
+          if (a[0] === 'DOPS:Allmän') return -1;
+          if (b[0] === 'DOPS:Allmän') return 1;
+          return a[0].localeCompare(b[0]);
+        });
+        sortedForms.forEach(([ft, v], idx, arr) => {
+          const isDOPS  = ft === 'DOPS' || ft === 'Operationsspecifik DOPS';
+          const isAlman = ft === 'DOPS:Allmän';
+          const color   = v.goal ? (v.count >= v.goal ? '#4a9e62' : v.count > 0 ? '#c8a96e' : '#9e2a18') : '#3d5c4a';
           if (idx > 0) s += '<div style="height:1px;background:#d8cfc5;margin:10px 0;"></div>';
-          s += '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">';
-          s += `<div style="font-size:15px;font-weight:bold;min-width:140px;">${esc(ft)}</div>`;
+          s += `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;${isAlman ? 'padding-left:16px;' : ''}">`;
+          s += `<div style="font-size:${isAlman ? '14' : '15'}px;font-weight:bold;min-width:140px;color:${isAlman ? '#6b5c52' : '#2a1f18'};">${isAlman ? 'Allmän' : esc(ft)}</div>`;
           s += '<div style="flex:1;">' + goalBar(v.count, v.goal) + '</div>';
           s += `<div style="font-size:18px;font-weight:bold;color:${color};min-width:32px;text-align:right;">${v.count}</div>`;
           s += '</div>';
@@ -2621,7 +2635,7 @@
         html += '<div class="section-header">Trend</div>';
         html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;margin-top:14px;max-width:700px;">';
         html += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
-        [['1V',7],['1M',30],['3M',90],['6M',180],['1Å',365],['MAX',0]].forEach(([label, days], i) => {
+        [['1 vecka',7],['1 månad',30],['3 månader',90],['6 månader',180],['1 år',365],['MAX',0]].forEach(([label, days], i) => {
           const active = i === 3 ? 'background:#3d5c4a;color:#f0ede8;' : 'background:#d8cfc5;color:#2a1f18;';
           html += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
         });
@@ -2909,6 +2923,32 @@
           scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { grid: { color: '#d8cfc5' } } }
         }
       });
+    }
+
+    // ── Polling för nya bedömningar och förfrågningar ────────────────────
+    let _lastAssessmentCount = null;
+
+    async function pollForUpdates() {
+      try {
+        // Kolla nya förfrågningar
+        const reqData = await api('getAssessmentRequests', { email: currentUser.email });
+        inboxData = reqData;
+        updateInboxBadge();
+
+        // Kolla nya mottagna bedömningar
+        const counts = await api('getMyAssessmentCount', { email: currentUser.email });
+        const total = counts.received || 0;
+        if (_lastAssessmentCount !== null && total > _lastAssessmentCount) {
+          const diff = total - _lastAssessmentCount;
+          const badge = document.getElementById('my-assessments-badge');
+          if (badge) {
+            badge.textContent = '+' + diff;
+            badge.classList.remove('hidden');
+            setTimeout(() => badge.classList.add('hidden'), 10000);
+          }
+        }
+        _lastAssessmentCount = total;
+      } catch(e) { /* tyst */ }
     }
 
     function toggleMenu() {
