@@ -465,6 +465,7 @@
           <div id="privilege-inline" class="hidden" style="background:#ede8e2;border:1.5px solid #c4b8ac;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
           </div>
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
+          <button onclick="clearCache()" style="width:100%;background:transparent;border:1px solid #c4b8ac;border-radius:6px;padding:8px;cursor:pointer;font-size:13px;color:#6b5c52;margin-bottom:6px;">🗑 Rensa cache</button>
           <button class="sidebar-logout" onclick="doLogout()">Logga ut</button>
         </div>
       </div>
@@ -3072,6 +3073,27 @@
       });
       window._statTrendDays = days;
       loadStatistics();
+    }
+
+    function clearCache() {
+      // Rensa appData så getData() körs om vid nästa behov
+      appData = null;
+      inboxData = null;
+      // Rensa localStorage utom användarens session
+      const savedUser = localStorage.getItem('dops_user');
+      localStorage.clear();
+      if (savedUser) localStorage.setItem('dops_user', savedUser);
+      // Ladda om appData i bakgrunden
+      api('getData').then(d => {
+        appData = d;
+        populateLocationDropdown();
+        loadInboxBadge();
+      }).catch(err => console.error(err));
+      // Visuell feedback
+      const btn = event.currentTarget;
+      const orig = btn.textContent;
+      btn.textContent = '✓ Rensat!';
+      setTimeout(() => btn.textContent = orig, 2000);
     }
 
     function toggleMenu() {
