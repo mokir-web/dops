@@ -224,8 +224,9 @@
         z-index: 160; transition: left 0.25s ease; overflow-y: auto;
       }
       .sidebar.open { left: 0; }
-      .main-content { padding: 20px 16px 20px 16px; padding-top: 72px; }
+      .main-content { padding: 20px 16px 20px 16px; padding-top: 68px; }
       .hamburger { display: flex; }
+      #mobile-topbar { display: flex !important; }
       body {
         padding: 10px;
         font-size: 17px;
@@ -399,8 +400,19 @@
   <div id="app" class="hidden">
     <div id="app-loading" style="position:fixed;inset:0;background:#e6e0d8;z-index:500;display:flex;align-items:center;justify-content:center;"><div style="color:#6b5c52;font-size:16px;">Laddar...</div></div>
 
-    <!-- Mobil hamburger (utanför sidebar) -->
-    <button class="hamburger" id="hamburger-btn" aria-label="Meny">☰</button>
+    <!-- Mobil hamburger + logo -->
+    <div id="mobile-topbar" style="display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#e6e0d8;z-index:140;align-items:center;padding:0 16px;gap:12px;">
+      <button class="hamburger" id="hamburger-btn" aria-label="Meny" style="position:static;min-height:44px;">☰</button>
+      <div style="display:flex;align-items:center;gap:8px;" onclick="showPanel('overview')">
+        <svg width="32" height="32" viewBox="0 0 44 44" style="overflow:visible;cursor:pointer;">
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#2a1f18" stroke-width="2"/>
+          <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#2a1f18" text-anchor="middle">MD</text>
+          <circle cx="35" cy="35" r="8" fill="#4a9e62"/>
+          <polyline points="30,35 33,38 40,31" fill="none" stroke="#f0ede8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span style="font-weight:700;font-size:16px;color:#2a1f18;cursor:pointer;">MoraDOPS</span>
+      </div>
+    </div>
 
     <!-- Mobil sidebar overlay -->
     <div id="mob-sidebar-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:150;" onclick="closeMenu()"></div>
@@ -426,6 +438,7 @@
           <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')">Min översikt</button>
           <button class="sidebar-btn"        id="nav-btn-my-assessments"  onclick="showPanel('my-assessments')">Mina bedömningar</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')">Kliniköversikt</button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')">Förfrågningsöversikt</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')">Administration</button>
         </div>
         <div class="sidebar-nav-bottom">
@@ -756,6 +769,12 @@
       <div id="overview-content"><p style="color:#888;">Laddar...</p></div>
     </div>
 
+    <!-- ── REQUEST STATS ────────────────────────────────────────── -->
+    <div id="panel-request-stats" class="hidden">
+      <h2>Förfrågningsöversikt</h2>
+      <div id="reqstat-content"><p style="color:#888;">Laddar...</p></div>
+    </div>
+
     <!-- ── INBOX ────────────────────────────────────────────────── -->
     <div id="panel-inbox" class="hidden">
       <h2>Förfrågningar</h2>
@@ -763,12 +782,21 @@
         <button class="btn-primary"   id="inbox-tab-inbox"  onclick="setInboxTab('inbox')">Mottagna</button>
         <button class="btn-secondary" id="inbox-tab-outbox" onclick="setInboxTab('outbox')">Skickade</button>
         <button class="btn-secondary btn-small" onclick="showRequestForm()" style="margin-left:auto;">+ Begär bedömning</button>
+        <span id="bulk-request-btn-wrap" class="hidden">
+          <button class="btn-secondary btn-small" onclick="showBulkRequestForm()">+ Gruppförfrågan</button>
+        </span>
       </div>
       <!-- Ny förfrågan-formulär -->
       <div id="request-form" class="hidden filter-box" style="margin-bottom:16px;">
         <div class="field">
           <label class="field-label">Kollega att begära bedömning av</label>
           <select id="request-to" style="max-width:400px;"></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Formulärtyp (valfritt)</label>
+          <select id="request-formtype" style="max-width:400px;">
+            <option value="">-- Inget specifikt --</option>
+          </select>
         </div>
         <div class="field">
           <label class="field-label">Meddelande</label>
@@ -787,6 +815,41 @@
           Skicka e-post när jag får en ny förfrågan
         </label>
       </div>
+      <!-- Bulk-förfrågan formulär -->
+      <div id="bulk-request-form" class="hidden filter-box" style="margin-bottom:16px;">
+        <div style="font-weight:bold;font-size:16px;margin-bottom:12px;">Gruppförfrågan</div>
+        <div class="field">
+          <label class="field-label">Formulärtyp</label>
+          <select id="bulk-formtype" style="max-width:400px;"></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Yrkesgrupp att skicka till</label>
+          <select id="bulk-role-filter" onchange="populateBulkRecipients()" style="max-width:300px;">
+            <option value="">-- Välj grupp --</option>
+            <option value="ST">ST</option>
+            <option value="Spec">Spec</option>
+            <option value="AT">AT</option>
+            <option value="BT">BT</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Mottagare <small style="color:#6b5c52;">(kryssa i dem du vill skicka till)</small></label>
+          <div id="bulk-recipients" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+          <label style="font-size:13px;cursor:pointer;margin-top:8px;display:block;">
+            <input type="checkbox" id="bulk-select-all" onchange="toggleBulkAll(this.checked)"> Markera alla
+          </label>
+        </div>
+        <div class="field">
+          <label class="field-label">Meddelande</label>
+          <textarea id="bulk-message" placeholder="Beskriv vad du vill att de ska göra..." style="max-width:560px;"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="sendBulkRequest()">Skicka till markerade</button>
+          <button class="btn-secondary" onclick="hideBulkRequestForm()">Avbryt</button>
+        </div>
+        <div id="bulk-status"></div>
+      </div>
+
       <div id="inbox-list"></div>
     </div>
 
@@ -1011,6 +1074,8 @@
       const hasPriv     = privilege === 'Studierektor' || privilege === 'Administratör';
       const isAdmin     = privilege === 'Administratör';
       if (clinicBtn) clinicBtn.classList.toggle('hidden', !hasPriv);
+      const reqStatsBtn = document.getElementById('nav-btn-request-stats');
+      if (reqStatsBtn) reqStatsBtn.classList.toggle('hidden', !hasPriv);
       if (adminBtn)  adminBtn.classList.toggle('hidden', !isAdmin);
       if (docsBtn)   docsBtn.classList.toggle('hidden', !isAdmin);
       if (divider)   divider.style.display = hasPriv ? 'block' : 'none';
@@ -2281,7 +2346,10 @@
     }
 
     function updateInboxBadge() {
-      const total = (inboxData?.inbox || []).length; // visa så länge det finns förfrågningar
+      const total = (inboxData?.inbox || []).length;
+      // Visa/dölj bulk-knapp
+      const bulkWrap = document.getElementById('bulk-request-btn-wrap');
+      if (bulkWrap) bulkWrap.classList.toggle('hidden', !activePrivilege); // visa så länge det finns förfrågningar
       const badge = document.getElementById('inbox-badge');
       if (badge) {
         badge.textContent = total;
@@ -2334,6 +2402,15 @@
 
     function showRequestForm() {
       show('request-form', true);
+      // Fyll formulärtyper
+      const ftSel = document.getElementById('request-formtype');
+      if (ftSel && ftSel.options.length <= 1 && appData && appData.formTypes) {
+        const allForms = [...new Set(Object.values(appData.formTypes).flat())].sort();
+        allForms.forEach(ft => {
+          const opt = document.createElement('option');
+          opt.value = ft; opt.textContent = ft; ftSel.appendChild(opt);
+        });
+      }
       const sel = document.getElementById('request-to');
       sel.innerHTML = '<option value="">-- Välj kollega --</option>';
       if (appData && appData.lists) {
@@ -2367,11 +2444,18 @@
       }
     }
 
-    function hideRequestForm() { show('request-form', false); }
+    function hideRequestForm() {
+      show('request-form', false);
+      const ft = document.getElementById('request-formtype');
+      if (ft) ft.value = '';
+      const msg = document.getElementById('request-message');
+      if (msg) msg.value = '';
+    }
 
     async function sendRequest() {
-      const toName  = document.getElementById('request-to').value;
-      const message = document.getElementById('request-message').value.trim();
+      const toName   = document.getElementById('request-to').value;
+      const message  = document.getElementById('request-message').value.trim();
+      const formType = document.getElementById('request-formtype')?.value || '';
       if (!toName)   { setStatus('request-status', 'Välj en kollega.', true); return; }
       if (!message)  { setStatus('request-status', 'Skriv ett meddelande.', true); return; }
       // Hitta email via Recipients
@@ -2379,7 +2463,7 @@
         const toEmail = await api('getRecipientEmail', { recipientFullName: toName });
         if (!toEmail) { setStatus('request-status', 'Kunde inte hitta e-post för ' + esc(toName), true); return; }
         setStatus('request-status', '⏳ Skickar...', false);
-        await api('sendAssessmentRequest', { fromEmail: currentUser.email, toEmail, message });
+        await api('sendAssessmentRequest', { fromEmail: currentUser.email, toEmail, message, formType });
         setStatus('request-status', '✓ Förfrågan skickad!', false);
         document.getElementById('request-message').value = '';
         document.getElementById('request-to').value = '';
@@ -2536,6 +2620,12 @@
       if (months.length > 0) {
         html += '<div class="section-header">Trend</div>';
         html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;margin-top:14px;max-width:700px;">';
+        html += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
+        [['1V',7],['1M',30],['3M',90],['6M',180],['1Å',365],['MAX',0]].forEach(([label, days], i) => {
+          const active = i === 3 ? 'background:#3d5c4a;color:#f0ede8;' : 'background:#d8cfc5;color:#2a1f18;';
+          html += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
+        });
+        html += '</div>';
         html += '<canvas id="overview-chart" height="160"></canvas></div>';
       }
 
@@ -2551,7 +2641,8 @@
           const datasets = [];
           if (showReceived) datasets.push({ label: 'Mottagna', data: months.map(m => m.received), borderColor: '#3d5c4a', backgroundColor: '#3d5c4a22', tension: 0.3, fill: false });
           if (showSent)     datasets.push({ label: 'Registrerade', data: months.map(m => m.sent), borderColor: '#9e7c68', backgroundColor: '#9e7c6822', tension: 0.3, fill: false });
-          new Chart(ctx, {
+          window._overviewChartData = { months, showSent, showReceived };
+          window._overviewChart = new Chart(ctx, {
             type: 'line',
             data: { labels: months.map(m => m.label), datasets },
             options: {
@@ -2610,6 +2701,216 @@
       }).catch(err => console.error('emailNotify:', err));
     }
 
+    // ── Förfrågningsöversikt ─────────────────────────────────────────────
+    async function loadRequestStats() {
+      const el = document.getElementById('reqstat-content');
+      el.innerHTML = '<p style="color:#888;">Hämtar...</p>';
+      try {
+        const data = await api('getRequestStats', { klinikId: activeKlinikId || currentUser.klinikId || '*' });
+        renderRequestStats(data);
+      } catch(err) {
+        el.innerHTML = '<p class="status-err">Fel: ' + esc(err.message) + '</p>';
+      }
+    }
+
+    function renderRequestStats(data) {
+      const el = document.getElementById('reqstat-content');
+      const s = data.summary;
+      let html = '';
+
+      // Sammanfattning
+      html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">';
+      html += `<div style="background:#3d5c4a;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">TOTALT</div><div style="font-size:28px;font-weight:bold;">${s.total}</div></div>`;
+      html += `<div style="background:#4a9e62;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">UTFÖRDA</div><div style="font-size:28px;font-weight:bold;">${s.done}</div></div>`;
+      html += `<div style="background:#c8a96e;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">VÄNTANDE</div><div style="font-size:28px;font-weight:bold;">${s.pending}</div></div>`;
+      html += '</div>';
+
+      // Per formulärtyp
+      if (Object.keys(s.byFormType).length) {
+        html += '<div class="section-header" style="margin-bottom:10px;">Per formulärtyp</div>';
+        html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:14px;margin-bottom:20px;max-width:500px;">';
+        Object.entries(s.byFormType).sort((a,b) => b[1].total - a[1].total).forEach(([ft, v], i, arr) => {
+          const pct = v.total > 0 ? Math.round(v.done / v.total * 100) : 0;
+          const color = pct >= 100 ? '#4a9e62' : pct > 0 ? '#c8a96e' : '#9e2a18';
+          if (i > 0) html += '<div style="height:1px;background:#d8cfc5;margin:8px 0;"></div>';
+          html += `<div style="display:flex;align-items:center;gap:10px;">
+            <span style="flex:1;font-size:14px;">${esc(ft)}</span>
+            <span style="font-size:13px;color:#6b5c52;">${v.done}/${v.total}</span>
+            <span style="font-size:13px;font-weight:bold;color:${color};">${pct}%</span>
+          </div>`;
+        });
+        html += '</div>';
+      }
+
+      // Per yrkesroll
+      if (Object.keys(s.byRole).length) {
+        html += '<div class="section-header" style="margin-bottom:10px;">Per yrkesroll (mottagare)</div>';
+        html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:14px;margin-bottom:20px;max-width:500px;">';
+        Object.entries(s.byRole).sort((a,b) => a[0].localeCompare(b[0])).forEach(([role, v], i) => {
+          if (i > 0) html += '<div style="height:1px;background:#d8cfc5;margin:8px 0;"></div>';
+          html += `<div style="display:flex;align-items:center;gap:10px;">
+            <span style="flex:1;font-size:14px;font-weight:bold;">${esc(role)}</span>
+            <span style="font-size:13px;color:#6b5c52;">${v.done} av ${v.total} utförda</span>
+          </div>`;
+        });
+        html += '</div>';
+      }
+
+      // Senaste förfrågningar
+      if (data.requests.length) {
+        html += '<div class="section-header" style="margin-bottom:10px;">Senaste förfrågningar</div>';
+        html += '<div style="display:flex;flex-direction:column;gap:8px;">';
+        data.requests.slice(0, 20).forEach(r => {
+          const statusColor = r.status === 'Utförd' ? '#4a9e62' : '#c8a96e';
+          const statusText  = r.status === 'Utförd' ? '✓ Utförd' : '⏳ Väntande';
+          html += `<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:6px;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <div style="flex:1;min-width:180px;">
+              <span style="font-weight:bold;">${esc(r.toName)}</span>
+              <span style="font-size:13px;color:#6b5c52;"> (${esc(r.toRole)})</span>
+              ${r.isSelf ? '<span style="font-size:12px;background:#e8f4ea;color:#3d5c4a;border-radius:4px;padding:1px 6px;margin-left:4px;">självskattning</span>' : ''}
+              <div style="font-size:12px;color:#9e8e82;margin-top:2px;">${esc(r.formType || '')} · från ${esc(r.fromName)} · ${esc(r.timestamp)}</div>
+            </div>
+            <span style="font-size:13px;font-weight:bold;color:${statusColor};">${statusText}</span>
+          </div>`;
+        });
+        html += '</div>';
+      }
+
+      el.innerHTML = html;
+    }
+
+    // ── Bulk-förfrågan ────────────────────────────────────────────────────
+    function showBulkRequestForm() {
+      show('bulk-request-form', true);
+      // Fyll formulärtyper
+      const ftSel = document.getElementById('bulk-formtype');
+      ftSel.innerHTML = '<option value="">-- Välj formulärtyp --</option>';
+      if (appData && appData.formTypes) {
+        const allForms = [...new Set(Object.values(appData.formTypes).flat())].sort();
+        allForms.forEach(ft => {
+          const opt = document.createElement('option');
+          opt.value = ft; opt.textContent = ft;
+          if (ft === 'Självskattning inför specialistkollegium') opt.selected = true;
+          ftSel.appendChild(opt);
+        });
+      }
+    }
+
+    function hideBulkRequestForm() { show('bulk-request-form', false); }
+
+    function populateBulkRecipients() {
+      const role = document.getElementById('bulk-role-filter').value;
+      const container = document.getElementById('bulk-recipients');
+      container.innerHTML = '';
+      if (!role || !appData || !appData.lists) return;
+      const clinic = currentUser.clinic;
+      const names = (appData.lists[role]?.[clinic] || []);
+      names.forEach(name => {
+        const shortName = name.split(' -- ')[0].trim();
+        const label = document.createElement('label');
+        label.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;background:#f5f1ec;border:1px solid #d8cfc5;border-radius:4px;padding:4px 10px;';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.value = name; cb.checked = true;
+        cb.className = 'bulk-recipient-cb';
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(shortName));
+        container.appendChild(label);
+      });
+    }
+
+    function toggleBulkAll(checked) {
+      document.querySelectorAll('.bulk-recipient-cb').forEach(cb => cb.checked = checked);
+    }
+
+    async function sendBulkRequest() {
+      const formType = document.getElementById('bulk-formtype').value;
+      const message  = document.getElementById('bulk-message').value.trim();
+      const selected = [...document.querySelectorAll('.bulk-recipient-cb:checked')].map(cb => cb.value);
+      if (!formType)       { setStatus('bulk-status', 'Välj formulärtyp.', true); return; }
+      if (!selected.length){ setStatus('bulk-status', 'Markera minst en mottagare.', true); return; }
+      if (!message)        { setStatus('bulk-status', 'Skriv ett meddelande.', true); return; }
+
+      setStatus('bulk-status', '⏳ Skickar...', false);
+      try {
+        // Hämta emails via getRecipientEmail för varje vald
+        const toEmails = await Promise.all(
+          selected.map(name => api('getRecipientEmail', { recipientFullName: name }).catch(() => null))
+        ).then(emails => emails.filter(Boolean));
+
+        const result = await api('sendBulkRequest', {
+          fromEmail: currentUser.email,
+          toEmails,
+          message,
+          formType
+        });
+        setStatus('bulk-status', `✓ Skickade till ${result.sent} personer!`, false);
+        setTimeout(() => { hideBulkRequestForm(); loadInbox(); }, 1500);
+      } catch(err) { setStatus('bulk-status', err.message, true); }
+    }
+
+    function setTrendPeriod(period) {
+      // Uppdatera knapp-stil
+      ['7d','30d','90d','180d','365d','max'].forEach(p => {
+        const btn = document.getElementById('period-' + p);
+        if (!btn) return;
+        btn.style.background = p === period ? '#3d5c4a' : '#d8cfc5';
+        btn.style.color      = p === period ? '#f0ede8' : '#2a1f18';
+      });
+      const chartData = window._overviewChartData;
+      if (!chartData) return;
+      let months = chartData.months;
+      // Filtrera månader
+      if (period !== 'max') {
+        const days = parseInt(period);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        months = months.filter(m => {
+          // m.label = "Jun 2026" – konvertera
+          const d = new Date(m.label);
+          return isNaN(d) ? true : d >= cutoff;
+        });
+        if (!months.length) months = chartData.months.slice(-1);
+      }
+      const chart = window._overviewChart;
+      if (!chart) return;
+      chart.data.labels = months.map(m => m.label);
+      if (chartData.showReceived) chart.data.datasets[0].data = months.map(m => m.received);
+      if (chartData.showSent) {
+        const idx = chartData.showReceived ? 1 : 0;
+        chart.data.datasets[idx].data = months.map(m => m.sent);
+      }
+      chart.update();
+    }
+
+    function filterTrend(days, btn) {
+      // Uppdatera aktiv knapp-styling
+      document.querySelectorAll('#trend-filter-btns button').forEach(b => {
+        b.style.background = b === btn ? '#3d5c4a' : '#d8cfc5';
+        b.style.color = b === btn ? '#f0ede8' : '#2a1f18';
+      });
+      const d = window._overviewChartData;
+      if (!d) return;
+      const all = d.months || [];
+      if (!all.length) return;
+      // days=0 = MAX, annars slice på antal månader
+      const filtered = days === 0 ? all : all.slice(-Math.max(1, Math.ceil(days / 30)));
+      const ctx = document.getElementById('overview-chart')?.getContext('2d');
+      if (!ctx) return;
+      window._overviewChart?.destroy();
+      const datasets = [];
+      if (d.showReceived) datasets.push({ label: 'Mottagna',     data: filtered.map(m => m.received), borderColor: '#3d5c4a', backgroundColor: '#3d5c4a22', tension: 0.3, fill: false });
+      if (d.showSent)     datasets.push({ label: 'Registrerade', data: filtered.map(m => m.sent),     borderColor: '#9e7c68', backgroundColor: '#9e7c6822', tension: 0.3, fill: false });
+      window._overviewChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: filtered.map(m => m.label), datasets },
+        options: {
+          responsive: true, maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { grid: { color: '#d8cfc5' } } }
+        }
+      });
+    }
+
     function toggleMenu() {
       const sidebar = document.getElementById('sidebar');
       const overlay = document.getElementById('mob-sidebar-overlay');
@@ -2661,10 +2962,10 @@
       // Ta bort loading-overlay vid första showPanel
       const loadingEl = document.getElementById('app-loading');
       if (loadingEl) loadingEl.remove();
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','statistics','documents','about','inbox','profile'].forEach(p =>
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','statistics','documents','about','inbox','request-stats','profile'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','statistics','documents','about','inbox','profile'].forEach(p => {
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','statistics','documents','about','inbox','request-stats','profile'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -2696,6 +2997,7 @@
       if (panel === 'documents')        { loadDocuments(); }
       if (panel === 'overview')          { loadMyOverview(); }
       if (panel === 'inbox')            { loadInbox(); }
+      if (panel === 'request-stats')    { loadRequestStats(); }
     }
 
     function show(id, visible) {
