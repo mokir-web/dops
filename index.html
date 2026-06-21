@@ -444,6 +444,7 @@
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')">Kliniköversikt</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')">Förfrågningsöversikt</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')">Administration</button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-reminders"       onclick="showPanel('reminders')">Påminnelser</button>
         </div>
         <div class="sidebar-nav-bottom">
           <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')">Min profil</button>
@@ -721,41 +722,6 @@
       <div id="admin-clinic-view">
         <div class="section-header">Välj klinik</div>
         <div id="admin-clinic-list" style="margin-top:12px;"><p style="color:#888;">Läser in...</p></div>
-        <!-- Schemalagda utskick -->
-        <div class="section-header" style="margin-top:28px;">Schemalagda utskick</div>
-        <p style="font-size:14px;color:#6b5c52;margin:4px 0 12px;">Automatiska veckovisa e-postpåminnelser till valda användare.</p>
-        <button class="btn-secondary btn-small" onclick="showScheduleForm()">+ Ny påminnelse</button>
-        <div id="schedule-list" style="margin-top:12px;"></div>
-        <!-- Skapa/redigera schema -->
-        <div id="schedule-form" class="hidden filter-box" style="max-width:520px;margin-top:16px;">
-          <h3 style="margin-top:0;">Ny påminnelse</h3>
-          <div class="field"><label class="field-label">Namn</label><input type="text" id="sch-namn" placeholder="T.ex. Veckorapport ST-läkare"></div>
-          <div class="field"><label class="field-label">Dag</label>
-            <select id="sch-dag">
-              <option value="Varje dag">Varje dag</option>
-              <option value="Måndag">Måndag</option><option value="Tisdag">Tisdag</option>
-              <option value="Onsdag">Onsdag</option><option value="Torsdag">Torsdag</option>
-              <option value="Fredag">Fredag</option><option value="Lördag">Lördag</option><option value="Söndag">Söndag</option>
-            </select>
-          </div>
-          <div class="field"><label class="field-label">Tid (HH:MM)</label><input type="time" id="sch-tid" value="07:00"></div>
-          <div class="field"><label class="field-label">Mottagargrupp</label>
-            <select id="sch-typ" onchange="populateScheduleRecipients()">
-              <option value="Registrerare">Registrerare</option>
-              <option value="Mottagare">Mottagare</option>
-              <option value="Blandbild">Blandbild</option>
-              <option value="Alla">Alla</option>
-            </select>
-          </div>
-          <div class="field"><label class="field-label">Mottagare (markera de som ska få utskick)</label>
-            <div id="sch-recipients" style="max-height:200px;overflow-y:auto;border:1px solid #d8cfc5;border-radius:6px;padding:8px;background:#fff;"></div>
-          </div>
-          <div class="btn-row" style="margin-top:14px;">
-            <button class="btn-primary btn-small" onclick="saveSchedule()">Spara</button>
-            <button class="btn-secondary btn-small" onclick="show('schedule-form',false)">Avbryt</button>
-          </div>
-          <div id="sch-status" style="margin-top:8px;"></div>
-        </div>
       </div>
       <div id="admin-detail-view" class="hidden">
         <button class="btn-secondary btn-small" onclick="showClinicList()" style="margin-bottom:16px;">← Alla kliniker</button>
@@ -822,6 +788,74 @@
     <div id="panel-request-stats" class="hidden">
       <h2>Förfrågningsöversikt</h2>
       <div id="reqstat-content"><p style="color:#888;">Laddar...</p></div>
+    </div>
+
+    <!-- ── PÅMINNELSER ───────────────────────────────────────────── -->
+    <div id="panel-reminders" class="hidden">
+      <h2>Påminnelser</h2>
+      <p style="font-size:14px;color:#6b5c52;margin:0 0 16px;">Automatiska veckovisa e-postpåminnelser med statistik till valda användare.</p>
+      <button class="btn-secondary btn-small" onclick="showScheduleForm()">+ Ny påminnelse</button>
+      <div id="schedule-list" style="margin-top:16px;max-width:560px;"></div>
+
+      <!-- Skapa/redigera schema -->
+      <div id="schedule-form" class="hidden filter-box" style="max-width:540px;margin-top:16px;">
+        <h3 style="margin-top:0;" id="sch-form-title">Ny påminnelse</h3>
+
+        <div class="field"><label class="field-label">Namn</label>
+          <input type="text" id="sch-namn" placeholder="T.ex. Veckorapport ST-läkare">
+        </div>
+
+        <div class="field"><label class="field-label">Klinik</label>
+          <select id="sch-klinik" style="font-size:15px;padding:8px;border:1.5px solid #c4b8ac;border-radius:6px;background:#f5f1ec;width:100%;"></select>
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div class="field" style="flex:1;min-width:140px;"><label class="field-label">Dag</label>
+            <select id="sch-dag">
+              <option value="Varje dag">Varje dag</option>
+              <option value="Måndag">Måndag</option><option value="Tisdag">Tisdag</option>
+              <option value="Onsdag">Onsdag</option><option value="Torsdag">Torsdag</option>
+              <option value="Fredag">Fredag</option><option value="Lördag">Lördag</option>
+              <option value="Söndag">Söndag</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1;min-width:120px;"><label class="field-label">Tid</label>
+            <input type="time" id="sch-tid" value="07:00">
+          </div>
+        </div>
+
+        <div class="field"><label class="field-label">Innehåll</label>
+          <div style="background:#fff;border:1px solid #d8cfc5;border-radius:6px;padding:10px 14px;">
+            <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-bottom:6px;">
+              <input type="checkbox" id="sch-content-sent" checked> Registrerade bedömningar (personens egna)
+            </label>
+            <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-bottom:6px;">
+              <input type="checkbox" id="sch-content-received" checked> Mottagna bedömningar
+            </label>
+            <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-bottom:6px;">
+              <input type="checkbox" id="sch-content-formtypes" checked> Formulärfördelning (klinkens, stapeldiagram)
+            </label>
+          </div>
+        </div>
+
+        <div class="field"><label class="field-label">Mottagargrupp</label>
+          <select id="sch-typ" onchange="populateScheduleRecipients()">
+            <option value="Registrerare">Registrerare</option>
+            <option value="Mottagare">Mottagare</option>
+            <option value="Blandbild">Blandbild</option>
+            <option value="Alla">Alla</option>
+          </select>
+        </div>
+        <div class="field"><label class="field-label">Välj mottagare</label>
+          <div id="sch-recipients" style="max-height:200px;overflow-y:auto;border:1px solid #d8cfc5;border-radius:6px;padding:8px;background:#fff;"></div>
+        </div>
+
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn-primary btn-small" onclick="saveSchedule()">Spara</button>
+          <button class="btn-secondary btn-small" onclick="show('schedule-form',false)">Avbryt</button>
+        </div>
+        <div id="sch-status" style="margin-top:8px;"></div>
+      </div>
     </div>
 
     <!-- ── INBOX ────────────────────────────────────────────────── -->
@@ -1227,6 +1261,8 @@
       if (clinicBtn) clinicBtn.classList.toggle('hidden', !hasPriv);
       const reqStatsBtn = document.getElementById('nav-btn-request-stats');
       if (reqStatsBtn) reqStatsBtn.classList.toggle('hidden', !hasPriv);
+      const remindersBtn = document.getElementById('nav-btn-reminders');
+      if (remindersBtn) remindersBtn.classList.toggle('hidden', !hasPriv);
       if (adminBtn)  adminBtn.classList.toggle('hidden', !isAdmin);
       if (docsBtn)   docsBtn.classList.toggle('hidden', !isAdmin);
 
@@ -1272,7 +1308,17 @@
       ['login-view','forgot-view','register-view'].forEach(v =>
         document.getElementById(v).classList.toggle('hidden', v !== `${view}-view`)
       );
-      if (view === 'register') populateLocationDropdown();
+      if (view === 'register') {
+        if (appData) {
+          populateLocationDropdown();
+        } else {
+          // appData laddas asynkront – försök igen när den finns
+          const poll = setInterval(() => {
+            if (appData) { clearInterval(poll); populateLocationDropdown(); }
+          }, 200);
+          setTimeout(() => clearInterval(poll), 10000);
+        }
+      }
     }
 
     // ── Login ─────────────────────────────────────────────────────
@@ -2359,8 +2405,11 @@
       const dateTo       = document.getElementById('stat-date-to')?.value || null;
       const checkedForms = [...document.querySelectorAll('#stat-formtype-filter input:checked')].map(cb => cb.value);
       const el           = document.getElementById('statistics-content');
-      const statKlinikId = document.getElementById('stat-klinik-select')?.value || activeKlinikId || currentUser.klinikId || '*';
-      const effectiveStatKlinik = (activePrivilege === 'Administratör' && activeKlinikId === '*') ? statKlinikId : (activeKlinikId || currentUser.klinikId || '*');
+      const statKlinikId = document.getElementById('stat-klinik-select')?.value;
+      // Klinikens statistik visar alltid användarens egen klinik om inte Admin med global access väljer annat
+      const effectiveStatKlinik = (activePrivilege === 'Administratör')
+        ? (statKlinikId || activeKlinikId || currentUser.klinikId || '*')
+        : (currentUser.klinikId || '*');
       const noFilter = !dateFrom && !dateTo && !checkedForms.length;
       const cacheKey = 'statistics_' + effectiveStatKlinik;
 
@@ -3203,33 +3252,68 @@
       const klinikId = activeKlinikId || currentUser.klinikId || '*';
       try {
         const schedules = await api('getScheduledEmails', { klinikId });
-        if (!schedules.length) { el.innerHTML = '<p style="color:#888;font-size:14px;">Inga schemalagda utskick.</p>'; return; }
-        el.innerHTML = schedules.map(s => `
-          <div class="assessment-card" style="margin-top:10px;max-width:520px;">
+        if (!schedules.length) { el.innerHTML = '<p style="color:#888;font-size:14px;">Inga schemalagda påminnelser.</p>'; return; }
+        el.innerHTML = schedules.map(s => {
+          // Formatera tid: "Söndag" + "kl 07:00" – hanterar Date-objekt från Sheets
+          const dag = s.dag || '';
+          let tidStr = s.tid || '';
+          if (tidStr && tidStr.includes('1899')) {
+            // Sheets returnerade Date-sträng – extrahera HH:MM
+            const m = tidStr.match(/(\d{2}):(\d{2})/);
+            tidStr = m ? m[1] + ':' + m[2] : '?';
+          }
+          const dagLabel = dag === 'Varje dag' ? 'Varje dag' : dag + 'ar';
+          const tidLabel = tidStr ? 'kl ' + tidStr : '';
+          return `<div class="assessment-card" style="margin-top:10px;max-width:560px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
-              <div style="font-weight:bold;">${esc(s.namn)}</div>
-              <span style="font-size:12px;color:${s.aktiv?'#4a9e62':'#9e8e82'};">${s.aktiv?'Aktiv':'Inaktiv'}</span>
+              <div style="font-weight:bold;font-size:15px;">${esc(s.namn)}</div>
+              <span style="font-size:12px;padding:2px 8px;border-radius:10px;background:${s.aktiv?'#e8f4ec':'#f0ede8'};color:${s.aktiv?'#3d5c4a':'#9e8e82'};">${s.aktiv?'Aktiv':'Inaktiv'}</span>
             </div>
-            <div style="font-size:13px;color:#6b5c52;margin-top:4px;">${esc(s.dag)} kl ${esc(s.tid)} · ${s.mottagare.length} mottagare</div>
+            <div style="font-size:13px;color:#6b5c52;margin-top:4px;">${esc(dagLabel)} ${tidLabel} · ${s.mottagare.length} mottagare</div>
             <div style="margin-top:8px;display:flex;gap:8px;">
-              <button class="btn-secondary btn-small" onclick="editSchedule(${JSON.stringify(s).replace(/"/g,'&quot;')})">Redigera</button>
+              <button class="btn-secondary btn-small" onclick='editSchedule(${JSON.stringify(s).replace(/'/g,"&#39;")})'>Redigera</button>
               <button class="btn-secondary btn-small" onclick="deleteScheduleById('${s.id}')">Ta bort</button>
             </div>
-          </div>`).join('');
-      } catch(err) { if (el) el.innerHTML = '<p class="status-err">' + err.message + '</p>'; }
+          </div>`;
+        }).join('');
+      } catch(err) { if (el) el.innerHTML = '<p class="status-err">' + esc(err.message) + '</p>'; }
     }
 
     async function showScheduleForm(existing) {
       _currentScheduleId = existing?.id || null;
+      const titleEl = document.getElementById('sch-form-title');
+      if (titleEl) titleEl.textContent = existing ? 'Redigera påminnelse' : 'Ny påminnelse';
       document.getElementById('sch-namn').value = existing?.namn || '';
       document.getElementById('sch-dag').value  = existing?.dag  || 'Måndag';
-      document.getElementById('sch-tid').value  = existing?.tid  || '07:00';
+      let tid = existing?.tid || '07:00';
+      if (tid && tid.length > 5) { const m = tid.match(/(\d{2}):(\d{2})/); tid = m ? m[1]+':'+m[2] : '07:00'; }
+      document.getElementById('sch-tid').value  = tid;
       document.getElementById('sch-typ').value  = existing?.mottagarTyp || 'Registrerare';
+      const innehall = existing?.innehall || 'sent,received,formtypes';
+      const sc = document.getElementById('sch-content-sent');
+      const rc = document.getElementById('sch-content-received');
+      const fc = document.getElementById('sch-content-formtypes');
+      if (sc) sc.checked = innehall.includes('sent');
+      if (rc) rc.checked = innehall.includes('received');
+      if (fc) fc.checked = innehall.includes('formtypes');
+      // Klinikval
+      const klinikSel = document.getElementById('sch-klinik');
+      if (klinikSel) {
+        klinikSel.innerHTML = '';
+        const kliniker = new Map([[currentUser.klinikId, currentUser.clinic || currentUser.klinikId]]);
+        (currentUser.privileges || []).forEach(p => {
+          if ((p.privilege === 'Administratör' || p.privilege === 'Studierektor') && p.klinikId && p.klinikId !== '*')
+            kliniker.set(p.klinikId, p.klinikId);
+        });
+        kliniker.forEach((namn, kid) => {
+          const opt = document.createElement('option'); opt.value = kid; opt.textContent = namn; klinikSel.appendChild(opt);
+        });
+        klinikSel.value = existing?.klinikId || currentUser.klinikId;
+      }
       show('schedule-form', true);
-      // Ladda användare om inte tillgängliga
       if (!allAdminUsers || !allAdminUsers.length) {
         try {
-          const res = await api('getAllUsers', { klinikId: activeKlinikId || currentUser.klinikId || '*' });
+          const res = await api('getAllUsers', { klinikId: klinikSel?.value || currentUser.klinikId || '*' });
           allAdminUsers = res || [];
         } catch(e) { allAdminUsers = []; }
       }
@@ -3240,8 +3324,9 @@
 
     function populateScheduleRecipients(checked = []) {
       const typ = document.getElementById('sch-typ')?.value || '';
-      const klinikId = activeKlinikId || currentUser.klinikId;
+      const klinikId = document.getElementById('sch-klinik')?.value || currentUser.klinikId;
       const container = document.getElementById('sch-recipients');
+      if (!container) return;
       container.innerHTML = '';
       const allUsers = allAdminUsers || [];
       const filtered = typ === 'Alla' ? allUsers : allUsers.filter(u =>
@@ -3261,21 +3346,26 @@
 
     async function saveSchedule() {
       const mottagare = [...document.querySelectorAll('#sch-recipients input:checked')].map(cb => cb.value);
+      const innehall = [
+        document.getElementById('sch-content-sent')?.checked      ? 'sent'      : '',
+        document.getElementById('sch-content-received')?.checked  ? 'received'  : '',
+        document.getElementById('sch-content-formtypes')?.checked ? 'formtypes' : '',
+      ].filter(Boolean).join(',');
       const schedule = {
         id: _currentScheduleId || undefined,
         namn:        document.getElementById('sch-namn').value.trim(),
-        klinikId:    activeKlinikId || currentUser.klinikId || '',
+        klinikId:    document.getElementById('sch-klinik')?.value || currentUser.klinikId || '',
         mottagarTyp: document.getElementById('sch-typ').value,
         dag:         document.getElementById('sch-dag').value,
         tid:         document.getElementById('sch-tid').value,
-        mottagare, aktiv: true
+        innehall, mottagare, aktiv: true
       };
       if (!schedule.namn) { setStatus('sch-status', 'Ange ett namn.', true); return; }
+      if (!mottagare.length) { setStatus('sch-status', 'Välj minst en mottagare.', true); return; }
       try {
         await api('saveScheduledEmail', { schedule });
         setStatus('sch-status', '✓ Sparat!', false);
-        show('schedule-form', false);
-        loadSchedules();
+        setTimeout(() => { show('schedule-form', false); loadSchedules(); }, 800);
       } catch(err) { setStatus('sch-status', err.message, true); }
     }
 
@@ -3760,7 +3850,8 @@
         loadStatistics();
       }
       if (panel === 'clinic-overview')  { loadClinicOverview(); }
-      if (panel === 'admin')            { loadAdminPanel(); loadSchedules(); }
+      if (panel === 'admin')            { loadAdminPanel(); }
+      if (panel === 'reminders')        { loadSchedules(); }
       if (panel === 'documents')        { loadDocuments(); }
       if (panel === 'overview')          { loadMyOverview(); }
       if (panel === 'inbox')            { loadInbox(); }
