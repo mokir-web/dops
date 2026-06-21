@@ -973,6 +973,18 @@
     let clinicAssessments = [];
     let _isProcessing = false;
 
+    // ── Bakgrundscache ────────────────────────────────────────────────────
+    const _bgCache = {};
+    const BG_TTL   = 5 * 60 * 1000; // 5 min
+    const AD_TTL   = 10 * 60 * 1000; // 10 min för appData
+
+    function bgGet(key) {
+      const e = _bgCache[key];
+      return (e && Date.now() - e.ts < BG_TTL) ? e.data : null;
+    }
+    function bgSet(key, data) { _bgCache[key] = { data, ts: Date.now() }; }
+    function bgInvalidate(key) { delete _bgCache[key]; }
+
     function lockUI(btn) {
       _isProcessing = true;
       if (btn) btn.disabled = true;
@@ -1013,26 +1025,39 @@
 
     // ── Boot ─────────────────────────────────────────────────────
     window.onload = async function() {
+      // Försök återanvänd cachad appData från förra sessionen
+      try {
+        const adRaw = localStorage.getItem('dops_appdata');
+        if (adRaw) {
+          const ad = JSON.parse(adRaw);
+          if (Date.now() - ad.ts < AD_TTL) {
+            appData = ad.data;
+            populateLocationDropdown();
+          }
+        }
+      } catch(e) {}
+
       const saved = localStorage.getItem('dops_user');
       if (saved) {
-        // Visa app direkt utan att vänta på getData
         currentUser = JSON.parse(saved);
         bootApp();
-        // Ladda data i bakgrunden
+        // Uppdatera appData i bakgrunden om den var cachad
         try {
           appData = await api('getData');
+          localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
           populateLocationDropdown();
-          prefillAssessment(); // Uppdatera med färsk data
+          prefillAssessment();
         } catch(err) { console.error('getData failed:', err); }
       } else {
-        // Ingen sparad user – ladda data och visa login
         document.getElementById('login-panel').classList.remove('hidden');
-        try {
-          appData = await api('getData');
-          populateLocationDropdown();
-        } catch(err) {
-          console.error(err);
-          document.getElementById('login-panel').classList.remove('hidden');
+        if (!appData) {
+          try {
+            appData = await api('getData');
+            localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
+            populateLocationDropdown();
+          } catch(err) {
+            console.error(err);
+          }
         }
       }
     };
@@ -1065,6 +1090,8 @@
         if (hasUnread) showPanel('inbox');
         else showPanel('overview');
       });
+      // Ladda statistik, min översikt och bedömningar i bakgrunden
+      setTimeout(backgroundLoad, 1500);
     }
 
     function renderPrivilegeToggle() {
@@ -1660,6 +1687,20 @@
       const dateTo       = document.getElementById('filter-date-to').value;
       const checkedTypes = [...document.querySelectorAll('#filter-formtypes input:checked')].map(cb => cb.value);
       const filters = { dateFrom: dateFrom || null, dateTo: dateTo || null, formTypes: checkedTypes };
+      const noFilter = !dateFrom && !dateTo && !checkedTypes.length;
+      const cacheKey = 'myAssessments_' + currentAssessmentRole;
+
+      // Använd cache om inga filter är satta
+      if (noFilter) {
+        const cached = bgGet(cacheKey);
+        if (cached) {
+          currentAssessments = cached;
+          renderAssessments(cached, currentAssessmentRole);
+          updateFormTypeFilters(cached);
+          bgInvalidate(cacheKey); backgroundLoad();
+          return;
+        }
+      }
       document.getElementById('my-assessments-list').innerHTML = '<p style="color:#888">Hämtar...</p>';
       document.getElementById('select-all').checked = false;
       show('assessment-actions', false);
@@ -2186,15 +2227,24 @@
     ];
 
     async function loadStatistics() {
-      const dateFrom    = document.getElementById('stat-date-from')?.value || null;
-      const dateTo      = document.getElementById('stat-date-to')?.value || null;
+      const dateFrom     = document.getElementById('stat-date-from')?.value || null;
+      const dateTo       = document.getElementById('stat-date-to')?.value || null;
       const checkedForms = [...document.querySelectorAll('#stat-formtype-filter input:checked')].map(cb => cb.value);
-      const el = document.getElementById('statistics-content');
+      const el           = document.getElementById('statistics-content');
+      const statKlinikId = document.getElementById('stat-klinik-select')?.value || activeKlinikId || currentUser.klinikId || '*';
+      const effectiveStatKlinik = (activePrivilege === 'Administratör' && activeKlinikId === '*') ? statKlinikId : (activeKlinikId || currentUser.klinikId || '*');
+      const noFilter = !dateFrom && !dateTo && !checkedForms.length;
+      const cacheKey = 'statistics_' + effectiveStatKlinik;
+
       el.innerHTML = '<p style="color:#888;">Hämtar data...</p>';
       try {
-        const statKlinikId = document.getElementById('stat-klinik-select')?.value || activeKlinikId || currentUser.klinikId || '*';
-        const effectiveStatKlinik = (activePrivilege === 'Administratör' && activeKlinikId === '*') ? statKlinikId : (activeKlinikId || currentUser.klinikId || '*');
-        const stats = await api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik });
+        let stats;
+        if (noFilter && bgGet(cacheKey)) {
+          stats = bgGet(cacheKey);
+          bgInvalidate(cacheKey); backgroundLoad();
+        } else {
+          stats = await api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik });
+        }
 
         // Uppdatera formulärfilter-chips (aggregerade typer)
         const aggByFormType = aggregateFormTypes(stats.byFormType);
@@ -2762,6 +2812,8 @@
 
     // ── Min översikt ──────────────────────────────────────────────────
     async function loadMyOverview() {
+      const cached = bgGet('myOverview');
+      if (cached) { renderOverview(cached); bgInvalidate('myOverview'); backgroundLoad(); return; }
       const el = document.getElementById('overview-content');
       el.innerHTML = '<p style="color:#888;">Hämtar data...</p>';
       try {
@@ -3160,6 +3212,25 @@
           scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { grid: { color: '#d8cfc5' } } }
         }
       });
+    }
+
+    // ── Bakgrundsladdning efter inloggning ────────────────────────────────
+    async function backgroundLoad() {
+      if (!currentUser) return;
+      const email    = currentUser.email;
+      const klinikId = activeKlinikId || currentUser.klinikId || '*';
+      try {
+        const [ov, myRec, mySent, stat] = await Promise.allSettled([
+          api('getMyOverview',    { email, klinikId: currentUser.klinikId }),
+          api('getMyAssessments', { email, role: 'received', filters: {} }),
+          api('getMyAssessments', { email, role: 'sent',     filters: {} }),
+          api('getStatistics',    { filters: {}, klinikId })
+        ]);
+        if (ov.status    === 'fulfilled') bgSet('myOverview',             ov.value);
+        if (myRec.status === 'fulfilled') bgSet('myAssessments_received', myRec.value);
+        if (mySent.status=== 'fulfilled') bgSet('myAssessments_sent',     mySent.value);
+        if (stat.status  === 'fulfilled') bgSet('statistics_' + klinikId, stat.value);
+      } catch(e) {}
     }
 
     // ── Enter-navigering i login/register/glömt ───────────────────
