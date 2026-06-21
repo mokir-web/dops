@@ -124,7 +124,7 @@
     .ans-section { font-weight: bold; margin-top: 12px; color: #2a1f18; font-size: 16px; }
     .ans-row { margin: 3px 0 3px 14px; color: #1e1612; font-size: 16px; }
 
-    .filter-box { margin-top: 16px; padding: 16px; background: #d8cfc5; border-radius: 7px; }
+    @keyframes spin { to { transform: rotate(360deg); } } margin-top: 16px; padding: 16px; background: #d8cfc5; border-radius: 7px; }
     .filter-chip {
       font-size: 15px; cursor: pointer;
       background: #f5f1ec; border: 1.5px solid #c4b8ac;
@@ -581,6 +581,7 @@
         <button class="btn-secondary btn-small" id="filter-toggle-btn" onclick="toggleAssessmentFilter()">⚙ Filtrera</button>
         <span id="selected-count" style="font-size:13px;color:#6b5c52;margin-left:auto;"></span>
       </div>
+      <div id="assessment-swr-status" style="margin-bottom:6px;min-height:18px;"></div>
       <div id="my-assessments-list"></div>
       <div id="export-status" style="margin-top:12px;"></div>
     </div>
@@ -619,10 +620,9 @@
           <canvas id="chart-pie" height="220"></canvas>
         </div>
       </div>
+      <div id="statistics-swr-status" style="min-height:18px;margin-bottom:4px;"></div>
       <div id="statistics-content"></div>
     </div>
-
-    <!-- ── DOCUMENTS ────────────────────────────────────────────── -->
     <div id="panel-documents" class="hidden">
       <h2>Dokument</h2>
       <p style="color:#6b5c52;">Nedladdningsbara mallar och avtal för kliniker som vill ansluta till MoraDOPS.</p>
@@ -778,6 +778,7 @@
     <!-- ── OVERVIEW ──────────────────────────────────────────────── -->
     <div id="panel-overview" class="hidden">
       <h2>Min översikt</h2>
+      <div id="overview-swr-status" style="min-height:18px;margin-bottom:4px;"></div>
       <div id="overview-content"><p style="color:#888;">Laddar...</p></div>
     </div>
 
@@ -862,10 +863,9 @@
         <div id="bulk-status"></div>
       </div>
 
+      <div id="inbox-swr-status" style="min-height:18px;margin-bottom:4px;"></div>
       <div id="inbox-list"></div>
     </div>
-
-    <!-- ── PROFILE ────────────────────────────────────────────── -->
 
     <div id="panel-profile" class="hidden">
       <h2>Min profil</h2>
@@ -975,8 +975,8 @@
 
     // ── Bakgrundscache ────────────────────────────────────────────────────
     const _bgCache = {};
-    const BG_TTL   = 5 * 60 * 1000; // 5 min
-    const AD_TTL   = 10 * 60 * 1000; // 10 min för appData
+    const BG_TTL   = 20 * 60 * 1000; // 20 min – matchar keep-alive-intervallet
+    const AD_TTL   = 10 * 60 * 1000;
 
     function bgGet(key) {
       const e = _bgCache[key];
@@ -984,6 +984,35 @@
     }
     function bgSet(key, data) { _bgCache[key] = { data, ts: Date.now() }; }
     function bgInvalidate(key) { delete _bgCache[key]; }
+
+    // ── Stale-while-revalidate ────────────────────────────────────────────
+    // Visar cache direkt, hämtar färsk data i bakgrunden.
+    // statusEl: DOM-element som visar "söker uppdateringar…" under hämtningen.
+    async function swr(cacheKey, fetchFn, renderFn, statusEl) {
+      const cached = bgGet(cacheKey);
+      if (cached) {
+        renderFn(cached);
+        if (statusEl) statusEl.innerHTML =
+          '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>' +
+          'Söker efter uppdateringar…</span>';
+        try {
+          const fresh = await fetchFn();
+          bgSet(cacheKey, fresh);
+          renderFn(fresh);
+        } catch(e) { /* håll kvar cachad vy */ }
+        if (statusEl) statusEl.innerHTML = '';
+      } else {
+        try {
+          const fresh = await fetchFn();
+          bgSet(cacheKey, fresh);
+          renderFn(fresh);
+        } catch(e) {
+          if (statusEl) statusEl.innerHTML =
+            '<p class="status-err">Kunde inte hämta data: ' + esc(e.message) + '</p>';
+        }
+      }
+    }
 
     function lockUI(btn) {
       _isProcessing = true;
@@ -1689,18 +1718,23 @@
       const filters = { dateFrom: dateFrom || null, dateTo: dateTo || null, formTypes: checkedTypes };
       const noFilter = !dateFrom && !dateTo && !checkedTypes.length;
       const cacheKey = 'myAssessments_' + currentAssessmentRole;
+      const statusEl = document.getElementById('assessment-swr-status');
 
-      // Använd cache om inga filter är satta
       if (noFilter) {
-        const cached = bgGet(cacheKey);
-        if (cached) {
-          currentAssessments = cached;
-          renderAssessments(cached, currentAssessmentRole);
-          updateFormTypeFilters(cached);
-          bgInvalidate(cacheKey); backgroundLoad();
-          return;
-        }
+        await swr(
+          cacheKey,
+          () => api('getMyAssessments', { email: currentUser.email, role: currentAssessmentRole, filters }),
+          data => {
+            if (!data) return;
+            currentAssessments = data;
+            renderAssessments(data, currentAssessmentRole);
+            updateFormTypeFilters(data);
+          },
+          statusEl
+        );
+        return;
       }
+      if (statusEl) statusEl.innerHTML = '';
       document.getElementById('my-assessments-list').innerHTML = '<p style="color:#888">Hämtar...</p>';
       document.getElementById('select-all').checked = false;
       show('assessment-actions', false);
@@ -2239,13 +2273,24 @@
       el.innerHTML = '<p style="color:#888;">Hämtar data...</p>';
       try {
         let stats;
-        if (noFilter && bgGet(cacheKey)) {
-          stats = bgGet(cacheKey);
-          bgInvalidate(cacheKey); backgroundLoad();
-        } else {
-          stats = await api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik });
+        if (noFilter) {
+          await swr(
+            cacheKey,
+            () => api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik }),
+            data => { if (data) { el.innerHTML = ''; renderStatistics(data, checkedForms); } },
+            document.getElementById('statistics-swr-status')
+          );
+          return;
         }
+        stats = await api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik });
+        renderStatistics(stats, checkedForms);
+      } catch(err) {
+        el.innerHTML = '<p class="status-err">Fel: ' + err.message + '</p>';
+      }
+    }
 
+    function renderStatistics(stats, checkedForms = []) {
+      const el = document.getElementById('statistics-content');
         // Uppdatera formulärfilter-chips (aggregerade typer)
         const aggByFormType = aggregateFormTypes(stats.byFormType);
         const aggByMonth    = aggregateByMonth(stats.byFormTypeByMonth || {});
@@ -2278,9 +2323,7 @@
           data: months.map(m => m[ft] || 0),
           borderColor: CHART_COLORS[i % CHART_COLORS.length],
           backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + '55',
-          tension: 0.3,
-          fill: true,
-          pointRadius: 3,
+          tension: 0.3, fill: true, pointRadius: 3,
         }));
 
         if (lineChart) lineChart.destroy();
@@ -2303,44 +2346,31 @@
           activeFormFilter.length === 0 || activeFormFilter.includes(ft)
         );
         const pieData = pieLabels.map(ft => aggByFormType[ft]);
-
         if (pieChart) pieChart.destroy();
         const pieCtx = document.getElementById('chart-pie').getContext('2d');
         pieChart = new Chart(pieCtx, {
           type: 'pie',
-          data: {
-            labels: pieLabels,
-            datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#f5f1ec', borderWidth: 2 }]
-          },
-          options: {
-            responsive: true, maintainAspectRatio: true,
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } }
-          }
+          data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#f5f1ec', borderWidth: 2 }] },
+          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
         });
 
         // ── Tabeller ──────────────────────────────────────────────
         let html = '';
         html += '<div class="section-header">Totalt antal bedömningar</div>';
         html += '<p style="font-size:28px;font-weight:bold;color:#3d5c4a;margin:12px 0;">' + stats.total + '</p>';
-
         html += '<div class="section-header">Mest aktiva registrerare</div>';
         html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
         Object.entries(stats.byRegistrar).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
           html += '<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">' + v + '</td></tr>';
         });
         html += '</table>';
-
         html += '<div class="section-header">Mest bedömda</div>';
         html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
         Object.entries(stats.byRecipient).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
           html += '<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">' + v + '</td></tr>';
         });
         html += '</table>';
-
         el.innerHTML = html;
-      } catch(err) {
-        el.innerHTML = '<p class="status-err">Fel: ' + err.message + '</p>';
-      }
     }
 
     async function exportSelected() {
@@ -2579,17 +2609,14 @@
     }
 
     async function loadInbox() {
-      // Synka e-postavisering
       const notifyChk = document.getElementById('inbox-email-notify');
       if (notifyChk) notifyChk.checked = currentUser.emailNotify !== false;
-      document.getElementById('inbox-list').innerHTML = '<p style="color:#888;">Hämtar...</p>';
-      try {
-        inboxData = await api('getAssessmentRequests', { email: currentUser.email });
-        renderInbox();
-        updateInboxBadge();
-      } catch(err) {
-        document.getElementById('inbox-list').innerHTML = '<p class="status-err">' + esc(err.message) + '</p>';
-      }
+      await swr(
+        'inbox_' + currentUser.email,
+        () => api('getAssessmentRequests', { email: currentUser.email }),
+        data => { if (data) { inboxData = data; renderInbox(); updateInboxBadge(); } },
+        document.getElementById('inbox-swr-status')
+      );
     }
 
     function renderInbox() {
@@ -2812,16 +2839,12 @@
 
     // ── Min översikt ──────────────────────────────────────────────────
     async function loadMyOverview() {
-      const cached = bgGet('myOverview');
-      if (cached) { renderOverview(cached); bgInvalidate('myOverview'); backgroundLoad(); return; }
-      const el = document.getElementById('overview-content');
-      el.innerHTML = '<p style="color:#888;">Hämtar data...</p>';
-      try {
-        const data = await api('getMyOverview', { email: currentUser.email, klinikId: currentUser.klinikId });
-        renderOverview(data);
-      } catch(err) {
-        el.innerHTML = '<p class="status-err">Fel: ' + esc(err.message) + '</p>';
-      }
+      await swr(
+        'myOverview',
+        () => api('getMyOverview', { email: currentUser.email, klinikId: currentUser.klinikId }),
+        data => { if (data) renderOverview(data); },
+        document.getElementById('overview-swr-status')
+      );
     }
 
     function renderOverview(data) {
@@ -3220,16 +3243,18 @@
       const email    = currentUser.email;
       const klinikId = activeKlinikId || currentUser.klinikId || '*';
       try {
-        const [ov, myRec, mySent, stat] = await Promise.allSettled([
+        const [ov, myRec, mySent, stat, inb] = await Promise.allSettled([
           api('getMyOverview',    { email, klinikId: currentUser.klinikId }),
           api('getMyAssessments', { email, role: 'received', filters: {} }),
           api('getMyAssessments', { email, role: 'sent',     filters: {} }),
-          api('getStatistics',    { filters: {}, klinikId })
+          api('getStatistics',    { filters: {}, klinikId }),
+          api('getAssessmentRequests', { email })
         ]);
         if (ov.status    === 'fulfilled') bgSet('myOverview',             ov.value);
         if (myRec.status === 'fulfilled') bgSet('myAssessments_received', myRec.value);
         if (mySent.status=== 'fulfilled') bgSet('myAssessments_sent',     mySent.value);
         if (stat.status  === 'fulfilled') bgSet('statistics_' + klinikId, stat.value);
+        if (inb.status   === 'fulfilled') bgSet('inbox_' + email,         inb.value);
       } catch(e) {}
     }
 
