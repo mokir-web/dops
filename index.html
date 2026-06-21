@@ -296,7 +296,7 @@
     <div id="login-view">
       <div class="field">
         <label class="field-label">E-postadress</label>
-        <input type="email" id="login-email" placeholder="din@email.se">
+        <input type="email" id="login-email" placeholder="din@email.se" autocomplete="username" oninput="document.getElementById('login-pin').value=''">
       </div>
       <div class="field">
         <label class="field-label">PIN</label>
@@ -445,8 +445,6 @@
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')">Administration</button>
         </div>
         <div class="sidebar-nav-bottom">
-          <div class="sidebar-divider" style="display:none;" id="priv-divider"></div>
-
           <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')">Min profil</button>
           <div style="height:1px;background:#c4b8ac;margin:4px 0;"></div>
           <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')">Klinikens statistik</button>
@@ -691,7 +689,7 @@
         </div>
         <div class="field">
           <label class="field-label">Mottagarkategori</label>
-          <select id="co-category">
+          <select id="co-category" onchange="filterCoFormTypesByCategory()">
             <option value="">Alla</option>
             <option value="ST">ST</option>
             <option value="Spec">Spec</option>
@@ -744,8 +742,10 @@
           <div class="field"><label class="field-label">Användarroll</label>
             <select id="edit-userrole"><option value="Registrerare">Registrerare</option><option value="Mottagare">Mottagare</option><option value="Blandbild">Blandbild</option></select>
           </div>
-          <div class="field"><label class="field-label">Klinik</label><input type="text" id="edit-clinic"></div>
-          <div class="field"><label class="field-label">KlinikID</label><input type="text" id="edit-klinikid"></div>
+          <div class="field"><label class="field-label">Klinik</label>
+            <select id="edit-clinic" style="font-size:15px;padding:8px;border:1.5px solid #c4b8ac;border-radius:6px;background:#f5f1ec;width:100%;"></select>
+          </div>
+          <input type="hidden" id="edit-klinikid">
           <div class="field"><label class="field-label">Nytt lösenord (lämna tomt för oförändrat)</label><input type="password" id="edit-pin" maxlength="6" placeholder="4–6 siffror"></div>
           <input type="hidden" id="edit-email">
           <hr style="margin:16px 0;">
@@ -986,48 +986,51 @@
     function bgInvalidate(key) { delete _bgCache[key]; }
 
     // ── Stale-while-revalidate ────────────────────────────────────────────
-    // Visar cache direkt, hämtar färsk data i bakgrunden.
-    // statusEl: DOM-element som visar "söker uppdateringar…" under hämtningen.
-    async function swr(cacheKey, fetchFn, renderFn, statusEl) {
+    async function swr(cacheKey, fetchFn, renderFn, statusEl, diffFn) {
       const cached = bgGet(cacheKey);
       if (cached) {
         renderFn(cached);
         if (statusEl) statusEl.innerHTML =
-          '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;">' +
-          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>' +
-          'Söker efter uppdateringar…</span>';
+          '<span style="font-size:12px;color:#b0a090;display:flex;align-items:center;gap:5px;">' +
+          '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>' +
+          'Söker…</span>';
         try {
           const fresh = await fetchFn();
-          bgSet(cacheKey, fresh);
-          renderFn(fresh);
-        } catch(e) { /* håll kvar cachad vy */ }
-        if (statusEl) statusEl.innerHTML = '';
+          const changed = JSON.stringify(fresh) !== JSON.stringify(cached);
+          if (changed) {
+            bgSet(cacheKey, fresh);
+            renderFn(fresh);
+            const n = diffFn ? diffFn(fresh, cached) : 0;
+            if (statusEl) statusEl.innerHTML = n > 0
+              ? `<span style="font-size:12px;color:#3d5c4a;">↑ ${n} ny${n===1?'':'a'}</span>`
+              : '';
+          } else {
+            if (statusEl) statusEl.innerHTML = '';
+          }
+        } catch(e) { if (statusEl) statusEl.innerHTML = ''; }
       } else {
+        if (statusEl) statusEl.innerHTML = '';
         try {
           const fresh = await fetchFn();
           bgSet(cacheKey, fresh);
           renderFn(fresh);
         } catch(e) {
-          if (statusEl) statusEl.innerHTML =
-            '<p class="status-err">Kunde inte hämta data: ' + esc(e.message) + '</p>';
+          if (statusEl) statusEl.innerHTML = `<p class="status-err">Kunde inte hämta data: ${esc(e.message)}</p>`;
         }
       }
     }
 
-    function lockUI(btn) {
+    const _lockedSet = new Set();
+    function lockUI() {
       _isProcessing = true;
-      if (btn) btn.disabled = true;
-      // Lås alla synliga skicka-knappar
-      document.querySelectorAll('button.btn-primary:not(:disabled)').forEach(b => {
-        b._lockedByUI = true; b.disabled = true;
+      document.querySelectorAll('button.btn-primary').forEach(b => {
+        if (!b.disabled) { _lockedSet.add(b); b.disabled = true; }
       });
     }
-    function unlockUI(btn) {
+    function unlockUI() {
       _isProcessing = false;
-      document.querySelectorAll('button[_lockedByUI]').forEach(b => {
-        b.disabled = false; delete b._lockedByUI;
-      });
-      if (btn) btn.disabled = false;
+      _lockedSet.forEach(b => { b.disabled = false; });
+      _lockedSet.clear();
     }
 
     const hierarchy = ['Spec', 'ST', 'BT', 'AT'];
@@ -1166,13 +1169,11 @@
       const hasPriv     = privilege === 'Studierektor' || privilege === 'Administratör';
       const isAdmin     = privilege === 'Administratör';
 
-      // Paneler för privilegierade roller
       if (clinicBtn) clinicBtn.classList.toggle('hidden', !hasPriv);
       const reqStatsBtn = document.getElementById('nav-btn-request-stats');
       if (reqStatsBtn) reqStatsBtn.classList.toggle('hidden', !hasPriv);
       if (adminBtn)  adminBtn.classList.toggle('hidden', !isAdmin);
       if (docsBtn)   docsBtn.classList.toggle('hidden', !isAdmin);
-      if (divider)   divider.style.display = hasPriv ? 'block' : 'none';
 
       // Dölj vanliga registrerarpaneler för privilegierade roller
       const regularPanels = ['nav-btn-inbox','nav-btn-assessment','nav-btn-overview','nav-btn-my-assessments'];
@@ -1223,31 +1224,31 @@
     async function doLogin() {
       if (_isProcessing) return;
       const btn = document.querySelector('#login-view .btn-primary');
-      lockUI(btn);
+      lockUI();
       const email = document.getElementById('login-email').value.trim();
       const pin   = document.getElementById('login-pin').value.trim();
-      if (!email || !pin) { setStatus('login-status', 'Fyll i e-post och PIN.', true); unlockUI(btn); return; }
+      if (!email || !pin) { setStatus('login-status', 'Fyll i e-post och PIN.', true); unlockUI(); return; }
       try {
         const result = await api('login', { email: email.trim().toLowerCase(), pin: pin.trim() });
-        if (!result) { setStatus('login-status', 'Felaktig e-post eller PIN.', true); unlockUI(btn); return; }
+        if (!result) { setStatus('login-status', 'Felaktig e-post eller PIN.', true); unlockUI(); return; }
         if (result.error === 'inactive_clinic') {
           setStatus('login-status', 'Din klinik har inget aktivt abonnemang. Kontakta lokal administratör.', true);
-          unlockUI(btn); return;
+          unlockUI(); return;
         }
         if (result.locked) {
           setStatus('login-status', `Kontot är tillfälligt låst. Försök igen om ${result.minutesLeft} minut${result.minutesLeft !== 1 ? 'er' : ''}.`, true);
-          unlockUI(btn); return;
+          unlockUI(); return;
         }
         if (result.failed) {
           const left = result.attemptsLeft;
           setStatus('login-status', `Felaktig PIN. ${left} försök kvar innan kontot låses i 10 minuter.`, true);
-          unlockUI(btn); return;
+          unlockUI(); return;
         }
         currentUser = result;
         localStorage.setItem('dops_user', JSON.stringify(result));
-        unlockUI(btn);
+        unlockUI();
         bootApp();
-      } catch(err) { setStatus('login-status', err.message, true); unlockUI(btn); }
+      } catch(err) { setStatus('login-status', err.message, true); unlockUI(); }
     }
 
     function doLogout() {
@@ -1259,33 +1260,33 @@
     async function sendResetCode() {
       if (_isProcessing) return;
       const btn = document.querySelector('#forgot-step1 .btn-primary');
-      lockUI(btn);
+      lockUI();
       const email = document.getElementById('forgot-email').value.trim();
-      if (!email) { setStatus('forgot-status1', 'Ange e-postadress.', true); unlockUI(btn); return; }
+      if (!email) { setStatus('forgot-status1', 'Ange e-postadress.', true); unlockUI(); return; }
       try {
         const result = await api('sendResetCode', { email });
-        if (result.error) { setStatus('forgot-status1', result.error, true); unlockUI(btn); return; }
+        if (result.error) { setStatus('forgot-status1', result.error, true); unlockUI(); return; }
         setStatus('forgot-status1', '✓ Kod skickad till din e-post.', false);
         document.getElementById('forgot-step2').classList.remove('hidden');
-        unlockUI(btn);
-      } catch(err) { setStatus('forgot-status1', err.message, true); unlockUI(btn); }
+        unlockUI();
+      } catch(err) { setStatus('forgot-status1', err.message, true); unlockUI(); }
     }
 
     async function doResetPin() {
       if (_isProcessing) return;
       const btn = document.querySelector('#forgot-step2 .btn-primary');
-      lockUI(btn);
+      lockUI();
       const email  = document.getElementById('forgot-email').value.trim();
       const code   = document.getElementById('forgot-code').value.trim();
       const newPin = document.getElementById('forgot-newpin').value.trim();
-      if (!code || !newPin) { setStatus('forgot-status2', 'Fyll i kod och ny PIN.', true); unlockUI(btn); return; }
+      if (!code || !newPin) { setStatus('forgot-status2', 'Fyll i kod och ny PIN.', true); unlockUI(); return; }
       try {
         const result = await api('resetPin', { email, code, newPin });
-        if (result.error) { setStatus('forgot-status2', result.error, true); unlockUI(btn); return; }
+        if (result.error) { setStatus('forgot-status2', result.error, true); unlockUI(); return; }
         setStatus('forgot-status2', '✓ PIN ändrad! Du kan nu logga in.', false);
-        unlockUI(btn);
+        unlockUI();
         setTimeout(() => showLoginView('login'), 2000);
-      } catch(err) { setStatus('forgot-status2', err.message, true); unlockUI(btn); }
+      } catch(err) { setStatus('forgot-status2', err.message, true); unlockUI(); }
     }
 
     // ── Assessment ────────────────────────────────────────────────
@@ -1582,12 +1583,12 @@
     async function submitAssessment() {
       if (_isProcessing) return;
       const submitBtn = document.getElementById('submit-btn');
-      lockUI(submitBtn);
+      lockUI();
       const meta = window._pendingAssessmentMeta;
       const category  = meta?.category  || document.querySelector('input[name="category"]:checked')?.value;
       const recipient = meta?.recipient || document.getElementById('recipient').value;
       const formType  = meta?.formType  || document.querySelector('input[name="formtype"]:checked')?.value;
-      if (!category || !recipient || !formType) { alert('Fyll i alla obligatoriska fält.'); unlockUI(submitBtn); return; }
+      if (!category || !recipient || !formType) { alert('Fyll i alla obligatoriska fält.'); unlockUI(); return; }
       setStatus('assessment-status', '⏳ Skickar bedömning...', false);
       saveCurrentSectionAnswers(currentSection);
       const answerList = Object.values(savedAnswers).map(a => ({
@@ -1693,7 +1694,7 @@
 
                 setTimeout(() => { status.textContent = ''; }, 4000);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      } catch(err) { setStatus('assessment-status', err.message, true); unlockUI(submitBtn); }
+      } catch(err) { setStatus('assessment-status', err.message, true); unlockUI(); }
     }
 
     // ── My assessments ────────────────────────────────────────────
@@ -1730,7 +1731,8 @@
             renderAssessments(data, currentAssessmentRole);
             updateFormTypeFilters(data);
           },
-          statusEl
+          statusEl,
+          (fresh, old) => Math.max(0, fresh.length - old.length)
         );
         return;
       }
@@ -1892,6 +1894,14 @@
       loadClinicOverview();
     }
 
+    function filterCoFormTypesByCategory() {
+      const cat = document.getElementById('co-category')?.value || '';
+      const filtered = cat
+        ? clinicAssessments.filter(a => a.category === cat)
+        : clinicAssessments;
+      updateCoFormTypeFilters(filtered);
+    }
+
     function updateCoFormTypeFilters(assessments) {
       const types = [...new Set(assessments.map(a => a.formType))].sort();
       const container = document.getElementById('co-formtypes');
@@ -1976,10 +1986,10 @@
     async function exportCoSelected() {
       if (_isProcessing) return;
       const btn = document.querySelector('#co-actions .btn-primary');
-      lockUI(btn);
+      lockUI();
       const selected = [...document.querySelectorAll('.co-checkbox:checked')]
         .map(cb => clinicAssessments[parseInt(cb.dataset.idx)]);
-      if (!selected.length) { alert('Markera minst en bedömning.'); unlockUI(btn); return; }
+      if (!selected.length) { alert('Markera minst en bedömning.'); unlockUI(); return; }
       const filterInfo = {
         name: 'Kliniköversikt',
         clinic: currentUser.clinic,
@@ -1989,8 +1999,8 @@
       try {
         const result = await api('exportAssessmentsToDoc', { email: currentUser.email, assessments: selected, filterInfo });
         setStatus('co-export-status', `✓ ${result.count} bedömning(ar) skickade till ${currentUser.email}`, false);
-        unlockUI(btn);
-      } catch(err) { setStatus('co-export-status', err.message, true); unlockUI(btn); }
+        unlockUI();
+      } catch(err) { setStatus('co-export-status', err.message, true); unlockUI(); }
     }
 
     let allAdminUsers = [];
@@ -2116,7 +2126,7 @@
         card.innerHTML = '<div style="font-weight:bold;font-size:16px;">' + esc(u.firstName) + ' ' + esc(u.lastName) + '</div>'
           + '<div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + esc(u.email) + '</div>'
           + '<div style="font-size:14px;margin-top:4px;">' + esc(u.jobRole) + ' · ' + esc(u.clinic) + ' · ' + esc(u.userRole) + '</div>'
-          + '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">KlinikID: ' + esc(u.klinikId || '–') + '</div>';
+          + '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">' + esc(u.userRole || '') + '</div>';
         card.onclick = () => openUserEdit(u);
         el.appendChild(card);
       });
@@ -2126,17 +2136,36 @@
       document.getElementById('admin-edit-overlay').style.display = 'flex';
       document.getElementById('edit-firstname').value = u.firstName || '';
       document.getElementById('edit-lastname').value  = u.lastName  || '';
-      document.getElementById('edit-clinic').value    = u.clinic    || '';
       document.getElementById('edit-klinikid').value  = u.klinikId  || '';
       document.getElementById('edit-pin').value       = '';
       document.getElementById('edit-email').value     = u.email     || '';
       document.getElementById('edit-status').textContent = '';
+      // Populera klinikdropdown
+      const clinicSel = document.getElementById('edit-clinic');
+      clinicSel.innerHTML = '<option value="">-- Välj klinik --</option>';
+      if (appData && appData.klinikIdMap) {
+        Object.entries(appData.klinikIdMap).sort((a,b) => a[0].localeCompare(b[0])).forEach(([namn, kid]) => {
+          const opt = document.createElement('option');
+          opt.value = namn; opt.textContent = namn;
+          clinicSel.appendChild(opt);
+        });
+      }
+      // Lägg till aktuell klinik om den saknas
+      if (u.clinic && !clinicSel.querySelector(`option[value="${u.clinic}"]`)) {
+        const opt = document.createElement('option'); opt.value = u.clinic; opt.textContent = u.clinic;
+        clinicSel.appendChild(opt);
+      }
+      clinicSel.value = u.clinic || '';
+      // Uppdatera klinikId när klinik byts
+      clinicSel.onchange = () => {
+        const kid = appData?.klinikIdMap?.[clinicSel.value] || u.klinikId || '';
+        document.getElementById('edit-klinikid').value = kid;
+      };
       const jobRoleSel  = document.getElementById('edit-jobrole');
       const userRoleSel = document.getElementById('edit-userrole');
       if (jobRoleSel)  { jobRoleSel.value  = u.jobRole  || ''; }
       if (userRoleSel) { userRoleSel.value = u.userRole || ''; }
       show('admin-edit-overlay', true);
-      // Ladda befintliga privilegier
       loadUserPrivileges(u.email);
     }
 
@@ -2178,13 +2207,15 @@
 
     async function saveUserEdit() {
       const email = document.getElementById('edit-email').value;
+      const clinic = document.getElementById('edit-clinic').value.trim();
+      const klinikId = document.getElementById('edit-klinikid').value.trim()
+        || (appData?.klinikIdMap?.[clinic] || '');
       const updates = {
         firstName: document.getElementById('edit-firstname').value.trim(),
         lastName:  document.getElementById('edit-lastname').value.trim(),
         jobRole:   document.getElementById('edit-jobrole').value,
         userRole:  document.getElementById('edit-userrole').value,
-        clinic:    document.getElementById('edit-clinic').value.trim(),
-        klinikId:  document.getElementById('edit-klinikid').value.trim(),
+        clinic, klinikId,
       };
       const pin = document.getElementById('edit-pin').value.trim();
       if (pin) { if (!/^\d{4,6}$/.test(pin)) { setStatus('edit-status', 'PIN måste vara 4–6 siffror.', true); return; } updates.newPin = pin; }
@@ -2193,6 +2224,8 @@
         const result = await api('updateUserByAdmin', { targetEmail: email, updates });
         if (result.error) { setStatus('edit-status', result.error, true); return; }
         setStatus('edit-status', '✓ Sparat!', false);
+        // Invalidera appData-cache så ny klinik syns
+        localStorage.removeItem('dops_appdata');
         setTimeout(() => { closeUserEdit(); loadClinicDetail(currentAdminKlinikId); }, 800);
       } catch(err) { setStatus('edit-status', err.message, true); }
     }
@@ -2295,8 +2328,8 @@
         const aggByFormType = aggregateFormTypes(stats.byFormType);
         const aggByMonth    = aggregateByMonth(stats.byFormTypeByMonth || {});
         const filterContainer = document.getElementById('stat-formtype-filter');
-        if (filterContainer.children.length === 0) {
-          Object.keys(aggByFormType).sort().forEach(ft => {
+        filterContainer.innerHTML = ''; // bygg alltid om med aggregerade typer
+        Object.keys(aggByFormType).sort().forEach(ft => {
             const lbl = document.createElement('label');
             lbl.className = 'filter-chip';
             const cb = document.createElement('input');
@@ -2306,7 +2339,6 @@
             lbl.appendChild(document.createTextNode(ft));
             filterContainer.appendChild(lbl);
           });
-        }
 
         // Filtrera data på valda formulär (aggregerade)
         const activeFormFilter = [...document.querySelectorAll('#stat-formtype-filter input:checked')].map(cb => cb.value);
@@ -2376,10 +2408,10 @@
     async function exportSelected() {
       if (_isProcessing) return;
       const btn = document.querySelector('#assessment-actions .btn-primary');
-      lockUI(btn);
+      lockUI();
       const selected = [...document.querySelectorAll('.assessment-checkbox:checked')]
         .map(cb => currentAssessments[parseInt(cb.dataset.idx)]);
-      if (!selected.length) { alert('Markera minst en bedömning.'); unlockUI(btn); return; }
+      if (!selected.length) { alert('Markera minst en bedömning.'); unlockUI(); return; }
       const dateFrom = document.getElementById('filter-date-from').value;
       const dateTo   = document.getElementById('filter-date-to').value;
       const period   = (dateFrom || dateTo)
@@ -2394,8 +2426,8 @@
       try {
         const result = await api('exportAssessmentsToDoc', { email: currentUser.email, assessments: selected, filterInfo });
         setStatus('export-status', `✓ ${result.count} bedömning(ar) skickade till ${currentUser.email}`, false);
-        unlockUI(btn);
-      } catch(err) { setStatus('export-status', err.message, true); unlockUI(btn); }
+        unlockUI();
+      } catch(err) { setStatus('export-status', err.message, true); unlockUI(); }
     }
 
     // ── Profile ───────────────────────────────────────────────────
@@ -2477,6 +2509,7 @@
         prefillAssessment();
         setStatus('profile-role-status', '✓ Profil sparad!', false);
         if (newPin) setStatus('profile-pin-status', '✓ PIN ändrad!', false);
+        localStorage.removeItem('dops_appdata');
       } catch(err) { setStatus('profile-role-status', err.message, true); }
     }
 
@@ -2503,8 +2536,21 @@
     function populateLocationDropdown() {
       if (!appData) return;
       const sel = document.getElementById('reg-location');
-      while (sel.options.length > 2) sel.remove(1);
-      appData.locations.forEach(loc => sel.insertBefore(newOption(loc, loc), sel.options[sel.options.length - 1]));
+      if (!sel) return;
+      // Tömmer alltid och fyller på nytt
+      sel.innerHTML = '<option value="">-- Välj ort --</option>';
+      appData.locations.forEach(loc => sel.appendChild(newOption(loc, loc)));
+      sel.appendChild(newOption('__new__', '+ Ny ort'));
+      // Uppdatera profil-klinik-dropdown också
+      const profileSel = document.getElementById('profile-clinic-input');
+      if (profileSel && appData.klinikIdMap) {
+        const current = profileSel.value;
+        profileSel.innerHTML = '<option value="">-- Välj klinik --</option>';
+        Object.keys(appData.klinikIdMap).sort((a,b) => a.localeCompare(b)).forEach(namn => {
+          profileSel.appendChild(newOption(namn, namn));
+        });
+        if (current) profileSel.value = current;
+      }
     }
 
     function updateClinicDropdown() {
@@ -2561,6 +2607,7 @@
       try {
         const result = await api('registerUser', { user });
         if (result.error) { setStatus('reg-status', result.error, true); return; }
+        localStorage.removeItem('dops_appdata'); // ny klinik ska synas nästa gång
         setStatus('reg-status', '✓ Konto skapat! Du kan nu logga in.', false);
         setTimeout(() => showLoginView('login'), 2000);
       } catch(err) { setStatus('reg-status', err.message, true); }
@@ -2615,7 +2662,8 @@
         'inbox_' + currentUser.email,
         () => api('getAssessmentRequests', { email: currentUser.email }),
         data => { if (data) { inboxData = data; renderInbox(); updateInboxBadge(); } },
-        document.getElementById('inbox-swr-status')
+        document.getElementById('inbox-swr-status'),
+        (fresh, old) => Math.max(0, (fresh.inbox?.length||0) - (old.inbox?.length||0))
       );
     }
 
@@ -2705,23 +2753,23 @@
     async function sendRequest() {
       if (_isProcessing) return;
       const btn = document.querySelector('#request-form .btn-primary');
-      lockUI(btn);
+      lockUI();
       const toName   = document.getElementById('request-to').value;
       const message  = document.getElementById('request-message').value.trim();
       const formType = document.getElementById('request-formtype')?.value || '';
-      if (!toName)   { setStatus('request-status', 'Välj en kollega.', true); unlockUI(btn); return; }
-      if (!message)  { setStatus('request-status', 'Skriv ett meddelande.', true); unlockUI(btn); return; }
+      if (!toName)   { setStatus('request-status', 'Välj en kollega.', true); unlockUI(); return; }
+      if (!message)  { setStatus('request-status', 'Skriv ett meddelande.', true); unlockUI(); return; }
       try {
         const toEmail = await api('getRecipientEmail', { recipientFullName: toName });
-        if (!toEmail) { setStatus('request-status', 'Kunde inte hitta e-post för ' + esc(toName), true); unlockUI(btn); return; }
+        if (!toEmail) { setStatus('request-status', 'Kunde inte hitta e-post för ' + esc(toName), true); unlockUI(); return; }
         setStatus('request-status', '⏳ Skickar...', false);
         await api('sendAssessmentRequest', { fromEmail: currentUser.email, toEmail, message, formType });
         setStatus('request-status', '✓ Förfrågan skickad!', false);
         document.getElementById('request-message').value = '';
         document.getElementById('request-to').value = '';
-        unlockUI(btn);
+        unlockUI();
         setTimeout(() => { hideRequestForm(); loadInbox(); }, 1500);
-      } catch(err) { setStatus('request-status', err.message, true); unlockUI(btn); }
+      } catch(err) { setStatus('request-status', err.message, true); unlockUI(); }
     }
 
     function startRequestedAssessment(item) {
@@ -3148,13 +3196,13 @@
     async function sendBulkRequest() {
       if (_isProcessing) return;
       const btn = document.querySelector('#bulk-request-form .btn-primary');
-      lockUI(btn);
+      lockUI();
       const formType = document.getElementById('bulk-formtype').value;
       const message  = document.getElementById('bulk-message').value.trim();
       const selected = [...document.querySelectorAll('.bulk-recipient-cb:checked')].map(cb => cb.value);
-      if (!formType)       { setStatus('bulk-status', 'Välj formulärtyp.', true); unlockUI(btn); return; }
-      if (!selected.length){ setStatus('bulk-status', 'Markera minst en mottagare.', true); unlockUI(btn); return; }
-      if (!message)        { setStatus('bulk-status', 'Skriv ett meddelande.', true); unlockUI(btn); return; }
+      if (!formType)       { setStatus('bulk-status', 'Välj formulärtyp.', true); unlockUI(); return; }
+      if (!selected.length){ setStatus('bulk-status', 'Markera minst en mottagare.', true); unlockUI(); return; }
+      if (!message)        { setStatus('bulk-status', 'Skriv ett meddelande.', true); unlockUI(); return; }
 
       setStatus('bulk-status', '⏳ Skickar...', false);
       try {
@@ -3169,9 +3217,9 @@
           formType
         });
         setStatus('bulk-status', `✓ Skickade till ${result.sent} personer!`, false);
-        unlockUI(btn);
+        unlockUI();
         setTimeout(() => { hideBulkRequestForm(); loadInbox(); }, 1500);
-      } catch(err) { setStatus('bulk-status', err.message, true); unlockUI(btn); }
+      } catch(err) { setStatus('bulk-status', err.message, true); unlockUI(); }
     }
 
     function setTrendPeriod(period) {
