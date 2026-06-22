@@ -614,7 +614,7 @@
         </div>
       </div>
       <!-- Grafer -->
-      <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:24px;" id="stat-charts">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;" id="stat-charts">
         <div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;">
           <div style="font-weight:bold;font-size:16px;color:#2a1f18;margin-bottom:12px;">Bedömningar över tid</div>
           <canvas id="chart-line" height="220"></canvas>
@@ -831,24 +831,15 @@
         <div class="field"><label class="field-label">Innehåll</label>
           <div style="background:#fff;border:1px solid #d8cfc5;border-radius:6px;padding:10px 14px;">
             <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-bottom:6px;">
-              <input type="checkbox" id="sch-content-sent" checked> Registrerade bedömningar (per formulärtyp)
+              <input type="checkbox" id="sch-content-sent" checked> Registrerade bedömningar (personens egna)
             </label>
             <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-bottom:6px;">
-              <input type="checkbox" id="sch-content-received" checked> Mottagna bedömningar (per formulärtyp)
+              <input type="checkbox" id="sch-content-received" checked> Mottagna bedömningar
             </label>
             <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-bottom:6px;">
-              <input type="checkbox" id="sch-content-formtypes" checked> Formulärfördelning (personens egna)
-            </label>
-            <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-bottom:6px;">
-              <input type="checkbox" id="sch-content-sent-to"> Skickat bedömningar till (per person)
-            </label>
-            <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;">
-              <input type="checkbox" id="sch-content-received-from"> Mottagit bedömningar av (per person)
+              <input type="checkbox" id="sch-content-formtypes" checked> Formulärfördelning (personens egna bedömningar)
             </label>
           </div>
-        </div>
-        <div class="field"><label class="field-label">Tidsperiod (veckor bakåt)</label>
-          <input type="number" id="sch-period" value="1" min="1" max="52" style="width:90px;font-size:15px;padding:8px;border:1.5px solid #c4b8ac;border-radius:6px;background:#f5f1ec;">
         </div>
 
         <div class="field"><label class="field-label">Mottagargrupp</label>
@@ -1055,7 +1046,7 @@
   </div><!-- /app -->
 
   <script>
-    const APP_VERSION = 'v3.9.1';
+    const APP_VERSION = 'v3.9.0';
 
     let appData = null;
     let currentUser = null;
@@ -1154,19 +1145,6 @@
 
     // ── Boot ─────────────────────────────────────────────────────
     window.onload = async function() {
-      // Cache-busting: rensa localStorage om APP_VERSION har ändrats sedan sist
-      const storedVersion = localStorage.getItem('dops_deployed_version');
-      if (storedVersion && storedVersion !== APP_VERSION) {
-        const msg = document.createElement('div');
-        msg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#3d5c4a;color:#f0ede8;text-align:center;padding:14px;font-size:15px;z-index:9999;';
-        msg.textContent = 'Systemet uppdateras till senaste version…';
-        document.body.appendChild(msg);
-        Object.keys(localStorage).forEach(k => { if (k.startsWith('dops_')) localStorage.removeItem(k); });
-        localStorage.setItem('dops_deployed_version', APP_VERSION);
-        setTimeout(() => location.reload(), 800);
-        return;
-      }
-      localStorage.setItem('dops_deployed_version', APP_VERSION);
       // Försök återanvänd cachad appData från förra sessionen
       try {
         const adRaw = localStorage.getItem('dops_appdata');
@@ -2214,10 +2192,7 @@
       const infoEl = document.getElementById('admin-clinic-info');
       infoEl.innerHTML = '<p style="color:#888;">Hämtar...</p>';
       try {
-        const [data, settings] = await Promise.all([
-          api('getClinicInfo', { klinikId }),
-          klinikId !== '*' ? api('getKlinikSettings', { klinikId }) : Promise.resolve({ inaktiveringsMånader: 24 })
-        ]);
+        const data = await api('getClinicInfo', { klinikId });
         let html = '';
         if (data.info) {
           html += '<div class="assessment-card">';
@@ -2228,29 +2203,16 @@
           const toggleLabel = data.info.aktiv === 'Ja' ? 'Stäng tillgång' : 'Aktivera';
           const toggleActive = data.info.aktiv !== 'Ja';
           html += '<div class="btn-row" style="margin-top:12px;"><button class="btn-' + (toggleActive ? 'primary' : 'danger') + ' btn-small" onclick="toggleClinicAccess(\'' + klinikId + '\',' + toggleActive + ')">' + toggleLabel + '</button></div>';
-          // Inaktiveringsgräns
-          const månader = settings?.inaktiveringsMånader || 24;
-          html += '<div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
-          html += '<label style="font-size:14px;color:#6b5c52;">Inaktivera användare efter</label>';
-          html += '<input type="number" id="klinik-inaktiv-månader" value="' + månader + '" min="1" max="120" style="width:70px;padding:6px;border:1.5px solid #c4b8ac;border-radius:5px;font-size:14px;">';
-          html += '<label style="font-size:14px;color:#6b5c52;">månaders inaktivitet</label>';
-          html += '<button class="btn-secondary btn-small" onclick="saveInaktiveringsgräns(\'' + klinikId + '\')">Spara</button>';
-          html += '</div>';
           html += '</div>';
         } else {
           html = '<div class="assessment-card"><strong>' + (klinikId === '*' ? 'Alla kliniker' : klinikId) + '</strong></div>';
         }
         infoEl.innerHTML = html;
-        allAdminUsers = data.users || [];
+        allAdminUsers = data.users;
         filterAdminUsers();
       } catch(err) {
         infoEl.innerHTML = '<p class="status-err">' + err.message + '</p>';
       }
-    }
-
-    async function saveInaktiveringsgräns(klinikId) {
-      const månader = parseInt(document.getElementById('klinik-inaktiv-månader')?.value) || 24;
-      await api('saveKlinikSettings', { klinikId, settings: { inaktiveringsMånader: månader } });
     }
 
     async function toggleClinicAccess(klinikId, active) {
@@ -2274,11 +2236,10 @@
         const card = document.createElement('div');
         card.className = 'assessment-card';
         card.style.cssText = 'margin-top:10px; cursor:pointer;';
-        card.innerHTML = '<div style="font-weight:bold;font-size:16px;">' + esc(u.firstName) + ' ' + esc(u.lastName)
-          + (u.inaktiverad ? ' <span style="font-size:12px;background:#f0d8d0;color:#9e2a18;padding:2px 6px;border-radius:8px;">Inaktiverad</span>' : '') + '</div>'
+        card.innerHTML = '<div style="font-weight:bold;font-size:16px;">' + esc(u.firstName) + ' ' + esc(u.lastName) + '</div>'
           + '<div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + esc(u.email) + '</div>'
           + '<div style="font-size:14px;margin-top:4px;">' + esc(u.jobRole) + ' · ' + esc(u.clinic) + ' · ' + esc(u.userRole) + '</div>'
-          + (u.senastAktiv ? '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">Senast aktiv: ' + esc(u.senastAktiv) + '</div>' : '');
+          + '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">' + esc(u.userRole || '') + '</div>';
         card.onclick = () => openUserEdit(u);
         el.appendChild(card);
       });
@@ -2519,14 +2480,14 @@
         if (lineChart) lineChart.destroy();
         const lineCtx = document.getElementById('chart-line').getContext('2d');
         lineChart = new Chart(lineCtx, {
-          type: 'bar',
-          data: { labels: Object.values(rawByMonth).map(m => m.label), datasets: areaDatasets.map(d => ({ ...d, fill: undefined, tension: undefined, pointRadius: undefined })) },
+          type: 'line',
+          data: { labels: Object.values(rawByMonth).map(m => m.label), datasets: areaDatasets },
           options: {
             responsive: true, maintainAspectRatio: true,
             plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } },
             scales: {
               y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } },
-              x: { stacked: true, grid: { color: '#d8cfc5' } }
+              x: { grid: { color: '#d8cfc5' } }
             }
           }
         });
@@ -3142,7 +3103,7 @@
         <div style="font-size:11px;color:#9e8e82;margin-top:2px;">${count6m} / ${goal} senaste 6 mån <span style="color:${color};">${count6m >= goal ? '✓' : ''}</span></div>`;
       }
 
-      function renderFormGroup(title, forms, subGoals, is6mForms, role) {
+      function renderFormGroup(title, forms, subGoals, is6mForms) {
         if (!Object.keys(forms).length) return '';
         let s = `<div class="section-header" style="margin-top:24px;">${title}</div>`;
         s += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:14px;margin-top:14px;max-width:600px;">';
@@ -3158,7 +3119,7 @@
             const count6m = is6mForms?.[ft] || 0;
             const color   = v.goal ? (count6m >= v.goal ? '#4a9e62' : count6m > 0 ? '#c8a96e' : '#9e2a18') : '#6b5c52';
             // Klickbar rad → Mina bedömningar med filter
-            s += `<div style="display:flex;align-items:center;gap:10px;padding:3px 0 3px 14px;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}','${role||'received'}')">`;
+            s += `<div style="display:flex;align-items:center;gap:10px;padding:3px 0 3px 14px;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}')">`;
             s += `<div style="font-size:14px;color:#6b5c52;flex:1;">${esc(subName)}</div>`;
             s += `<div style="flex:2;max-width:160px;">${goalBar(count6m, v.count, v.goal)}</div>`;
             s += `<div style="font-size:16px;font-weight:bold;color:${color};min-width:28px;text-align:right;">${v.count}</div>`;
@@ -3170,7 +3131,7 @@
           const count6m = is6mForms?.[ft] || 0;
           const color = v.goal ? (count6m >= v.goal ? '#4a9e62' : count6m > 0 ? '#c8a96e' : '#9e2a18') : '#3d5c4a';
           if (idx > 0) s += '<div style="height:1px;background:#d8cfc5;margin:10px 0;"></div>';
-          s += `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}','${role||'received'}')">`;
+          s += `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}')">`;
           s += `<div style="font-size:15px;font-weight:bold;min-width:140px;color:#2a1f18;">${esc(ft)}</div>`;
           s += '<div style="flex:1;">' + goalBar(count6m, v.count, v.goal) + '</div>';
           s += `<div style="font-size:18px;font-weight:bold;color:${color};min-width:32px;text-align:right;">${v.count}</div>`;
@@ -3191,11 +3152,11 @@
           html += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
         });
         html += '</div>';
-        html += '<div style="position:relative;width:100%;height:220px;"><canvas id="overview-chart"></canvas></div></div>';
+        html += '<canvas id="overview-chart" height="160"></canvas></div>';
       }
 
-      if (showReceived) html += renderFormGroup('Mottagna bedömningar',     data.received, data.subGoals, rec6m, 'received');
-      if (showSent)     html += renderFormGroup('Registrerade bedömningar', data.sent,     data.subGoals, sent6m, 'sent');
+      if (showReceived) html += renderFormGroup('Mottagna bedömningar',     data.received, data.subGoals, rec6m);
+      if (showSent)     html += renderFormGroup('Registrerade bedömningar', data.sent,     data.subGoals, sent6m);
 
       el.innerHTML = html;
 
@@ -3220,12 +3181,12 @@
           window._overviewChartData = { months, allMonthKeys, ftByMonth, allFtRaw, showSent, showReceived };
           if (window._overviewChart) window._overviewChart.destroy();
           window._overviewChart = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: allMonthKeys.map(mk => ftByMonth[mk]?.label || mk), datasets: datasets.map(d => ({ ...d, fill: undefined, tension: undefined, pointRadius: undefined })) },
+            type: 'line',
+            data: { labels: allMonthKeys.map(mk => ftByMonth[mk]?.label || mk), datasets },
             options: {
-              responsive: true, maintainAspectRatio: false,
+              responsive: true, maintainAspectRatio: true,
               plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } },
-              scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { stacked: true, grid: { color: '#d8cfc5' } } }
+              scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { grid: { color: '#d8cfc5' } } }
             }
           });
         }
@@ -3328,7 +3289,6 @@
             <div style="font-size:13px;color:#6b5c52;margin-top:4px;">${esc(dagLabel)} ${tidLabel} · ${s.mottagare.length} mottagare</div>
             <div style="margin-top:8px;display:flex;gap:8px;">
               <button class="btn-secondary btn-small" onclick='editSchedule(${JSON.stringify(s).replace(/'/g,"&#39;")})'>Redigera</button>
-              <button class="btn-secondary btn-small" onclick="toggleSchedule('${s.id}')">${s.aktiv ? 'Pausa' : 'Aktivera'}</button>
               <button class="btn-secondary btn-small" onclick="deleteScheduleById('${s.id}')">Ta bort</button>
             </div>
           </div>`;
@@ -3350,15 +3310,9 @@
       const sc = document.getElementById('sch-content-sent');
       const rc = document.getElementById('sch-content-received');
       const fc = document.getElementById('sch-content-formtypes');
-      const stc = document.getElementById('sch-content-sent-to');
-      const rfc = document.getElementById('sch-content-received-from');
-      if (sc)  sc.checked  = innehall.includes('sent');
-      if (rc)  rc.checked  = innehall.includes('received');
-      if (fc)  fc.checked  = innehall.includes('formtypes');
-      if (stc) stc.checked = innehall.includes('sent_to');
-      if (rfc) rfc.checked = innehall.includes('received_from');
-      const pEl = document.getElementById('sch-period');
-      if (pEl) pEl.value = existing?.periodVeckor || 1;
+      if (sc) sc.checked = innehall.includes('sent');
+      if (rc) rc.checked = innehall.includes('received');
+      if (fc) fc.checked = innehall.includes('formtypes');
       // Klinikval
       const klinikSel = document.getElementById('sch-klinik');
       if (klinikSel) {
@@ -3412,13 +3366,10 @@
     async function saveSchedule() {
       const mottagare = [...document.querySelectorAll('#sch-recipients input:checked')].map(cb => cb.value);
       const innehall = [
-        document.getElementById('sch-content-sent')?.checked          ? 'sent'           : '',
-        document.getElementById('sch-content-received')?.checked      ? 'received'       : '',
-        document.getElementById('sch-content-formtypes')?.checked     ? 'formtypes'      : '',
-        document.getElementById('sch-content-sent-to')?.checked       ? 'sent_to'        : '',
-        document.getElementById('sch-content-received-from')?.checked ? 'received_from'  : '',
+        document.getElementById('sch-content-sent')?.checked      ? 'sent'      : '',
+        document.getElementById('sch-content-received')?.checked  ? 'received'  : '',
+        document.getElementById('sch-content-formtypes')?.checked ? 'formtypes' : '',
       ].filter(Boolean).join(',');
-      const periodVeckor = parseInt(document.getElementById('sch-period')?.value) || 1;
       const schedule = {
         id: _currentScheduleId || undefined,
         namn:        document.getElementById('sch-namn').value.trim(),
@@ -3426,7 +3377,7 @@
         mottagarTyp: document.getElementById('sch-typ').value,
         dag:         document.getElementById('sch-dag').value,
         tid:         document.getElementById('sch-tid').value,
-        innehall, mottagare, aktiv: true, periodVeckor
+        innehall, mottagare, aktiv: true
       };
       if (!schedule.namn) { setStatus('sch-status', 'Ange ett namn.', true); return; }
       if (!mottagare.length) { setStatus('sch-status', 'Välj minst en mottagare.', true); return; }
@@ -3437,9 +3388,7 @@
       } catch(err) { setStatus('sch-status', err.message, true); }
     }
 
-    async function toggleSchedule(id) {
-      try { await api('toggleScheduleActive', { id }); loadSchedules(); } catch(e) {}
-    }
+    async function deleteScheduleById(id) {
       if (!confirm('Ta bort detta schema?')) return;
       await api('deleteScheduledEmail', { id });
       loadSchedules();
@@ -3648,12 +3597,12 @@
         tension: 0.3, fill: true, pointRadius: 2,
       }));
       window._overviewChart = new Chart(ctx, {
-        type: 'bar',
-        data: { labels: filteredKeys.map(mk => d.ftByMonth?.[mk]?.label || mk), datasets: datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })) },
+        type: 'line',
+        data: { labels: filteredKeys.map(mk => d.ftByMonth?.[mk]?.label || mk), datasets },
         options: {
-          responsive: true, maintainAspectRatio: false,
+          responsive: true, maintainAspectRatio: true,
           plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } },
-          scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { stacked: true, grid: { color: '#d8cfc5' } } }
+          scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { grid: { color: '#d8cfc5' } } }
         }
       });
     }
@@ -3677,9 +3626,9 @@
 
     let _pendingFormFilter = null; // sätts av navigateToAssessments, läses av updateFormTypeFilters
 
-    function navigateToAssessments(formType, role) {
+    function navigateToAssessments(formType) {
       _pendingFormFilter = formType;
-      currentAssessmentRole = role || 'received';
+      currentAssessmentRole = 'received';
       showPanel('my-assessments');
     }
 
