@@ -274,7 +274,7 @@
       .ans-section { font-size: 15px; }
       .ans-row { font-size: 15px; }
       .filter-chip { font-size: 15px; padding: 8px 14px; }
-      #chart-line, #chart-pie { min-height: 280px; }
+      #chart-line, #chart-pie { height: 250px !important; max-height: 250px !important; }
     }
   </style>
 
@@ -370,17 +370,13 @@
         <label class="field-label">Ort *</label>
         <select id="reg-location" onchange="updateClinicDropdown()">
           <option value="">-- Välj ort --</option>
-          <option value="__new__">+ Ny ort</option>
         </select>
-        <input type="text" id="reg-location-new" class="hidden" placeholder="Ange ort" style="margin-top:6px;">
       </div>
       <div class="field">
         <label class="field-label">Klinik *</label>
-        <select id="reg-clinic" onchange="checkNewClinic()">
+        <select id="reg-clinic">
           <option value="">-- Välj klinik --</option>
-          <option value="__new__">+ Ny klinik</option>
         </select>
-        <input type="text" id="reg-clinic-new" class="hidden" placeholder="Ange kliniknamn" style="margin-top:6px;">
       </div>
       <div class="field">
         <label class="field-label">Användarroll *</label>
@@ -446,6 +442,7 @@
           <button class="sidebar-btn" id="nav-btn-my-assessments" onclick="showPanel('my-assessments')">
             Mina bedömningar <span id="my-assessments-badge" class="hidden" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
           </button>
+          <button class="sidebar-btn hidden" id="nav-btn-progress" onclick="showPanel('progress')">Min progress</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')">Kliniköversikt</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')">Förfrågningsöversikt</button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')">Administration</button>
@@ -545,9 +542,7 @@
           <div id="confirm-time-this" style="font-size:22px;font-weight:bold;color:#3d5c4a;"></div>
           <div id="confirm-time-total" style="font-size:14px;color:#6b5c52;margin-top:8px;padding-top:8px;border-top:1px solid #d8cfc5;"></div>
           <div id="confirm-time-context" style="font-size:13px;color:#9e8e82;margin-top:4px;font-style:italic;"></div>
-          <div id="confirm-ai-sig" style="display:none;font-size:11px;color:#9e8e82;margin-top:6px;padding:4px 8px;background:#ede8e2;border-radius:4px;display:inline-flex;align-items:center;gap:4px;">
-            <span style="color:#c8a070;">✦</span> Genererat av Claude Haiku (AI)
-          </div>
+
         </div>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
           <button class="btn-primary" onclick="showPanel('assessment')">Ny bedömning</button>
@@ -560,6 +555,7 @@
 
     <div id="panel-my-assessments" class="hidden">
       <h2>Mina bedömningar</h2>
+      <div id="assessment-swr-status" style="min-height:18px;margin-bottom:6px;"></div>
       <!-- Åtgärdsrad: tabbar + filtrerknapp alltid synlig -->
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
         <button class="btn-primary"   id="tab-received" onclick="setAssessmentTab('received')">Mottagna</button>
@@ -589,13 +585,13 @@
         <button class="btn-secondary btn-small" id="filter-toggle-btn" onclick="toggleAssessmentFilter()">⚙ Filtrera</button>
         <span id="selected-count" style="font-size:13px;color:#6b5c52;margin-left:auto;"></span>
       </div>
-      <div id="assessment-swr-status" style="margin-bottom:6px;min-height:18px;"></div>
       <div id="my-assessments-list"></div>
       <div id="export-status" style="margin-top:12px;"></div>
     </div>
     <!-- ── STATISTICS ───────────────────────────────────────────── -->
     <div id="panel-statistics" class="hidden">
       <h2>Klinikens statistik</h2>
+      <div id="statistics-swr-status" style="min-height:18px;margin-bottom:4px;"></div>
       <div id="stat-klinik-row" class="hidden" style="margin-bottom:14px;">
         <label class="field-label">Klinik</label>
         <select id="stat-klinik-select" style="max-width:300px;" onchange="loadStatistics()">
@@ -630,7 +626,6 @@
           <canvas id="chart-pie" height="220"></canvas>
         </div>
       </div>
-      <div id="statistics-swr-status" style="min-height:18px;margin-bottom:4px;"></div>
       <div id="statistics-content"></div>
     </div>
     <div id="panel-documents" class="hidden">
@@ -640,6 +635,32 @@
     </div>
 
     <!-- ── ABOUT ─────────────────────────────────────────────────── -->
+
+    <!-- ── MIN PROGRESS / PROGRESS ──────────────────────────────────────── -->
+    <div id="panel-progress" class="hidden">
+      <h2 id="progress-title">Min progress</h2>
+      <div id="progress-recipient-row" class="hidden field" style="max-width:400px;margin-bottom:12px;">
+        <label class="field-label">Läkare</label>
+        <select id="progress-recipient" onchange="onProgressRecipientChange()" style="width:100%;"></select>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;">
+        <div class="field" style="flex:1 1 200px;max-width:320px;margin:0;">
+          <label class="field-label">Formulärtyp</label>
+          <select id="progress-formtype" onchange="loadProgressData()" style="width:100%;"></select>
+        </div>
+        <div class="field" style="min-width:140px;margin:0;">
+          <label class="field-label">Från</label>
+          <input type="date" id="progress-from" onchange="loadProgressData()" style="width:100%;">
+        </div>
+        <div class="field" style="min-width:140px;margin:0;">
+          <label class="field-label">Till</label>
+          <input type="date" id="progress-to" onchange="loadProgressData()" style="width:100%;">
+        </div>
+      </div>
+      <div id="progress-swr-status" style="min-height:20px;margin-bottom:4px;"></div>
+      <div id="progress-content"></div>
+    </div>
+
     <div id="panel-about" class="hidden">
       <h2>Om MoraDOPS</h2>
       <div style="max-width:720px;">
@@ -801,8 +822,26 @@
 
     <!-- ── REQUEST STATS ────────────────────────────────────────── -->
     <div id="panel-request-stats" class="hidden">
-      <h2>Förfrågningsöversikt</h2>
-      <div id="reqstat-content"><p style="color:#888;">Laddar...</p></div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:0;">
+        <h2 style="margin:0;">Förfrågningsöversikt</h2>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#6b5c52;">
+          <label for="expiry-select">Inaktuella efter</label>
+          <select id="expiry-select" style="font-size:13px;padding:3px 6px;border:1px solid #d8cfc5;border-radius:4px;background:#f5f1ec;" onchange="saveRequestExpiry(this.value)">
+            <option value="0">Ingen gräns</option>
+            <option value="1">1 vecka</option>
+            <option value="2">2 veckor</option>
+            <option value="3">3 veckor</option>
+            <option value="4">4 veckor</option>
+            <option value="5">5 veckor</option>
+            <option value="6">6 veckor</option>
+            <option value="7">7 veckor</option>
+            <option value="8">8 veckor</option>
+            <option value="9">9 veckor</option>
+            <option value="10">10 veckor</option>
+          </select>
+        </div>
+      </div>
+      <div id="reqstat-content" style="margin-top:16px;"></div>
     </div>
 
     <!-- ── PÅMINNELSER ───────────────────────────────────────────── -->
@@ -885,6 +924,7 @@
     <!-- ── INBOX ────────────────────────────────────────────────── -->
     <div id="panel-inbox" class="hidden">
       <h2>Förfrågningar</h2>
+      <div id="inbox-swr-status" style="min-height:18px;margin-bottom:6px;"></div>
       <div style="display:flex;gap:10px;margin-bottom:16px;">
         <button class="btn-primary"   id="inbox-tab-inbox"  onclick="setInboxTab('inbox')">Mottagna</button>
         <button class="btn-secondary" id="inbox-tab-outbox" onclick="setInboxTab('outbox')">Skickade</button>
@@ -957,7 +997,6 @@
         <div id="bulk-status"></div>
       </div>
 
-      <div id="inbox-swr-status" style="min-height:18px;margin-bottom:4px;"></div>
       <div id="inbox-list"></div>
     </div>
 
@@ -1066,7 +1105,7 @@
   </div><!-- /app -->
 
   <script>
-    const APP_VERSION = 'v3.9.5';
+    const APP_VERSION = 'v3.12.10';
 
     let appData = null;
     let currentUser = null;
@@ -1090,18 +1129,32 @@
 
     function _bk(key) { return (currentUser?.email || '__anon__') + ':' + key; }
     function bgGet(key) { const e = _bgCache[_bk(key)]; return (e && Date.now()-e.ts < BG_TTL) ? e.data : null; }
+    function bgAge(key) { const e = _bgCache[_bk(key)]; return e ? Date.now()-e.ts : Infinity; }
     function bgSet(key, data) { _bgCache[_bk(key)] = { data, ts: Date.now() }; }
     function bgInvalidate(key) { delete _bgCache[_bk(key)]; }
+    const SWR_FRESH_MS = 60 * 1000; // hoppa revalidering om cachen är yngre än detta
+    // Markera inaktuell: behåll innehållet (visas direkt) men tvinga revalidering vid nästa vy
+    function bgMarkStale(key) { const e = _bgCache[_bk(key)]; if (e) e.ts = Date.now() - SWR_FRESH_MS - 1000; }
+    function bgMarkStalePrefix(prefix) {
+      const p = (currentUser?.email || '__anon__') + ':' + prefix;
+      const t = Date.now() - SWR_FRESH_MS - 1000;
+      Object.keys(_bgCache).forEach(k => { if (k.startsWith(p) && _bgCache[k]) _bgCache[k].ts = t; });
+    }
 
     // ── Stale-while-revalidate ────────────────────────────────────────────
     async function swr(cacheKey, fetchFn, renderFn, statusEl, diffFn) {
       const cached = bgGet(cacheKey);
       if (cached) {
         renderFn(cached);
+        // Färsk nog (nyss förladdad) → hoppa revalidering, spara en request
+        if (bgAge(cacheKey) < SWR_FRESH_MS) {
+          if (statusEl) statusEl.innerHTML = '';
+          return;
+        }
         if (statusEl) statusEl.innerHTML =
           '<span style="font-size:12px;color:#b0a090;display:flex;align-items:center;gap:5px;">' +
           '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>' +
-          'Söker…</span>';
+          'Söker efter uppdateringar…</span>';
         try {
           const fresh = await fetchFn();
           const changed = JSON.stringify(fresh) !== JSON.stringify(cached);
@@ -1117,14 +1170,16 @@
           }
         } catch(e) { if (statusEl) statusEl.innerHTML = ''; }
       } else {
-        if (statusEl) statusEl.innerHTML = '';
+        if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Hämtar innehåll…</span>';
         try {
           const fresh = await fetchFn();
           bgSet(cacheKey, fresh);
           renderFn(fresh);
         } catch(e) {
           if (statusEl) statusEl.innerHTML = `<p class="status-err">Kunde inte hämta data: ${esc(e.message)}</p>`;
+          return;
         }
+        if (statusEl) statusEl.innerHTML = '';
       }
     }
 
@@ -1172,8 +1227,10 @@
         msg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#3d5c4a;color:#f0ede8;text-align:center;padding:14px;font-size:15px;z-index:9999;';
         msg.textContent = 'Systemet uppdateras till senaste version…';
         document.body.appendChild(msg);
+        const _savedUser = localStorage.getItem('dops_user'); // bevaras genom uppdatering
         Object.keys(localStorage).forEach(k => { if (k.startsWith('dops_')) localStorage.removeItem(k); });
         localStorage.setItem('dops_deployed_version', APP_VERSION);
+        if (_savedUser) localStorage.setItem('dops_user', _savedUser);
         setTimeout(() => location.reload(), 800);
         return;
       }
@@ -1304,6 +1361,14 @@
       if (remindersBtn) remindersBtn.classList.toggle('hidden', !hasPriv);
       if (adminBtn)  adminBtn.classList.toggle('hidden', !isAdmin);
       if (docsBtn)   docsBtn.classList.toggle('hidden', !isAdmin);
+      // Progresssida: Mottagare, Blandbild samt Studierektor
+      const progressBtn = document.getElementById('nav-btn-progress');
+      const _role = currentUser?.userRole || '';
+      const showProgress = (_role === 'Mottagare' || _role === 'Blandbild') || privilege === 'Studierektor';
+      if (progressBtn) {
+        progressBtn.classList.toggle('hidden', !showProgress);
+        progressBtn.textContent = privilege === 'Studierektor' ? 'Progress' : 'Min progress';
+      }
 
       // Dölj vanliga registrerarpaneler för privilegierade roller
       const regularPanels = ['nav-btn-inbox','nav-btn-assessment','nav-btn-overview','nav-btn-my-assessments'];
@@ -1441,8 +1506,8 @@
         radio.closest('label').classList.toggle('disabled-option', isDisabled);
         radio.closest('label').style.opacity = '';
       });
-      // Visa f4 och f5 direkt, men Till bedömning-knappen döljs till mottagare valts
-      show('f4', true);
+      // Stegvis: f4 och f5 dolda tills resp. föregående fält fyllts
+      show('f4', false);
       show('f5', false);
       show('f-till-bedomning', false);
       updateTillBedomningBtn();
@@ -1470,7 +1535,7 @@
       const category = document.querySelector('input[name="category"]:checked')?.value;
       const sel = document.getElementById('recipient');
       sel.innerHTML = '<option value="">-- Välj mottagare --</option>';
-      show('f4', true); show('f5', !!category); show('f6-container', false); show('submit-btn', false);
+      show('f4', !!category); show('f5', false); show('f6-container', false); show('submit-btn', false);
       const group = document.getElementById('form-type-group');
       group.innerHTML = '';
       const checkedFormType = document.querySelector('input[name="formtype"]:checked')?.value;
@@ -1498,9 +1563,8 @@
     }
 
     function updateFormTypes() {
-      // Mottagare vald – visa f5 och Till bedömning-knappen
+      // Mottagare vald – visa f5; knappen hanteras av updateTillBedomningBtn
       show('f5', true);
-      show('f-till-bedomning', true);
       show('f6-container', false);
       show('submit-btn', false);
       updateTillBedomningBtn();
@@ -1510,8 +1574,10 @@
       const category  = document.querySelector('input[name="category"]:checked')?.value;
       const recipient = document.getElementById('recipient').value;
       const formType  = document.querySelector('input[name="formtype"]:checked')?.value;
+      const ready = !!(category && recipient && formType);
       const btn = document.getElementById('till-bedomning-btn');
-      if (btn) btn.disabled = !(category && recipient && formType);
+      if (btn) btn.disabled = !ready;
+      show('f-till-bedomning', ready);
     }
 
     function tillBedomning() {
@@ -1753,7 +1819,12 @@
         const recipientEmail = await api('getRecipientEmail', { recipientFullName: recipient });
         const recipientName  = recipient.split(' -- ')[0];
         const registrarName  = `${currentUser.firstName} ${currentUser.lastName}`;
-        const result = await api('saveAnswers', { answerList, recipientEmail, recipientName, registrarName, formType, startTime: window._formStartTime || null });
+        const result = await api('saveAnswers', { answerList, recipientEmail, recipientName, registrarName, formType, registrarEmail: currentUser.email, startTime: window._formStartTime || null });
+        // Markera berörda cachar inaktuella: innehåll visas direkt, revalidering hämtar nya bedömningen
+        bgMarkStale('myOverview');
+        bgMarkStale('myAssessments_sent');
+        bgMarkStale('myAssessments_received');
+        bgMarkStalePrefix('statistics_');
         // Återställ och gå tillbaka till startvyn
         savedAnswers = {};
         currentFormData = null;
@@ -1878,8 +1949,7 @@
         );
         return;
       }
-      if (statusEl) statusEl.innerHTML = '';
-      document.getElementById('my-assessments-list').innerHTML = '<p style="color:#888">Hämtar...</p>';
+      if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#9e8e82;">Söker efter uppdateringar…</span>';
       document.getElementById('select-all').checked = false;
       show('assessment-actions', false);
       try {
@@ -1889,6 +1959,8 @@
         updateFormTypeFilters(assessments);
       } catch(err) {
         document.getElementById('my-assessments-list').innerHTML = `<p class="status-err">${err.message}</p>`;
+      } finally {
+        if (statusEl) statusEl.innerHTML = '';
       }
     }
 
@@ -1922,14 +1994,6 @@
       }
     }
     function renderAssessments(assessments, role) {
-      // Förinställ datumfilter vid första laddning
-      const fromEl = document.getElementById('filter-date-from');
-      const toEl   = document.getElementById('filter-date-to');
-      if (fromEl && !fromEl.value && assessments.length) {
-        const earliest = assessments.map(a => a.timestamp).sort()[0];
-        if (earliest) fromEl.value = earliest.slice(0, 10);
-      }
-      if (toEl && !toEl.value) toEl.value = new Date().toISOString().slice(0, 10);
       const list = document.getElementById('my-assessments-list');
       if (!assessments.length) {
         list.innerHTML = '<p style="color:#888">Inga bedömningar hittades.</p>';
@@ -2041,7 +2105,7 @@
         formTypes: [...document.querySelectorAll('#co-formtypes input:checked')].map(cb => cb.value)
       };
       const list = document.getElementById('co-list');
-      list.innerHTML = '<p style="color:#888;">Hämtar bedömningar...</p>';
+      list.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
       show('co-select-wrap', false);
       try {
         const assessments = await api('getClinicAssessments', { klinikId, filters });
@@ -2191,7 +2255,7 @@
     async function loadAdminPanel() {
       showClinicList();
       const el = document.getElementById('admin-clinic-list');
-      el.innerHTML = '<p style="color:#888;">Hämtar kliniker...</p>';
+      el.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
       try {
         // Hämta alltid alla användare för admin (filtrera lokalt)
         const result = await api('getAllUsers', { klinikId: '*' });
@@ -2259,7 +2323,7 @@
       show('admin-clinic-view', false);
       show('admin-detail-view', true);
       const infoEl = document.getElementById('admin-clinic-info');
-      infoEl.innerHTML = '<p style="color:#888;">Hämtar...</p>';
+      infoEl.innerHTML = '';
       try {
         const [data, settings] = await Promise.all([
           api('getClinicInfo', { klinikId }),
@@ -2370,7 +2434,7 @@
 
     async function loadUserPrivileges(email) {
       const el = document.getElementById('edit-privileges-list');
-      el.innerHTML = '<span style="color:#888;font-size:14px;">Hämtar...</span>';
+      el.innerHTML = '';
       try {
         const privs = await api('getPrivilegesForUser', { targetEmail: email });
         if (!privs.length) { el.innerHTML = '<span style="color:#888;font-size:14px;">Inga privilegier</span>'; return; }
@@ -2441,7 +2505,7 @@
 
     async function loadDocuments() {
       const el = document.getElementById('documents-list');
-      el.innerHTML = '<p style="color:#888;">Hämtar dokument...</p>';
+      el.innerHTML = '';
       try {
         const docs = await api('getDocuments');
         if (!docs.length) { el.innerHTML = '<p style="color:#888;">Inga dokument tillgängliga ännu.</p>'; return; }
@@ -2472,7 +2536,7 @@
         if (!chart._selDs) chart._selDs = new Set();
         const sel = chart._selDs;
         if (sel.size === 0) {
-          sel.add(i)
+          sel.add(i);
           chart.data.datasets.forEach((_, j) => chart.setDatasetVisibility(j, j === i));
         } else if (sel.has(i)) {
           sel.delete(i);
@@ -2487,11 +2551,10 @@
       };
     }
 
-    // Mobil: koppla touchstart på canvasen till legend-klick via Chart.js plugin API
+    // Mobil: koppla touchend på canvasen till legend-klick via Chart.js plugin API
     function attachLegendTouch(chart) {
-      chart.canvas.addEventListener('touchstart', function(ev) {
-        ev.preventDefault();
-        const touch = ev.touches[0];
+      chart.canvas.addEventListener('touchend', function(ev) {
+        const touch = ev.changedTouches[0];
         const rect  = chart.canvas.getBoundingClientRect();
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;
@@ -2506,7 +2569,7 @@
             return;
           }
         }
-      }, { passive: false });
+      }, { passive: true });
     }
 
     function aggregateFormTypes(byFormType) {
@@ -2552,7 +2615,7 @@
       const noFilter = !dateFrom && !dateTo && !checkedForms.length;
       const cacheKey = 'statistics_' + effectiveStatKlinik;
 
-      el.innerHTML = '<p style="color:#888;">Hämtar data...</p>';
+      el.innerHTML = '';
       try {
         let stats;
         if (noFilter) {
@@ -2564,6 +2627,7 @@
           );
           return;
         }
+        if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Hämtar innehåll…</span>';
         stats = await api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik });
         renderStatistics(stats, checkedForms);
       } catch(err) {
@@ -2638,7 +2702,7 @@
         pieChart = new Chart(pieCtx, {
           type: 'pie',
           data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#f5f1ec', borderWidth: 2 }] },
-          options: { responsive: true, maintainAspectRatio: !isMobile, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
+          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
         });
 
         // ── Tabeller ──────────────────────────────────────────────
@@ -2817,10 +2881,9 @@
       if (!appData) return;
       const sel = document.getElementById('reg-location');
       if (!sel) return;
-      // Tömmer alltid och fyller på nytt
+      // Tömmer alltid och fyller på nytt (bara befintliga orter — ny ort/klinik ej tillåtet från registreringsskärmen)
       sel.innerHTML = '<option value="">-- Välj ort --</option>';
       appData.locations.forEach(loc => sel.appendChild(newOption(loc, loc)));
-      sel.appendChild(newOption('__new__', '+ Ny ort'));
       // Uppdatera profil-klinik-dropdown också
       const profileSel = document.getElementById('profile-clinic-input');
       if (profileSel && appData.klinikIdMap) {
@@ -2835,33 +2898,22 @@
 
     function updateClinicDropdown() {
       const locVal = document.getElementById('reg-location').value;
-      show('reg-location-new', locVal === '__new__');
       const clinicSel = document.getElementById('reg-clinic');
-      clinicSel.innerHTML = '<option value="">-- Välj klinik --</option><option value="__new__">+ Ny klinik</option>';
-      document.getElementById('reg-clinic-new').classList.add('hidden');
-      if (!locVal || locVal === '__new__') return;
+      clinicSel.innerHTML = '<option value="">-- Välj klinik --</option>';
+      if (!locVal) return;
       appData.clinics
         .filter(c => c.startsWith(locVal + ' - ') || c === locVal)
         .forEach(c => {
           const label = c.includes(' - ') ? c.split(' - ').slice(1).join(' - ') : c;
-          clinicSel.insertBefore(newOption(c, label), clinicSel.options[clinicSel.options.length - 1]);
+          clinicSel.appendChild(newOption(c, label));
         });
-    }
-
-    function checkNewClinic() {
-      show('reg-clinic-new', document.getElementById('reg-clinic').value === '__new__');
     }
 
     async function doRegister() {
       const locVal    = document.getElementById('reg-location').value;
-      const locNew    = document.getElementById('reg-location-new').value.trim();
       const clinicVal = document.getElementById('reg-clinic').value;
-      const clinicNew = document.getElementById('reg-clinic-new').value.trim();
       const pin       = document.getElementById('reg-pin').value.trim();
-      const location  = locVal === '__new__' ? locNew : locVal;
-      const fullClinic = clinicVal === '__new__'
-        ? (location ? `${location} - ${clinicNew}` : clinicNew)
-        : clinicVal;
+      const fullClinic = clinicVal;
       // Hitta klinikId från appData baserat på kliniknamn
       let klinikId = '';
       if (appData && appData.klinikIdMap) {
@@ -2917,6 +2969,275 @@
       renderInbox();
     }
 
+
+    let _progressCharts = [];
+
+    async function initProgress() {
+      const isStudierektor = activePrivilege === 'Studierektor';
+      const titleEl = document.getElementById('progress-title');
+      if (titleEl) titleEl.textContent = isStudierektor ? 'Progress' : 'Min progress';
+      show('progress-recipient-row', isStudierektor);
+
+      // Fyll läkarväljare för studierektor (en gång)
+      if (isStudierektor) {
+        const recSel = document.getElementById('progress-recipient');
+        if (recSel && recSel.options.length === 0) {
+          recSel.innerHTML = '<option value="">-- Välj läkare --</option>';
+          try {
+            const users = await api('getProgressUsers', { klinikId: activeKlinikId || currentUser.klinikId });
+            users.forEach(u => recSel.appendChild(new Option(u.name, u.email)));
+          } catch(e) { console.warn('getProgressUsers:', e); }
+        }
+      }
+
+      // Fyll formulärtypsväljare (en gång)
+      const ftSel = document.getElementById('progress-formtype');
+      if (ftSel && ftSel.options.length === 0) {
+        ftSel.innerHTML = '<option value="">-- Välj formulärtyp --</option>';
+        if (appData && appData.formTypes) {
+          const jobRole = currentUser.jobRole || '';
+          const allForms = [...new Set(Object.values(appData.formTypes).flat())].sort();
+          const forms = isStudierektor || !jobRole
+            ? allForms
+            : (appData.formTypes[jobRole]?.slice().sort() || allForms);
+          forms.forEach(ft => ftSel.appendChild(new Option(ft, ft)));
+        }
+      }
+      loadProgressData();
+    }
+
+    function onProgressRecipientChange() {
+      // Återställ formulärtyp och innehåll när läkare byts
+      const ftSel = document.getElementById('progress-formtype');
+      if (ftSel) ftSel.value = '';
+      document.getElementById('progress-content').innerHTML = '';
+    }
+
+    async function loadProgressData() {
+      const isStudierektor = activePrivilege === 'Studierektor';
+      const recipientEmail = isStudierektor
+        ? (document.getElementById('progress-recipient')?.value || '')
+        : currentUser.email;
+      const formType = document.getElementById('progress-formtype')?.value || '';
+      const dateFrom = document.getElementById('progress-from')?.value  || null;
+      const dateTo   = document.getElementById('progress-to')?.value    || null;
+
+      const el       = document.getElementById('progress-content');
+      const statusEl = document.getElementById('progress-swr-status');
+
+      if (!formType || (isStudierektor && !recipientEmail)) {
+        el.innerHTML = '';
+        if (statusEl) statusEl.innerHTML = '';
+        return;
+      }
+
+      _progressCharts.forEach(c => { try { c.destroy(); } catch(_){} });
+      _progressCharts = [];
+
+      const SPIN = '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>H\u00e4mtar inneh\u00e5ll\u2026</span>';
+      if (statusEl) statusEl.innerHTML = SPIN;
+      el.innerHTML = '';
+
+      try {
+        const data = await api('getProgressData', { recipientEmail, formType, dateFrom, dateTo });
+        if (statusEl) statusEl.innerHTML = '';
+        renderProgress(data);
+      } catch(e) {
+        if (statusEl) statusEl.innerHTML = '';
+        el.innerHTML = `<p class="status-err">${esc(e.message)}</p>`;
+      }
+    }
+
+    function renderProgress({ submissions, formDef }) {
+      const el = document.getElementById('progress-content');
+      if (!submissions || !submissions.length) {
+        el.innerHTML = '<p style="color:#9e8e82;margin-top:8px;">Inga bed\u00f6mningar hittades f\u00f6r valt urval.</p>';
+        return;
+      }
+
+      const sorted = [...submissions].sort((a, b) => new Date(a.ts) - new Date(b.ts));
+      const pendingCharts = [];
+      let html = '';
+
+      formDef.forEach((q, qi) => {
+        if (q.typ === 'skala') {
+          const points = sorted.map(s => {
+            const a = s.answers.find(a => a.question === q.question);
+            return a ? (parseFloat(a.answer) || null) : null;
+          });
+          const valid = points.filter(p => p !== null);
+          const avg = valid.length
+            ? (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(1)
+            : null;
+
+          // Detektera skalans max genom att hitta det högsta talet i beskrivningen
+          const allNums = [...q.beskrivning.matchAll(/(\d+):/g)].map(m => parseInt(m[1]));
+          const minScale = allNums.length ? Math.min(...allNums) : 1;
+          const maxScale = allNums.length ? Math.max(...allNums) : 5;
+
+          // Plocka ut beskrivningar per nivå (ta bort mellannivåer utan text)
+          const descParts = q.beskrivning
+            .split(' | ')
+            .map(p => p.trim())
+            .filter(p => /^\d+:\s*.+/.test(p));
+
+          const canvasId = `pgc_${qi}`;
+          html += `<div style="margin-bottom:24px;background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;max-width:700px;">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+              <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
+              <span style="font-size:12px;color:#9e8e82;">n=${valid.length}</span>
+              ${avg !== null ? `<span style="font-size:13px;color:#3d5c4a;font-weight:bold;">\u00d8\u00a0${avg}</span>` : ''}
+            </div>
+            <div style="position:relative;height:170px;"><canvas id="${canvasId}"></canvas></div>
+            ${descParts.length ? `<div style="margin-top:10px;font-size:11px;color:#9e8e82;line-height:1.6;">${descParts.map(p => esc(p)).join('&nbsp;&nbsp;&bull;&nbsp;&nbsp;')}</div>` : ''}
+          </div>`;
+
+          pendingCharts.push({ canvasId, points, sorted, avg, minScale, maxScale });
+
+        }
+        // fritext hanteras separat nedan (pool-metod)
+      });
+
+      // Fritextpool: samla ALLA icke-numeriska textsvar oavsett frågenamn
+      // (fångar även svar från äldre formulärversioner med andra frågenamn)
+      const _skalaRadioQs = new Set(
+        formDef.filter(q => q.typ === 'skala' || q.typ === 'radio').map(q => q.question.trim().toLowerCase())
+      );
+      const _structuralNames = new Set(['roll','ingrepp','källa','datum','procedur']);
+      const freeTextPool = {};
+      sorted.forEach(s => {
+        s.answers.forEach(a => {
+          if (!a.answer || !a.answer.trim() || a.answer.trim().length < 3) return;
+          const qLower = a.question.trim().toLowerCase();
+          if (_skalaRadioQs.has(qLower)) return;          // hoppa skalafrågor
+          if (_structuralNames.has(qLower)) return;        // hoppa strukturella
+          if (/^\d+(\.\d+)?$/.test(a.answer.trim())) return; // hoppa rena siffror
+          const key = a.question.trim();
+          if (!freeTextPool[key]) freeTextPool[key] = [];
+          freeTextPool[key].push({ ts: s.ts, text: a.answer.trim(), registrar: s.registrar });
+        });
+      });
+
+
+      // Fritextsvar
+      const ftKeys = Object.keys(freeTextPool).filter(k => freeTextPool[k].length);
+      if (ftKeys.length) {
+        html += `<div class="section-header" style="margin-top:4px;margin-bottom:14px;">Fritextsvar</div>`;
+        ftKeys.forEach(question => {
+          html += `<div style="font-weight:bold;font-size:14px;margin:12px 0 6px;">${esc(question)}</div>`;
+          freeTextPool[question].forEach(a => {
+            html += `<div style="background:#fff;border:1.5px solid #d8cfc5;border-radius:8px;padding:10px 14px;margin-bottom:8px;max-width:700px;">
+              <div style="font-size:11px;color:#9e8e82;margin-bottom:4px;">${esc(a.ts)} \u2014 ${esc(a.registrar)}</div>
+              <div style="font-size:14px;">${esc(a.text)}</div>
+            </div>`;
+          });
+        });
+      }
+
+      el.innerHTML = html;
+
+      requestAnimationFrame(() => {
+        pendingCharts.forEach(({ canvasId, points, sorted, avg, minScale, maxScale }) => {
+          const ctx = document.getElementById(canvasId)?.getContext('2d');
+          if (!ctx) return;
+
+          const dataPoints = sorted
+            .map((s, i) => ({ x: new Date(s.ts).getTime(), y: points[i] }))
+            .filter(d => d.y !== null && !isNaN(d.x));
+
+          if (!dataPoints.length) return;
+
+          const avgVal = avg !== null ? parseFloat(avg) : null;
+          const xMin = dataPoints[0].x;
+          const xMax = dataPoints[dataPoints.length - 1].x;
+
+          const datasets = [{
+            label: 'Po\u00e4ng',
+            data: dataPoints,
+            borderColor: '#3d5c4a',
+            backgroundColor: 'rgba(61,92,74,0.07)',
+            fill: true,
+            tension: 0.3,
+            borderWidth: 2,
+            pointBackgroundColor: '#3d5c4a',
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            spanGaps: true
+          }];
+
+          if (avgVal !== null) {
+            datasets.push({
+              label: `Snitt ${avg}`,
+              data: [{ x: xMin, y: avgVal }, { x: xMax, y: avgVal }],
+              borderColor: '#c8a96e',
+              borderDash: [6, 4],
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: false,
+              tension: 0
+            });
+          }
+
+          const chart = new Chart(ctx, {
+            type: 'line',
+            data: { datasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: false,
+              scales: {
+                x: {
+                  type: 'linear',
+                  ticks: {
+                    maxTicksLimit: 7,
+                    font: { size: 11 },
+                    callback: v => {
+                      const d = new Date(v);
+                      return isNaN(d) ? '' : d.toLocaleDateString('sv-SE', { month: 'short', day: 'numeric' });
+                    }
+                  },
+                  grid: { color: 'rgba(0,0,0,0.04)' }
+                },
+                y: {
+                  min: minScale,
+                  max: maxScale,
+                  afterBuildTicks: scale => {
+                    scale.ticks = [];
+                    for (let i = minScale; i <= maxScale; i++) scale.ticks.push({ value: i });
+                  },
+                  ticks: { font: { size: 11 }, callback: v => v },
+                  grid: { color: 'rgba(0,0,0,0.13)', lineWidth: 1 }
+                }
+              },
+              plugins: {
+                legend: {
+                  display: avgVal !== null,
+                  labels: { font: { size: 11 }, boxWidth: 20, padding: 10 }
+                },
+                tooltip: {
+                  callbacks: {
+                    title: items => {
+                      const d = new Date(items[0].parsed.x);
+                      return isNaN(d) ? '' : d.toLocaleDateString('sv-SE', { year: 'numeric', month: 'short', day: 'numeric' });
+                    },
+                    label: item => `Po\u00e4ng: ${item.parsed.y}`
+                  }
+                }
+              }
+            }
+          });
+          _progressCharts.push(chart);
+        });
+      });
+    }
+
+    function saveRequestExpiry(weeks) {
+      const kid = activeKlinikId && activeKlinikId !== '*' ? activeKlinikId : currentUser.klinikId;
+      api('saveKlinikSettings', { klinikId: kid, settings: { requestExpiry: parseInt(weeks) || 0 } })
+        .then(() => { bgInvalidate('inbox_' + currentUser.email); loadInbox(); })
+        .catch(e => console.error('saveRequestExpiry:', e));
+    }
+
     async function loadInboxBadge() {
       try {
         inboxData = await api('getAssessmentRequests', { email: currentUser.email });
@@ -2942,8 +3263,13 @@
       if (notifyChk) notifyChk.checked = currentUser.emailNotify !== false;
       await swr(
         'inbox_' + currentUser.email,
-        () => api('getAssessmentRequests', { email: currentUser.email }),
-        data => { if (data) { inboxData = data; renderInbox(); updateInboxBadge(); } },
+        () => api('getAssessmentRequests', { email: currentUser.email, klinikId: currentUser.klinikId }),
+        data => {
+          if (!data) return;
+          inboxData = data;
+          renderInbox();
+          updateInboxBadge();
+        },
         document.getElementById('inbox-swr-status'),
         (fresh, old) => Math.max(0, (fresh.inbox?.length||0) - (old.inbox?.length||0))
       );
@@ -3251,6 +3577,17 @@
       const userRole = currentUser.userRole;
       let html = '';
 
+      // Tidsramsknappar längst upp — styr både graf och formulärgrupper
+      const months = Object.values(data.byMonth || {});
+      if (months.length > 0) {
+        html += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
+        [['1 vecka',7],['1 månad',30],['3 månader',90],['6 månader',180],['1 år',365],['MAX',0]].forEach(([label, days], i) => {
+          const active = i === 3 ? 'background:#3d5c4a;color:#f0ede8;' : 'background:#d8cfc5;color:#2a1f18;';
+          html += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
+        });
+        html += '</div>';
+      }
+
       // Totalt sparat-banner
       if (data.totalMinutesSaved > 0 && (userRole === 'Registrerare' || userRole === 'Blandbild')) {
         const h = Math.floor(data.totalMinutesSaved / 60), m = data.totalMinutesSaved % 60;
@@ -3273,17 +3610,10 @@
       // renderFormGroup definierad på modul-nivå
 
       // Trendgraf
-      const months = Object.values(data.byMonth || {});
       if (months.length > 0) {
         html += '<div class="section-header">Trend</div>';
         html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;margin-top:14px;max-width:700px;">';
-        html += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
-        [['1 vecka',7],['1 månad',30],['3 månader',90],['6 månader',180],['1 år',365],['MAX',0]].forEach(([label, days], i) => {
-          const active = i === 3 ? 'background:#3d5c4a;color:#f0ede8;' : 'background:#d8cfc5;color:#2a1f18;';
-          html += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
-        });
-        html += '</div>';
-        html += '<div style="position:relative;width:100%;height:220px;"><canvas id="overview-chart"></canvas></div></div>';
+        html += '<div style="position:relative;width:100%;height:' + (window.innerWidth < 600 ? 400 : 220) + 'px;"><canvas id="overview-chart"></canvas></div></div>';
       }
 
       // Initial render med 6-månaders period (periodMonths=0 → label "senaste 6 mån")
@@ -3407,6 +3737,7 @@
     async function loadSchedules() {
       const el = document.getElementById('schedule-list');
       if (!el) return;
+      el.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
       const klinikId = activeKlinikId || currentUser.klinikId || '*';
       try {
         const schedules = await api('getScheduledEmails', { klinikId });
@@ -3549,9 +3880,15 @@
     }
     async function loadRequestStats() {
       const el = document.getElementById('reqstat-content');
-      el.innerHTML = '<p style="color:#888;">Hämtar...</p>';
+      el.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
       try {
-        const data = await api('getRequestStats', { klinikId: activeKlinikId || currentUser.klinikId || '*' });
+        const klinikId = activeKlinikId || currentUser.klinikId || '*';
+        const [data, settings] = await Promise.all([
+          api('getRequestStats', { klinikId }),
+          klinikId !== '*' ? api('getKlinikSettings', { klinikId }) : Promise.resolve({ requestExpiry: 0 })
+        ]);
+        const sel = document.getElementById('expiry-select');
+        if (sel) sel.value = String(settings.requestExpiry || 0);
         renderRequestStats(data);
       } catch(err) {
         el.innerHTML = '<p class="status-err">Fel: ' + esc(err.message) + '</p>';
@@ -3567,6 +3904,7 @@
       html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">';
       html += `<div style="background:#3d5c4a;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">TOTALT</div><div style="font-size:28px;font-weight:bold;">${s.total}</div></div>`;
       html += `<div style="background:#4a9e62;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">UTFÖRDA</div><div style="font-size:28px;font-weight:bold;">${s.done}</div></div>`;
+      if (s.inaktuell) html += `<div style="background:#9e8e82;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">INAKTUELLA</div><div style="font-size:28px;font-weight:bold;">${s.inaktuell}</div></div>`;
       html += `<div style="background:#c8a96e;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">VÄNTANDE</div><div style="font-size:28px;font-weight:bold;">${s.pending}</div></div>`;
       html += '</div>';
 
@@ -3606,8 +3944,8 @@
         html += '<div class="section-header" style="margin-bottom:10px;">Senaste förfrågningar</div>';
         html += '<div style="display:flex;flex-direction:column;gap:8px;">';
         data.requests.slice(0, 20).forEach(r => {
-          const statusColor = r.status === 'Utförd' ? '#4a9e62' : '#c8a96e';
-          const statusText  = r.status === 'Utförd' ? '✓ Utförd' : '⏳ Väntande';
+          const statusColor = r.status === 'Utförd' ? '#4a9e62' : r.status === 'Inaktuell' ? '#9e8e82' : '#c8a96e';
+          const statusText  = r.status === 'Utförd' ? '✓ Utförd' : r.status === 'Inaktuell' ? '✕ Inaktuell' : '⏳ Väntande';
           html += `<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:6px;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
             <div style="flex:1;min-width:180px;">
               <span style="font-weight:bold;">${esc(r.toName)}</span>
@@ -3850,6 +4188,7 @@
       if (!currentUser) return;
       const email    = currentUser.email;
       const klinikId = activeKlinikId || currentUser.klinikId || '*';
+      // Parallella anrop: varje cache-nyckel fylls så snabbt som möjligt (latensen döljs)
       try {
         const [ov, myRec, mySent, stat, inb] = await Promise.allSettled([
           api('getMyOverview',    { email, klinikId: currentUser.klinikId }),
@@ -3859,8 +4198,8 @@
           api('getAssessmentRequests', { email })
         ]);
         if (ov.status    === 'fulfilled') bgSet('myOverview',             ov.value);
-        if (myRec.status === 'fulfilled') bgSet('myAssessments_received', myRec.value);
-        if (mySent.status=== 'fulfilled') bgSet('myAssessments_sent',     mySent.value);
+        if (myRec.status === 'fulfilled' && myRec.value !== undefined) bgSet('myAssessments_received', myRec.value);
+        if (mySent.status=== 'fulfilled' && mySent.value !== undefined) bgSet('myAssessments_sent',     mySent.value);
         if (stat.status  === 'fulfilled') bgSet('statistics_' + klinikId, stat.value);
         if (inb.status   === 'fulfilled') bgSet('inbox_' + email,         inb.value);
       } catch(e) {}
@@ -4147,10 +4486,12 @@
     }
 
     function showSelectionFields() {
-      show('f-intro', true); show('f3', true); show('f4', true);
-      const hasCat = !!document.querySelector('input[name="category"]:checked');
-      show('f5', hasCat); show('f-till-bedomning', false);
-      show('f-till-bedomning', true);
+      show('f-intro', true); show('f3', true);
+      const hasCat  = !!document.querySelector('input[name="category"]:checked');
+      const hasRec  = !!(document.getElementById('recipient')?.value);
+      show('f4', hasCat);
+      show('f5', hasCat && hasRec);
+      show('f-till-bedomning', false);
       show('f6-container', false);
       show('submit-btn', false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4162,10 +4503,10 @@
       // Ta bort loading-overlay vid första showPanel
       const loadingEl = document.getElementById('app-loading');
       if (loadingEl) loadingEl.remove();
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile'].forEach(p =>
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile'].forEach(p => {
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -4201,6 +4542,8 @@
       if (panel === 'overview')          { loadMyOverview(); }
       if (panel === 'inbox')            { loadInbox(); }
       if (panel === 'request-stats')    { loadRequestStats(); }
+      if (panel === 'progress')          { initProgress(); }
+      if (panel !== 'progress') { _progressCharts.forEach(c => { try { c.destroy(); } catch(_){} }); _progressCharts = []; }
     }
 
     function show(id, visible) {
