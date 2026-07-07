@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="format-detection" content="telephone=no">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'><circle cx='22' cy='22' r='17' fill='none' stroke='%232a1f18' stroke-width='2'/><text x='22' y='27' font-family='Arial' font-size='13' font-weight='700' fill='%232a1f18' text-anchor='middle'>MD</text><circle cx='35' cy='35' r='8' fill='%234a9e62'/></svg>">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; }
     html { width: 100%; font-size: 16px; }
@@ -71,27 +72,43 @@
     }
     /* Sidebar layout */
     .app-layout { display: flex; min-height: 100vh; align-items: flex-start; }
-    .sidebar { width: 220px; min-width: 220px; background: #d4ccc4; display: flex; flex-direction: column; padding: 0; border-right: 1.5px solid #c4b8ac; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-    .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 20px 16px 16px; border-bottom: 1.5px solid #c4b8ac; cursor: pointer; }
-    .sidebar-logo-text { font-family: Arial,sans-serif; font-size: 16px; font-weight: 700; color: #2a1f18; }
+    .sidebar { width: 220px; min-width: 220px; background: #1c2b36; display: flex; flex-direction: column; padding: 0; border-right: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; transition: width 0.15s ease, min-width 0.15s ease; }
+    .sidebar.collapsed { width: 56px; min-width: 56px; }
+    .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 16px; border-bottom: 1px solid #2e4a5f; cursor: pointer; position: relative; }
+    .sidebar-logo-text { font-family: Arial,sans-serif; font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; }
+    .sidebar.collapsed .sidebar-logo-text { display: none; }
+    .sidebar.collapsed .sidebar-logo { justify-content: center; padding: 16px 8px; }
+    .sidebar-collapse-toggle { position: absolute; top: 14px; right: 10px; background: none; border: none; color: #9fb2c0; cursor: pointer; font-size: 15px; padding: 2px; line-height: 1; }
+    .sidebar.collapsed .sidebar-collapse-toggle { position: static; margin-top: 8px; }
     .sidebar-nav { display: flex; flex-direction: column; padding: 8px 0; flex: 1; overflow-y: auto; }
-    .sidebar-nav-bottom { display: flex; flex-direction: column; padding: 0 0 4px; border-top: 1px solid #c4b8ac; }
-    .sidebar-btn { display: block; width: 100%; text-align: left; padding: 11px 18px; font-size: 16px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #2a1f18; font-family: Arial,sans-serif; }
-    .sidebar-btn:hover { background: #cfc5b8; }
-    .sidebar-btn.active { background: #3d5c4a; color: #f0ede8; border-left-color: #2a4234; font-weight: bold; }
+    .sidebar-nav-bottom { display: flex; flex-direction: column; padding: 0 0 4px; border-top: 1px solid #2e4a5f; }
+    .sidebar-btn { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 11px 18px; font-size: 15px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #d4dde3; font-family: Arial,sans-serif; }
+    .sidebar-btn i { font-size: 17px; flex-shrink: 0; width: 18px; text-align: center; }
+    .sidebar-btn-label { white-space: nowrap; overflow: hidden; }
+    .sidebar.collapsed .sidebar-btn-label, .sidebar.collapsed .sidebar-btn-badge { display: none; }
+    .sidebar.collapsed .sidebar-btn { justify-content: center; padding: 11px 8px; }
+    .sidebar-btn:hover { background: #24384a; }
+    .sidebar-btn.active { background: #2e4a5f; color: #fff; border-left-color: #5b9bd5; font-weight: bold; }
     .sidebar-btn.hidden { display: none; }
-    .sidebar-footer { padding: 14px 16px; border-top: 1.5px solid #c4b8ac; margin-top: auto; }
-    .sidebar-nav-secondary { border-top: 1px solid #c4b8ac; padding: 6px 0; margin-top: auto; }
-    .sidebar-btn-secondary { display: block; width: 100%; text-align: left; padding: 8px 18px; font-size: 16px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #6b5c52; font-family: Arial,sans-serif; }
-    .sidebar-btn-secondary:hover { background: #cfc5b8; color: #2a1f18; }
-    .sidebar-btn-secondary.active { background: #3d5c4a; color: #f0ede8; border-left-color: #2a4234; font-weight: bold; }
+    .sidebar-footer { padding: 14px 16px; border-top: 1px solid #2e4a5f; margin-top: auto; }
+    .sidebar.collapsed .sidebar-footer { padding: 14px 6px; }
+    .sidebar-nav-secondary { border-top: 1px solid #2e4a5f; padding: 6px 0; margin-top: auto; }
+    .sidebar-btn-secondary { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 18px; font-size: 14px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #9fb2c0; font-family: Arial,sans-serif; }
+    .sidebar-btn-secondary i { font-size: 16px; flex-shrink: 0; width: 18px; text-align: center; }
+    .sidebar.collapsed .sidebar-btn-secondary .sidebar-btn-label, .sidebar.collapsed .sidebar-btn-secondary .sidebar-btn-badge { display: none; }
+    .sidebar.collapsed .sidebar-btn-secondary { justify-content: center; padding: 8px; }
+    .sidebar-btn-secondary:hover { background: #24384a; color: #fff; }
+    .sidebar-btn-secondary.active { background: #2e4a5f; color: #fff; border-left-color: #5b9bd5; font-weight: bold; }
     .sidebar-btn-secondary.hidden { display: none; }
-    .sidebar-divider { height: 1px; background: #c4b8ac; margin: 6px 18px; display: none; }
+    .sidebar-divider { height: 1px; background: #2e4a5f; margin: 6px 18px; display: none; }
     .sidebar-user { font-size: 14px; font-weight: bold; color: #2a1f18; }
     .sidebar-clinic { font-size: 12px; color: #6b5c52; margin-top: 2px; }
     .sidebar-priv { margin-top: 8px; }
-    .sidebar-logout { width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.08); color: #9e2a18; border: 1.5px solid rgba(176,48,32,0.25); border-radius: 5px; cursor: pointer; text-align: left; box-sizing: border-box; }
-    .sidebar-logout:hover { background: rgba(176,48,32,0.18); border-color: rgba(176,48,32,0.45); }
+    .sidebar-logout { width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.12); color: #ff8a75; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; text-align: left; box-sizing: border-box; }
+    .sidebar-logout:hover { background: rgba(176,48,32,0.22); border-color: rgba(255,138,117,0.55); }
+    .sidebar-collapsed-only { display: none; }
+    .sidebar.collapsed .sidebar-collapsed-only { display: inline; }
+    .sidebar.collapsed #sidebar-user-btn, .sidebar.collapsed #privilege-inline, .sidebar.collapsed .sidebar-priv { display: none; }
     .main-content { flex: 1; padding: 28px 36px; max-width: 900px; min-width: 0; }
     .nav button { flex-shrink: 0; }
     .nav-right {
@@ -453,39 +470,41 @@
       <div class="sidebar" id="sidebar">
         <div class="sidebar-logo" onclick="goToStartPage()">
           <svg width="34" height="34" viewBox="0 0 44 44" style="overflow:visible;flex-shrink:0;">
-            <circle cx="22" cy="22" r="17" fill="none" stroke="#2a1f18" stroke-width="2"/>
-            <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#2a1f18" text-anchor="middle">MD</text>
+            <circle cx="22" cy="22" r="17" fill="none" stroke="#fff" stroke-width="2"/>
+            <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">MD</text>
             <circle cx="35" cy="35" r="8" fill="#4a9e62"/>
             <polyline points="30,35 33,38 40,31" fill="none" stroke="#f0ede8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span class="sidebar-logo-text">MoraDOPS</span>
+          <button class="sidebar-collapse-toggle" id="sidebar-collapse-btn" onclick="event.stopPropagation(); toggleSidebarCollapse();" title="Fäll in/ut meny"><i class="ti ti-chevron-left" id="sidebar-collapse-icon" aria-hidden="true"></i></button>
         </div>
         <div class="sidebar-nav">
           <button class="sidebar-btn"        id="nav-btn-inbox"          onclick="showPanel('inbox')">
-            Förfrågningar <span id="inbox-badge" class="hidden" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
+            <i class="ti ti-inbox" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningar</span> <span id="inbox-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
           </button>
-          <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')">Registrera bedömning</button>
-          <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')">Min översikt</button>
+          <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')"><i class="ti ti-edit" aria-hidden="true"></i><span class="sidebar-btn-label">Registrera bedömning</span></button>
+          <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i><span class="sidebar-btn-label">Min översikt</span></button>
           <button class="sidebar-btn" id="nav-btn-my-assessments" onclick="showPanel('my-assessments')">
-            Mina bedömningar <span id="my-assessments-badge" class="hidden" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
+            <i class="ti ti-list-check" aria-hidden="true"></i><span class="sidebar-btn-label">Mina bedömningar</span> <span id="my-assessments-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
           </button>
-          <button class="sidebar-btn hidden" id="nav-btn-progress" onclick="showPanel('progress')">Min progress</button>
-          <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')">Klinikens bedömningar</button>
-          <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-settings" onclick="showPanel('clinic-settings')">Klinikens inställningar</button>
-          <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')">Förfrågningsöversikt</button>
-          <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')">Administration</button>
-          <button class="sidebar-btn-secondary hidden" id="nav-btn-form-builder"   onclick="showPanel('form-builder')">Formulärbyggare</button>
+          <button class="sidebar-btn hidden" id="nav-btn-progress" onclick="showPanel('progress')"><i class="ti ti-chart-line" aria-hidden="true"></i><span class="sidebar-btn-label">Min progress</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')"><i class="ti ti-building-hospital" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens bedömningar</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-settings" onclick="showPanel('clinic-settings')"><i class="ti ti-settings" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens inställningar</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningsöversikt</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')"><i class="ti ti-users" aria-hidden="true"></i><span class="sidebar-btn-label">Administration</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-error-reports"   onclick="showPanel('error-reports')"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Felanmälningar</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-form-builder"   onclick="showPanel('form-builder')"><i class="ti ti-forms" aria-hidden="true"></i><span class="sidebar-btn-label">Formulärbyggare</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-pending-users" onclick="showPanel('pending-users')">
-            Användargodkännande <span id="pending-users-badge" class="hidden" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
+            <i class="ti ti-user-check" aria-hidden="true"></i><span class="sidebar-btn-label">Användargodkännande</span> <span id="pending-users-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
           </button>
-          <button class="sidebar-btn-secondary hidden" id="nav-btn-documents"  onclick="showPanel('documents')">Dokument</button>
-          <button class="sidebar-btn-secondary hidden" id="nav-btn-reminders"       onclick="showPanel('reminders')">Påminnelser</button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-documents"  onclick="showPanel('documents')"><i class="ti ti-file-text" aria-hidden="true"></i><span class="sidebar-btn-label">Dokument</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-reminders"       onclick="showPanel('reminders')"><i class="ti ti-bell" aria-hidden="true"></i><span class="sidebar-btn-label">Påminnelser</span></button>
         </div>
         <div class="sidebar-nav-bottom">
-          <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')">Min profil</button>
-          <div style="height:1px;background:#c4b8ac;margin:4px 0;"></div>
-          <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')">Klinikens statistik</button>
-          <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')">Om MoraDOPS</button>
+          <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')"><i class="ti ti-user" aria-hidden="true"></i><span class="sidebar-btn-label">Min profil</span></button>
+          <div style="height:1px;background:#2e4a5f;margin:4px 0;"></div>
+          <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens statistik</span></button>
+          <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
         </div>
         <div class="sidebar-footer">
           <div id="sidebar-user-btn" onclick="togglePrivilegeFromUserBtn()" style="width:100%;text-align:left;background:#ede8e2;border:1.5px solid #c4b8ac;border-radius:6px;padding:8px 12px;cursor:pointer;margin-bottom:4px;box-sizing:border-box;">
@@ -499,11 +518,12 @@
           <div id="privilege-inline" class="hidden" style="background:#ede8e2;border:1.5px solid #c4b8ac;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
           </div>
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
+          <button onclick="openFeedbackModal()" style="width:100%;background:transparent;border:1.5px solid #3d6a8a;border-radius:6px;padding:9px 4px;cursor:pointer;font-size:13px;color:#7fb2dd;box-sizing:border-box;line-height:1.2;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
           <div style="display:flex;gap:6px;align-items:stretch;">
-            <button onclick="clearCache()" style="flex:1;background:transparent;border:1.5px solid #c4b8ac;border-radius:6px;padding:10px 4px;cursor:pointer;font-size:13px;color:#6b5c52;box-sizing:border-box;line-height:1.2;">Rensa cache</button>
-            <button class="sidebar-logout" onclick="doLogout()" style="flex:1;padding:10px 4px;box-sizing:border-box;line-height:1.2;margin:0;">Logga ut</button>
+            <button onclick="clearCache()" style="flex:1;background:transparent;border:1.5px solid #c4b8ac;border-radius:6px;padding:10px 4px;cursor:pointer;font-size:13px;color:#6b5c52;box-sizing:border-box;line-height:1.2;"><span class="sidebar-btn-label">Rensa cache</span><i class="ti ti-refresh sidebar-collapsed-only" aria-hidden="true"></i></button>
+            <button class="sidebar-logout" onclick="doLogout()" style="flex:1;padding:10px 4px;box-sizing:border-box;line-height:1.2;margin:0;"><span class="sidebar-btn-label">Logga ut</span><i class="ti ti-logout sidebar-collapsed-only" aria-hidden="true"></i></button>
           </div>
-          <div id="sidebar-version" style="text-align:center;font-size:11px;color:#b0a090;margin-top:6px;"></div>
+          <div id="sidebar-version" style="text-align:center;font-size:13px;font-weight:bold;color:#9fb2c0;margin-top:8px;"></div>
         </div>
       </div>
 
@@ -1022,6 +1042,17 @@
       <div id="pending-users-list" style="margin-top:14px;"><p style="color:#888;">Läser in...</p></div>
     </div>
 
+    <div id="panel-error-reports" class="hidden">
+      <h2>Felanmälningar</h2>
+      <p style="color:#6b5c52;font-size:14px;">Feedback och felanmälningar som skickats in från "Feedback/felanmälan" i sidomenyn.</p>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <label style="font-size:14px;color:#6b5c52;">Felanmälningar skickas till</label>
+        <input type="email" id="global-feedback-email" placeholder="global-admin@moradops.se" style="flex:1;min-width:200px;padding:6px;border:1.5px solid #c4b8ac;border-radius:5px;font-size:14px;">
+        <button class="btn-secondary btn-small" onclick="saveGlobalFeedbackEmail()">Spara</button>
+      </div>
+      <div id="error-reports-global-list"><p style="color:#888;">Läser in...</p></div>
+    </div>
+
     <!-- Modal: ny formulärtyp -->
     <div id="fb-newtype-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
       <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
@@ -1370,8 +1401,25 @@
     </div>
   </div>
 
+  <div id="feedback-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;">
+      <h3 style="margin-top:0;">Feedback/felanmälan</h3>
+      <p style="color:#6b5c52;font-size:14px;">Använd detta för att rapportera buggar, oväntat beteende, eller ge förslag på förbättringar. Beskriv gärna vad du gjorde och vad som hände — det gör det lättare att hitta orsaken.</p>
+      <div class="field"><label class="field-label">Beskrivning</label><textarea id="feedback-message" rows="5" placeholder="Vad hände, och vad förväntade du dig?"></textarea></div>
+      <div class="field">
+        <label class="field-label">Systeminformation som skickas med</label>
+        <div id="feedback-sysinfo" style="background:#ede8e2;border:1px solid #c4b8ac;border-radius:6px;padding:10px 12px;font-size:12px;color:#6b5c52;white-space:pre-wrap;max-height:160px;overflow-y:auto;"></div>
+      </div>
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn-primary" onclick="submitFeedback()">Skicka</button>
+        <button class="btn-secondary" onclick="closeFeedbackModal()">Avbryt</button>
+      </div>
+      <div id="feedback-status" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
   <script>
-    const APP_VERSION = 'v4.13.6';
+    const APP_VERSION = 'v4.13.7';
 
     let appData = null;
     let currentUser = null;
@@ -1379,6 +1427,20 @@
     let currentSection = null;
     let savedAnswers = {};
     let currentAssessmentRole = 'received';
+
+    // ── Sessionsfelloggning (för Feedback/felanmälan) ──────────────
+    const _sessionErrorLog = [];
+    function logSessionError(entry) {
+      _sessionErrorLog.push(Object.assign({ t: new Date().toISOString() }, entry));
+      if (_sessionErrorLog.length > 30) _sessionErrorLog.shift();
+    }
+    const _origConsoleError = console.error;
+    console.error = function(...args) {
+      try { logSessionError({ type: 'console', message: args.map(a => String(a)).join(' ') }); } catch (e) { /* tyst */ }
+      _origConsoleError.apply(console, args);
+    };
+    window.addEventListener('error', e => logSessionError({ type: 'window', message: e.message, source: (e.filename || '') + ':' + e.lineno }));
+    window.addEventListener('unhandledrejection', e => logSessionError({ type: 'promise', message: String(e.reason) }));
     let _assessmentStartTime  = 0; // sätts när bedömningspanelen öppnas, används för tidsbesparing
     let currentAssessments = [];
     let _sectionHistory = []; // för Tillbaka-knappen i formuläret
@@ -1508,6 +1570,10 @@
       getData:                { method: 'GET',    path: () => '/reference-data', query: p => ({ clinicId: p?.klinikId }) },
       login:                  { method: 'POST',   path: () => '/auth/login', body: p => ({ email: p.email, pin: p.pin }) },
       checkAuthStatus:        { method: 'GET',    path: () => '/auth/status', query: p => ({ email: p.email }) },
+      submitErrorReport:      { method: 'POST',   path: () => '/error-reports', body: p => ({ message: p.message, systemInfo: p.systemInfo }) },
+      getErrorReports:        { method: 'GET',    path: () => '/error-reports' },
+      getGlobalFeedbackSettings: { method: 'GET',  path: () => '/error-reports/global-settings' },
+      saveGlobalFeedbackSettings: { method: 'PUT', path: () => '/error-reports/global-settings', body: p => ({ feedbackEmail: p.feedbackEmail }) },
       sendResetCode:          { method: 'POST',   path: () => '/auth/reset-code', body: p => ({ email: p.email }) },
       resetPin:               { method: 'POST',   path: () => '/auth/reset-pin', body: p => ({ email: p.email, code: p.code, newPin: p.newPin }) },
       loginWithToken:         { method: 'POST',   path: () => '/auth/login-token', body: p => ({ token: p.token }) },
@@ -1624,6 +1690,7 @@
       });
 
       if (res.status === 401) {
+        logSessionError({ type: 'api', action, status: 401 });
         if (!window._sessionExpiredReloading) {
           window._sessionExpiredReloading = true;
           localStorage.removeItem('dops_user');
@@ -1634,6 +1701,7 @@
       if (!res.ok) {
         let msg = 'HTTP ' + res.status;
         try { const body = await res.json(); if (body?.error) msg = body.error; } catch (e) { /* inget JSON-svar */ }
+        logSessionError({ type: 'api', action, status: res.status, message: msg });
         throw new Error(msg);
       }
       if (cfg.method !== 'GET') checkForNewVersion();
@@ -1859,6 +1927,8 @@
       // Administration/Dokument: bara Administratör
       if (adminBtn)  adminBtn.classList.toggle('hidden', !isAdmin);
       if (docsBtn)   docsBtn.classList.toggle('hidden', !isAdmin);
+      const errorReportsBtn = document.getElementById('nav-btn-error-reports');
+      if (errorReportsBtn) errorReportsBtn.classList.toggle('hidden', !(isAdmin && activeKlinikId === '*'));
       // Progresssida: Mottagare, Blandbild samt Studierektor
       const progressBtn = document.getElementById('nav-btn-progress');
       const _role = currentUser?.userRole || '';
@@ -2009,6 +2079,53 @@
         if (result.mustChangePin) { showMustChangePinModal(); return; }
         bootApp();
       } catch(err) { setStatus('login-status', err.message, true); unlockUI(); }
+    }
+
+    function buildFeedbackSystemInfo() {
+      const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('dops_'));
+      const data = {
+        användare: currentUser?.email || '(ej inloggad)',
+        klinik: currentUser?.klinik || currentUser?.klinikId || '',
+        roll: currentUser?.userRole || '',
+        version: APP_VERSION,
+        tidpunkt: new Date().toISOString(),
+        webbläsare: navigator.userAgent,
+        skärm: screen.width + 'x' + screen.height,
+        cacheNycklar: cacheKeys,
+        sessionsfel: _sessionErrorLog.slice(-15)
+      };
+      const display = Object.entries(data).map(([k, v]) => k + ': ' + (typeof v === 'string' ? v : JSON.stringify(v))).join('\n');
+      return { data, display };
+    }
+
+    function openFeedbackModal() {
+      const info = buildFeedbackSystemInfo();
+      window._feedbackSystemInfoObj = info.data;
+      document.getElementById('feedback-sysinfo').textContent = info.display;
+      document.getElementById('feedback-message').value = '';
+      document.getElementById('feedback-status').textContent = '';
+      const el = document.getElementById('feedback-modal');
+      el.style.display = 'flex'; el.classList.remove('hidden');
+    }
+
+    function closeFeedbackModal() {
+      const el = document.getElementById('feedback-modal');
+      el.style.display = 'none'; el.classList.add('hidden');
+    }
+
+    async function submitFeedback() {
+      const message = document.getElementById('feedback-message').value.trim();
+      const statusEl = document.getElementById('feedback-status');
+      if (!message) { statusEl.textContent = 'Skriv en beskrivning innan du skickar.'; statusEl.style.color = '#9e2a18'; return; }
+      try {
+        await api('submitErrorReport', { message, systemInfo: window._feedbackSystemInfoObj || {} });
+        statusEl.textContent = 'Tack! Din feedback har skickats.';
+        statusEl.style.color = '#3d5c4a';
+        setTimeout(closeFeedbackModal, 1500);
+      } catch (e) {
+        statusEl.textContent = 'Kunde inte skicka: ' + e.message;
+        statusEl.style.color = '#9e2a18';
+      }
     }
 
     function showMustChangePinModal() {
@@ -3874,6 +3991,41 @@
         btn.classList.toggle('hidden', n === 0);
         if (badge) { badge.textContent = n; badge.classList.toggle('hidden', n === 0); }
       } catch (e) { /* tyst */ }
+    }
+
+    function renderErrorReportsList(container, reports, showClinic) {
+      if (!reports.length) { container.innerHTML = '<p style="color:#888;">Inga felanmälningar.</p>'; return; }
+      container.innerHTML = reports.map(r => {
+        const namn = esc((r.first_name || '') + ' ' + (r.last_name || ''));
+        const datum = new Date(r.created_at).toLocaleString('sv-SE');
+        const klinikRad = showClinic ? '<div style="font-size:12px;color:#6b5c52;">' + esc(r.clinic_name || '') + '</div>' : '';
+        const sysInfo = esc(JSON.stringify(r.system_info, null, 2));
+        return '<div class="assessment-card" style="margin-bottom:10px;">'
+          + '<div style="font-weight:bold;">' + namn + ' &middot; ' + esc(r.email || '') + '</div>'
+          + klinikRad
+          + '<div style="font-size:12px;color:#6b5c52;margin-bottom:6px;">' + datum + '</div>'
+          + '<div style="font-size:14px;white-space:pre-wrap;margin-bottom:8px;">' + esc(r.message) + '</div>'
+          + '<details><summary style="cursor:pointer;font-size:12px;color:#6b5c52;">Systeminformation</summary>'
+          + '<pre style="font-size:11px;white-space:pre-wrap;background:#ede8e2;padding:8px;border-radius:5px;margin-top:6px;">' + sysInfo + '</pre></details>'
+          + '</div>';
+      }).join('');
+    }
+
+    async function loadErrorReports() {
+      const globalList = document.getElementById('error-reports-global-list');
+      try {
+        const [global, settings] = await Promise.all([
+          api('getErrorReports'),
+          api('getGlobalFeedbackSettings')
+        ]);
+        renderErrorReportsList(globalList, global, true);
+        document.getElementById('global-feedback-email').value = settings?.feedbackEmail || '';
+      } catch (err) { globalList.innerHTML = '<p class="status-err">' + err.message + '</p>'; }
+    }
+
+    async function saveGlobalFeedbackEmail() {
+      const email = document.getElementById('global-feedback-email')?.value.trim() || '';
+      await api('saveGlobalFeedbackSettings', { feedbackEmail: email });
     }
 
     async function loadPendingUsers() {
@@ -6308,6 +6460,19 @@
       if (role === 'Mottagare' || role === 'Blandbild') return 'my-assessments';
       return 'assessment';
     }
+    function toggleSidebarCollapse() {
+      const sidebar = document.getElementById('sidebar');
+      const collapsed = sidebar.classList.toggle('collapsed');
+      localStorage.setItem('dops_sidebar_collapsed', collapsed ? '1' : '0');
+      document.getElementById('sidebar-collapse-icon').className = collapsed ? 'ti ti-chevron-right' : 'ti ti-chevron-left';
+    }
+    if (localStorage.getItem('dops_sidebar_collapsed') === '1') {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('sidebar').classList.add('collapsed');
+        document.getElementById('sidebar-collapse-icon').className = 'ti ti-chevron-right';
+      });
+    }
+
     function goToStartPage() {
       const p = getDefaultPanel();
       showPanel(p); // showPanel('blank') döljer alla paneler → tom vy
@@ -6845,10 +7010,10 @@
       // Ta bort loading-overlay vid första showPanel
       const loadingEl = document.getElementById('app-loading');
       if (loadingEl) loadingEl.remove();
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users'].forEach(p =>
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users'].forEach(p => {
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -6880,6 +7045,7 @@
       if (panel === 'clinic-overview')  { loadClinicOverview(); }
       if (panel === 'clinic-settings')  { loadClinicSettings(); }
       if (panel === 'admin')            { loadAdminPanel(); }
+      if (panel === 'error-reports')    { loadErrorReports(); }
       if (panel === 'form-builder')     { loadFormBuilder(); }
       if (panel === 'pending-users')    { loadPendingUsers(); }
       if (panel === 'reminders')        { loadSchedules(); }
