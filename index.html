@@ -326,16 +326,19 @@
         <label class="field-label">E-postadress</label>
         <input type="email" id="login-email" placeholder="din@email.se" autocomplete="username">
       </div>
-      <div class="field">
+      <div class="field" id="login-pin-row">
         <label class="field-label">PIN</label>
         <input type="password" id="login-pin" placeholder="••••" maxlength="6" autocomplete="current-password">
       </div>
-      <div class="btn-row">
+      <div id="login-reset-required" class="hidden" style="font-size:14px;color:#9e2a18;margin-bottom:12px;">
+        Inget giltigt lösenord finns för kontot. Ange nytt lösenord nedan.
+      </div>
+      <div class="btn-row" id="login-actions">
         <button class="btn-primary" onclick="doLogin()">Logga in</button>
         <button class="btn-secondary" onclick="showLoginView('register')">Skapa konto</button>
       </div>
       <div style="margin-top:12px;">
-        <a href="#" onclick="showLoginView('forgot'); return false;" style="font-size:13px; color:#1a73e8;">Glömt PIN?</a>
+        <a href="#" id="login-forgot-link" onclick="showLoginView('forgot'); return false;" style="font-size:13px; color:#1a73e8;">Glömt PIN?</a>
       </div>
       <div id="login-status"></div>
       <div style="margin-top:24px;text-align:center;font-size:12px;color:#b0a090;" id="login-version"></div>
@@ -886,7 +889,7 @@
           <div class="field" style="margin-top:8px;">
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:15px;">
               <input type="checkbox" id="addu-temppin" checked onchange="toggleAddUserPinField()" style="width:18px;height:18px;">
-              <span>Tillfällig PIN (kräver byte vid första inloggning)</span>
+              <span>Inget lösenord (användaren registrerar eget via mejl)</span>
             </label>
           </div>
           <div class="field hidden" id="addu-pin-field"><label class="field-label">PIN (4–6 siffror)</label><input type="password" id="addu-pin" maxlength="6"></div>
@@ -939,6 +942,12 @@
           </div>
           <input type="hidden" id="edit-klinikid">
           <div class="field"><label class="field-label">Nytt lösenord (lämna tomt för oförändrat)</label><input type="password" id="edit-pin" maxlength="6" placeholder="4–6 siffror"></div>
+          <div class="field" style="margin-top:8px;">
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:15px;">
+              <input type="checkbox" id="edit-reset-password" style="width:18px;height:18px;accent-color:#9e2a18;">
+              <span>Byt lösenord (användaren sätter eget nytt via mejl vid nästa inloggning)</span>
+            </label>
+          </div>
           <div class="field" style="margin-top:8px;">
             <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:15px;">
               <input type="checkbox" id="edit-inaktiverad" style="width:18px;height:18px;accent-color:#9e2a18;">
@@ -1362,7 +1371,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.13.4';
+    const APP_VERSION = 'v4.13.5';
 
     let appData = null;
     let currentUser = null;
@@ -1411,8 +1420,8 @@
 
     // ── Bakgrundscache ────────────────────────────────────────────────────
     const _bgCache = {};
-    const BG_TTL   = 20 * 60 * 1000;
-    const AD_TTL   = 10 * 60 * 1000;
+    const BG_TTL   = 10 * 60 * 1000;
+    const AD_TTL   = 24 * 60 * 60 * 1000;
 
     function _bk(key) { return (currentUser?.email || '__anon__') + ':' + key; }
     function bgGet(key) { const e = _bgCache[_bk(key)]; return (e && Date.now()-e.ts < BG_TTL) ? e.data : null; }
@@ -1498,6 +1507,7 @@
     const API_ROUTES = {
       getData:                { method: 'GET',    path: () => '/reference-data', query: p => ({ clinicId: p?.klinikId }) },
       login:                  { method: 'POST',   path: () => '/auth/login', body: p => ({ email: p.email, pin: p.pin }) },
+      checkAuthStatus:        { method: 'GET',    path: () => '/auth/status', query: p => ({ email: p.email }) },
       sendResetCode:          { method: 'POST',   path: () => '/auth/reset-code', body: p => ({ email: p.email }) },
       resetPin:               { method: 'POST',   path: () => '/auth/reset-pin', body: p => ({ email: p.email, code: p.code, newPin: p.newPin }) },
       loginWithToken:         { method: 'POST',   path: () => '/auth/login-token', body: p => ({ token: p.token }) },
@@ -1655,6 +1665,7 @@
               localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
               populateLocationDropdown();
               prefillAssessment();
+              if (document.querySelector('input[name="category"]:checked')) updateRecipients();
             } catch(_e) {}
             return;
           }
@@ -1698,6 +1709,7 @@
           localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
           populateLocationDropdown();
           prefillAssessment();
+          if (document.querySelector('input[name="category"]:checked')) updateRecipients();
         } catch(err) { console.error('getData failed:', err); }
       } else {
         document.getElementById('login-panel').classList.remove('hidden');
@@ -1930,10 +1942,30 @@
     }
 
     // ── Login views ───────────────────────────────────────────────
+    async function checkLoginEmailStatus() {
+      const email = document.getElementById('login-email').value.trim();
+      if (!email || !email.includes('@')) { setLoginResetRequired(false); return; }
+      try {
+        const result = await api('checkAuthStatus', { email });
+        setLoginResetRequired(!!result?.mustResetPassword);
+      } catch (e) { /* tyst */ }
+    }
+
+    function setLoginResetRequired(active) {
+      document.getElementById('login-pin-row').classList.toggle('hidden', active);
+      document.getElementById('login-actions').classList.toggle('hidden', active);
+      document.getElementById('login-reset-required').classList.toggle('hidden', !active);
+      document.getElementById('login-forgot-link').textContent = active ? 'Registrera nytt lösenord' : 'Glömt PIN?';
+    }
+
     function showLoginView(view) {
       ['login-view','forgot-view','register-view'].forEach(v =>
         document.getElementById(v).classList.toggle('hidden', v !== `${view}-view`)
       );
+      if (view === 'forgot') {
+        const loginEmailVal = document.getElementById('login-email').value.trim();
+        if (loginEmailVal) document.getElementById('forgot-email').value = loginEmailVal;
+      }
       if (view === 'register') {
         if (appData) {
           populateLocationDropdown();
@@ -3232,6 +3264,7 @@
       document.getElementById('edit-lastname').value  = u.lastName  || '';
       document.getElementById('edit-klinikid').value  = u.klinikId  || '';
       document.getElementById('edit-pin').value       = '';
+      document.getElementById('edit-reset-password').checked = false;
       document.getElementById('edit-email').value     = u.email     || '';
       document.getElementById('edit-id').value        = u.id        || '';
       document.getElementById('edit-status').textContent = '';
@@ -3318,6 +3351,7 @@
       };
       const pin = document.getElementById('edit-pin').value.trim();
       if (pin) { if (!/^\d{4,6}$/.test(pin)) { setStatus('edit-status', 'PIN måste vara 4–6 siffror.', true); return; } updates.newPin = pin; }
+      if (document.getElementById('edit-reset-password')?.checked) updates.resetPassword = true;
       setStatus('edit-status', '⏳ Sparar...', false);
       try {
         const result = await api('updateUserByAdmin', { targetId: id, updates });
@@ -3364,11 +3398,11 @@
         const result = await api('registerUser', { user });
         if (result.error) { statusEl.textContent = result.error; statusEl.style.color = '#9e2a18'; return; }
         if (result.generatedPin) {
-          statusEl.textContent = `✓ Skapad! Tillfällig PIN: ${result.generatedPin} — dela med användaren.`;
+          statusEl.textContent = '✓ Skapad! Användaren skriver in sin mejladress vid inloggning för att sätta eget lösenord.';
         } else {
           statusEl.textContent = '✓ Skapad!';
-          setTimeout(closeAddUserModal, 1500);
         }
+        setTimeout(closeAddUserModal, 1500);
         statusEl.style.color = '#3d5c4a';
         loadClinicDetail(currentAdminKlinikId);
       } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
@@ -5312,6 +5346,7 @@
       const lastReadAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
       localStorage.setItem('dops_last_read_' + currentUser.email, lastReadAt);
       currentUser.lastReadAt = lastReadAt;
+      localStorage.setItem('dops_user', JSON.stringify(currentUser));
       api('setLastReadAt', { email: currentUser.email, lastReadAt }).catch(() => {});
       updateAssessmentBadge();
     }
@@ -6373,6 +6408,7 @@
       const loginEmail = document.getElementById('login-email');
       const loginPin   = document.getElementById('login-pin');
       if (loginEmail) loginEmail.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loginPin.focus(); } });
+      if (loginEmail) loginEmail.addEventListener('blur', checkLoginEmailStatus);
       if (loginPin)   loginPin.addEventListener('keydown',   e => { if (e.key === 'Enter') { e.preventDefault(); doLogin(); } });
       // Glömt PIN
       const forgotEmail  = document.getElementById('forgot-email');
