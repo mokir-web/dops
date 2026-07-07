@@ -42,7 +42,7 @@
     .scale-group input { margin-bottom: 5px; width: 22px; height: 22px; cursor: pointer; }
 
     .slider-wrap { margin-top: 10px; max-width: 480px; }
-    .slider-value-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+    .slider-value-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; position: relative; }
     .slider-value-label {
       min-width: 28px; text-align: center; font-size: 17px; font-weight: bold;
       color: #8a97a0; transition: color 0.15s;
@@ -50,20 +50,22 @@
     .slider-value-label.touched { color: #2e4a5f; }
     input[type=range].skala-slider {
       flex: 1; -webkit-appearance: none; appearance: none; height: 6px;
-      border-radius: 3px; background: #c7d1d7; outline: none; cursor: pointer;
+      padding: 14px 0; box-sizing: content-box; background-clip: content-box;
+      border-radius: 3px; background-color: #c7d1d7; outline: none; cursor: pointer;
     }
     input[type=range].skala-slider::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+      -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
       background: #8a97a0; cursor: pointer; border: 2px solid #eef1f3; transition: background 0.15s;
     }
     input[type=range].skala-slider.touched::-webkit-slider-thumb { background: #2e4a5f; }
     input[type=range].skala-slider::-moz-range-thumb {
-      width: 24px; height: 24px; border-radius: 50%; border: 2px solid #eef1f3;
+      width: 26px; height: 26px; border-radius: 50%; border: 2px solid #eef1f3;
       background: #8a97a0; cursor: pointer; transition: background 0.15s;
     }
     input[type=range].skala-slider.touched::-moz-range-thumb { background: #2e4a5f; }
-    .slider-marks { position: relative; height: 16px; font-size: 11px; color: #8a97a0; margin-top: 3px; }
-    .slider-marks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+    /* Siffrorna fällda in i linjen istället för på en egen rad under */
+    .slider-marks { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 16px; font-size: 11px; color: #5b6b75; font-weight: 600; pointer-events: none; }
+    .slider-marks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; background: #eef1f3; padding: 0 2px; }
 
     .hidden { display: none !important; }
 
@@ -74,7 +76,7 @@
     }
     /* Sidebar layout */
     .app-layout { display: flex; min-height: 100vh; align-items: flex-start; }
-    .sidebar { width: 220px; min-width: 220px; background: #1c2b36; display: flex; flex-direction: column; padding: 0; border-right: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; transition: width 0.15s ease, min-width 0.15s ease; }
+    .sidebar { width: 248px; min-width: 248px; background: #1c2b36; display: flex; flex-direction: column; padding: 0; border-right: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; transition: width 0.15s ease, min-width 0.15s ease; }
     .sidebar.collapsed { width: 84px; min-width: 84px; }
     .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 16px; border-bottom: 1px solid #2e4a5f; cursor: pointer; }
     .sidebar-logo-text { font-family: Arial,sans-serif; font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; }
@@ -104,7 +106,7 @@
     .sidebar-user { font-size: 14px; font-weight: bold; color: #1c2b36; }
     .sidebar-clinic { font-size: 12px; color: #5b6b75; margin-top: 2px; }
     .sidebar-priv { margin-top: 8px; }
-    .sidebar-logout { width: 100%; background: rgba(176,48,32,0.12); color: #d4dde3; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; box-sizing: border-box; }
+    .sidebar-logout { width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.12); color: #d4dde3; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; text-align: left; box-sizing: border-box; }
     .sidebar-logout:hover { background: rgba(176,48,32,0.22); border-color: rgba(255,138,117,0.55); }
     .tab-row { display: flex; border-bottom: 1.5px solid #c7d1d7; margin-bottom: 16px; gap: 4px; }
     .tab-btn { background: none; border: none; padding: 10px 18px; font-size: 16px; color: #8a97a0; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; font-family: Arial,sans-serif; }
@@ -112,6 +114,14 @@
     .formtype-card:focus-within { box-shadow: 0 0 0 2px #2e4a5f; }
     .sidebar.collapsed #sidebar-user-btn, .sidebar.collapsed #privilege-inline, .sidebar.collapsed .sidebar-priv { display: none; }
     .sidebar.collapsed #sidebar-user-icon-collapsed { display: flex !important; }
+    /* Menygrupper: fälls in med rubrik bara när allt inte får plats (se fitSidebarMenu) */
+    .sidebar-group-header { display: none; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 10px 18px; font-size: 12px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; background: none; border: none; cursor: pointer; color: #7a8b98; font-family: Arial,sans-serif; }
+    .sidebar-group-header:hover { color: #d4dde3; }
+    .sidebar-group-chevron { font-size: 14px; transition: transform 0.15s ease; }
+    .sidebar-group.sg-active .sidebar-group-header { display: flex; }
+    .sidebar-group.sg-active:not(.sg-collapsed) .sidebar-group-chevron { transform: rotate(90deg); }
+    .sidebar-group.sg-active.sg-collapsed .sidebar-group-body { display: none; }
+    .sidebar.collapsed .sidebar-group-header { display: none !important; }
     .main-content { flex: 1; padding: 28px 36px; max-width: 1100px; min-width: 0; margin: 0 auto; }
     .nav button { flex-shrink: 0; }
     .nav-right {
@@ -172,6 +182,8 @@
     .ans-desc { margin: 0 0 4px 28px; color: #5b6b75; font-size: 13px; line-height: 1.5; }
 
     @keyframes spin { to { transform: rotate(360deg); } } margin-top: 16px; padding: 16px; background: #c7d1d7; border-radius: 7px; }
+    .filter-box { background:#eef1f3; border:1.5px solid #c7d1d7; border-radius:8px; padding:16px; }
+    .filter-box-heading { font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; color:#5b6b75; margin-bottom:10px; }
     .filter-chip {
       font-size: 15px; cursor: pointer;
       background: #eef1f3; border: 1.5px solid #c7d1d7;
@@ -481,16 +493,27 @@
           <span class="sidebar-logo-text">MoraDOPS</span>
           <span id="sidebar-collapse-icon" style="font-size:20px;color:#9fb2c0;">‹</span>
         </div>
-        <div class="sidebar-nav">
-          <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')"><i class="ti ti-edit" aria-hidden="true"></i><span class="sidebar-btn-label">Registrera bedömning</span></button>
-          <button class="sidebar-btn"        id="nav-btn-inbox"          onclick="showPanel('inbox')">
-            <i class="ti ti-question-mark" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningar</span> <span id="inbox-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
-          </button>
-          <button class="sidebar-btn" id="nav-btn-my-assessments" onclick="showPanel('my-assessments')">
-            <i class="ti ti-list-check" aria-hidden="true"></i><span class="sidebar-btn-label">Mina bedömningar</span> <span id="my-assessments-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
-          </button>
-          <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i><span class="sidebar-btn-label">Min översikt</span></button>
-          <button class="sidebar-btn hidden" id="nav-btn-progress" onclick="showPanel('progress')"><i class="ti ti-chart-line" aria-hidden="true"></i><span class="sidebar-btn-label">Min progress</span></button>
+        <div class="sidebar-nav" id="sidebar-nav">
+          <div class="sidebar-group" data-group="assessments">
+            <button class="sidebar-group-header" onclick="toggleSidebarGroup('assessments')"><i class="ti ti-chevron-right sidebar-group-chevron" aria-hidden="true"></i><span class="sidebar-btn-label">Bedömningar</span></button>
+            <div class="sidebar-group-body">
+              <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')"><i class="ti ti-edit" aria-hidden="true"></i><span class="sidebar-btn-label">Registrera bedömning</span></button>
+              <button class="sidebar-btn"        id="nav-btn-inbox"          onclick="showPanel('inbox')">
+                <i class="ti ti-question-mark" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningar</span> <span id="inbox-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
+              </button>
+              <button class="sidebar-btn" id="nav-btn-my-assessments" onclick="showPanel('my-assessments')">
+                <i class="ti ti-list-check" aria-hidden="true"></i><span class="sidebar-btn-label">Mina bedömningar</span> <span id="my-assessments-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
+              </button>
+            </div>
+          </div>
+          <div class="sidebar-group" data-group="overview">
+            <button class="sidebar-group-header" onclick="toggleSidebarGroup('overview')"><i class="ti ti-chevron-right sidebar-group-chevron" aria-hidden="true"></i><span class="sidebar-btn-label">Översikter</span></button>
+            <div class="sidebar-group-body">
+              <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i><span class="sidebar-btn-label">Min översikt</span></button>
+              <button class="sidebar-btn hidden" id="nav-btn-progress" onclick="showPanel('progress')"><i class="ti ti-chart-line" aria-hidden="true"></i><span class="sidebar-btn-label">Min progress</span></button>
+              <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens statistik</span></button>
+            </div>
+          </div>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')"><i class="ti ti-building-hospital" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens bedömningar</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-settings" onclick="showPanel('clinic-settings')"><i class="ti ti-settings" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens inställningar</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningsöversikt</span></button>
@@ -505,27 +528,29 @@
         </div>
         <div class="sidebar-nav-bottom">
           <button class="sidebar-btn-secondary" id="sidebar-user-icon-collapsed" onclick="togglePrivilegeFromUserBtn()" style="display:none;"><i class="ti ti-id-badge" aria-hidden="true"></i></button>
-          <div id="sidebar-user-btn" onclick="togglePrivilegeFromUserBtn()" style="width:100%;text-align:left;background:#24384a;border:1.5px solid #c7d1d7;border-radius:6px;padding:8px 12px;cursor:pointer;margin-bottom:4px;box-sizing:border-box;">
-            <div id="nav-user" style="font-weight:bold;font-size:15px;color:#fff;"></div>
-            <div id="nav-jobrole" style="font-size:12px;color:#9fb2c0;margin-top:1px;"></div>
-            <div id="nav-clinic" style="font-size:12px;color:#9fb2c0;"></div>
-            <div id="nav-role-label" style="font-size:12px;color:#7fd4a0;font-weight:bold;margin-top:2px;"></div>
-            <div id="nav-other-roles" style="font-size:11px;color:#9fb2c0;margin-top:2px;display:none;"></div>
+          <div class="sidebar-group" data-group="settings">
+            <button class="sidebar-group-header" onclick="toggleSidebarGroup('settings')"><i class="ti ti-chevron-right sidebar-group-chevron" aria-hidden="true"></i><span class="sidebar-btn-label">Inställningar</span></button>
+            <div class="sidebar-group-body">
+              <div id="sidebar-user-btn" onclick="togglePrivilegeFromUserBtn()" style="width:100%;text-align:left;background:#24384a;border:1.5px solid #c7d1d7;border-radius:6px;padding:8px 12px;cursor:pointer;margin-bottom:4px;box-sizing:border-box;">
+                <div id="nav-user" style="font-weight:bold;font-size:15px;color:#fff;"></div>
+                <div id="nav-jobrole" style="font-size:12px;color:#9fb2c0;margin-top:1px;"></div>
+                <div id="nav-clinic" style="font-size:12px;color:#9fb2c0;"></div>
+                <div id="nav-role-label" style="font-size:12px;color:#7fd4a0;font-weight:bold;margin-top:2px;"></div>
+                <div id="nav-other-roles" style="font-size:11px;color:#9fb2c0;margin-top:2px;display:none;"></div>
+              </div>
+              <!-- Rollval expanderas under knappen -->
+              <div id="privilege-inline" class="hidden" style="background:#24384a;border:1.5px solid #c7d1d7;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
+              </div>
+              <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')"><i class="ti ti-user" aria-hidden="true"></i><span class="sidebar-btn-label">Min profil</span></button>
+              <button onclick="openFeedbackModal()" class="sidebar-btn-secondary"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
+              <button onclick="clearCache()" class="sidebar-btn-secondary"><i class="ti ti-refresh" aria-hidden="true"></i><span class="sidebar-btn-label">Rensa cache</span></button>
+            </div>
           </div>
-          <!-- Rollval expanderas under knappen -->
-          <div id="privilege-inline" class="hidden" style="background:#24384a;border:1.5px solid #c7d1d7;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
-          </div>
-          <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')"><i class="ti ti-user" aria-hidden="true"></i><span class="sidebar-btn-label">Min profil</span></button>
-          <div style="height:1px;background:#2e4a5f;margin:4px 0;"></div>
-          <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens statistik</span></button>
           <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
-          <div style="height:1px;background:#2e4a5f;margin:4px 0;"></div>
-          <button onclick="openFeedbackModal()" class="sidebar-btn-secondary"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
-          <button onclick="clearCache()" class="sidebar-btn-secondary"><i class="ti ti-refresh" aria-hidden="true"></i><span class="sidebar-btn-label">Rensa cache</span></button>
-          <button class="sidebar-btn-secondary sidebar-logout" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span class="sidebar-btn-label">Logga ut</span></button>
         </div>
         <div class="sidebar-footer">
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
+          <button class="sidebar-btn-secondary sidebar-logout" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span class="sidebar-btn-label">Logga ut</span></button>
           <div id="sidebar-version" style="text-align:center;font-size:13px;font-weight:bold;color:#9fb2c0;margin-top:8px;"></div>
         </div>
       </div>
@@ -542,6 +567,7 @@
     <div id="panel-assessment">
       <h2>Bedömning</h2>
       <p id="f-intro" style="color:#666; font-size:13px;">Frågor som inte anses relevanta kan med fördel lämnas obesvarade.</p>
+      <p style="color:#8a97a0;font-size:12px;margin-top:-6px;">Formuläret kan navigeras med tangentbord: <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Tab</kbd> byter fält, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">↑ ↓</kbd> väljer svarsalternativ, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Enter</kbd> bekräftar och går vidare.</p>
 
       <div class="field" id="f1" style="display:none;">
         <label class="field-label">1. Klinik</label>
@@ -578,11 +604,6 @@
       <div class="field hidden" id="f5">
         <label class="field-label">Formulärtyp *</label>
         <div class="radio-group" id="form-type-group"></div>
-      </div>
-
-
-      <div class="field hidden" id="f-till-bedomning" style="margin-top:16px;">
-        <button class="btn-primary" id="till-bedomning-btn" onclick="tillBedomning()" disabled style="width:auto;">Till bedömning →</button>
       </div>
 
       <div id="f6-container" class="hidden">
@@ -630,6 +651,7 @@
       </div>
       <!-- Kollapsbart filter -->
       <div id="assessment-filter-panel" class="hidden filter-box" style="margin-bottom:14px;">
+        <div class="filter-box-heading">Filter</div>
         <div class="date-grid">
           <div><label class="field-label">Från datum</label><input type="date" id="filter-date-from" style="max-width:100%;"></div>
           <div><label class="field-label">Till datum</label><input type="date" id="filter-date-to" style="max-width:100%;"></div>
@@ -652,6 +674,7 @@
         <button class="btn-secondary btn-small" id="filter-toggle-btn" onclick="toggleAssessmentFilter()">Filtrera</button>
         <span id="selected-count" style="font-size:13px;color:#5b6b75;margin-left:auto;"></span>
       </div>
+      <p style="font-size:12px;color:#8a97a0;margin-top:-4px;">Kryssa i enskilda bedömningar nedan (eller "Markera alla") och klicka "Exportera" – du får då de markerade bedömningarna som ett Word-dokument mejlat till din adress.</p>
       <div id="my-assessments-list"></div>
       <div id="export-status" style="margin-top:12px;"></div>
     </div>
@@ -687,10 +710,12 @@
         <div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Bedömningar över tid</div>
           <div style="width:100%;aspect-ratio:4/3;"><canvas id="chart-line"></canvas></div>
+          <p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p>
         </div>
         <div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Fördelning per formulärtyp</div>
           <div style="width:100%;aspect-ratio:4/3;"><canvas id="chart-pie"></canvas></div>
+          <p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p>
         </div>
       </div>
       <div id="statistics-content"></div>
@@ -1087,6 +1112,7 @@
     <!-- ── OVERVIEW ──────────────────────────────────────────────── -->
     <div id="panel-overview" class="hidden">
       <h2>Min översikt</h2>
+      <p style="color:#5b6b75;font-size:13px;max-width:600px;margin-top:-4px;">Formulär med ett målvärde satt av kliniken visas med en stapel som fylls i takt med dina registreringar. Målet gäller normalt per 6 månader och skalas automatiskt om du byter tidsintervall ovan (t.ex. halva målet på 3 månader). Grönt = mål uppnått, gult = delvis uppfyllt, rött = inga registreringar ännu.</p>
       <div id="overview-swr-status" style="min-height:18px;margin-bottom:4px;"></div>
       <div id="overview-content"><p style="color:#888;">Laddar...</p></div>
     </div>
@@ -1422,7 +1448,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.14.4';
+    const APP_VERSION = 'v4.15.0';
 
     let appData = null;
     let currentUser = null;
@@ -1843,6 +1869,7 @@
         }
       });
       setTimeout(backgroundLoad, 100);
+      setTimeout(fitSidebarMenu, 50);
     }
 
     // Väntande konton (självregistrerade, ej godkända) — bara Mottagna bedömningar synligt.
@@ -2011,6 +2038,7 @@
           otherRolesEl.style.display = others.length ? 'block' : 'none';
         }
       }
+      fitSidebarMenu();
     }
 
     // ── Login views ───────────────────────────────────────────────
@@ -2080,6 +2108,12 @@
         unlockUI();
         if (result.mustChangePin) { showMustChangePinModal(); return; }
         bootApp();
+        try {
+          appData = await api('getData', { klinikId: currentUser.klinikId });
+          localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
+          populateLocationDropdown();
+          if (document.querySelector('input[name="category"]:checked')) updateRecipients();
+        } catch(_e) { /* tyst, försöker igen vid nästa sidladdning */ }
       } catch(err) { setStatus('login-status', err.message, true); unlockUI(); }
     }
 
@@ -2274,7 +2308,7 @@
       show('f4', !!category); show('f34-summary', false); show('f5', false); show('f6-container', false); show('submit-btn', false);
       const group = document.getElementById('form-type-group');
       const checkedFormType = document.querySelector('input[name="formtype"]:checked')?.value;
-      if (!appData) { populateAllFormTypes(); return; } // data inte klart ännu
+      if (!appData) { group.innerHTML = '<p style="color:#8a97a0;">Laddar…</p>'; return; } // data inte klart ännu
       if (!category) { populateAllFormTypes(); return; }
       const catNames = new Set((appData.lists[category] && appData.lists[category][clinic]) ? appData.lists[category][clinic] : []);
       const recNames = new Set((appData.lists['Mottagare'] && appData.lists['Mottagare'][clinic]) ? appData.lists['Mottagare'][clinic] : []);
@@ -2312,17 +2346,17 @@
       updateTillBedomningBtn();
     }
 
+    let _lastTillBedomningReady = false;
     function updateTillBedomningBtn() {
       const category  = document.querySelector('input[name="category"]:checked')?.value;
       const recipient = document.getElementById('recipient').value;
       const formType  = document.querySelector('input[name="formtype"]:checked')?.value;
       const ready = !!(category && recipient && formType);
-      const btn = document.getElementById('till-bedomning-btn');
-      if (btn) btn.disabled = !ready;
-      const wasHidden = document.getElementById('f-till-bedomning')?.classList.contains('hidden');
-      show('f-till-bedomning', ready);
-      if (ready && wasHidden) {
-        setTimeout(() => document.getElementById('f-till-bedomning')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+      if (ready && !_lastTillBedomningReady) {
+        _lastTillBedomningReady = true;
+        tillBedomning();
+      } else if (!ready) {
+        _lastTillBedomningReady = false;
       }
     }
 
@@ -2493,7 +2527,6 @@
           });
           valueRow.appendChild(input);
           valueRow.appendChild(label);
-          wrap.appendChild(valueRow);
           const marks = document.createElement('div');
           marks.className = 'slider-marks';
           const span = max - min;
@@ -2506,12 +2539,13 @@
             m.textContent = v; m.dataset.value = v;
             marks.appendChild(m);
           });
-          wrap.appendChild(marks);
+          valueRow.appendChild(marks);
+          wrap.appendChild(valueRow);
           div.appendChild(wrap);
           requestAnimationFrame(() => {
             const trackWidth = input.offsetWidth;
             if (!trackWidth) return;
-            const thumbSize = 24;
+            const thumbSize = 26;
             const usable = Math.max(0, trackWidth - thumbSize);
             marks.querySelectorAll('span').forEach(m => {
               const v = parseFloat(m.dataset.value);
@@ -2621,7 +2655,7 @@
     }
 
     async function cancelAssessment() {
-      if (!await customConfirm('Avbryta registreringen? Ifyllda svar går förlorade.')) return;
+      if (!await customConfirm('Vill du verkligen avbryta? Dina registrerade svar går förlorade.', 'Ja, rensa', 'Nej, fortsätt registrering')) return;
       clearDraft();
       savedAnswers = {};
       currentFormData = null;
@@ -2766,6 +2800,9 @@
       document.getElementById('tab-sent').className     = role === 'sent'     ? 'tab-btn active' : 'tab-btn';
       document.getElementById('tab-received').className = role === 'received' ? 'tab-btn active' : 'tab-btn';
       document.getElementById('my-assessments-list').innerHTML = '';
+      document.getElementById('filter-date-from').value = '';
+      document.getElementById('filter-date-to').value   = '';
+      _resetFormTypeFilterOnNextRender = true;
       if (role === 'received') clearAssessmentBadge();
       applyFilters();
     }
@@ -2774,8 +2811,11 @@
       const dateFrom     = document.getElementById('filter-date-from').value;
       const dateTo       = document.getElementById('filter-date-to').value;
       const checkedTypes = [...document.querySelectorAll('#filter-formtypes input:checked')].map(cb => cb.value);
-      const filters = { dateFrom: dateFrom || null, dateTo: dateTo || null, formTypes: checkedTypes };
-      const noFilter = !dateFrom && !dateTo && !checkedTypes.length;
+      const allTypesChecked = availableFormTypes.length > 0 && checkedTypes.length === availableFormTypes.length;
+      // "Alla ikryssade" motsvarar inget filter alls (samma resultat, samma snabba SWR-väg).
+      const effectiveTypes = allTypesChecked ? [] : checkedTypes;
+      const filters = { dateFrom: dateFrom || null, dateTo: dateTo || null, formTypes: effectiveTypes };
+      const noFilter = !dateFrom && !dateTo && effectiveTypes.length === 0;
       const cacheKey = 'myAssessments_' + currentAssessmentRole;
       const statusEl = document.getElementById('assessment-swr-status');
 
@@ -2812,10 +2852,11 @@
     function resetFilters() {
       document.getElementById('filter-date-from').value = '';
       document.getElementById('filter-date-to').value   = '';
-      document.querySelectorAll('#filter-formtypes input').forEach(cb => cb.checked = false);
+      document.querySelectorAll('#filter-formtypes input').forEach(cb => cb.checked = true);
       applyFilters();
     }
 
+    let _resetFormTypeFilterOnNextRender = true;
     function updateFormTypeFilters(assessments) {
       const types = [...new Set(assessments.map(a => a.formType))].sort();
       availableFormTypes = types;
@@ -2825,11 +2866,13 @@
       if (!container) return;
       // Spara befintligt val innan rebuild så SWR-revalidering inte nollställer filter
       const prevChecked = new Set([...container.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.value));
+      const forceAllChecked = _resetFormTypeFilterOnNextRender;
+      _resetFormTypeFilterOnNextRender = false;
       container.innerHTML = '';
       types.forEach(t => {
         const lbl = document.createElement('label'); lbl.className = 'filter-chip';
         const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = t;
-        if (prevChecked.has(t)) cb.checked = true;
+        cb.checked = forceAllChecked ? true : prevChecked.has(t);
         lbl.appendChild(cb);
         lbl.appendChild(document.createTextNode(`${t} (${counts[t]})`));
         container.appendChild(lbl);
@@ -4603,6 +4646,30 @@
       };
     }
 
+    // Pajdiagram: en enda dataset, segmenten styrs via data-index (inte datasetIndex).
+    // Samma isolera-vid-klick-princip som stapel/linje-diagrammen ovan.
+    function makePieLegendClick(chart) {
+      return function(e, legendItem) {
+        const i = legendItem.index;
+        const n = chart.data.labels.length;
+        const setVisible = (idx, visible) => { if (chart.getDataVisibility(idx) !== visible) chart.toggleDataVisibility(idx); };
+        if (!chart._selIdx) chart._selIdx = new Set();
+        const sel = chart._selIdx;
+        if (sel.size === 0) {
+          sel.add(i);
+          for (let j = 0; j < n; j++) setVisible(j, j === i);
+        } else if (sel.has(i)) {
+          sel.delete(i);
+          setVisible(i, false);
+          if (sel.size === 0) for (let j = 0; j < n; j++) setVisible(j, true);
+        } else {
+          sel.add(i);
+          setVisible(i, true);
+        }
+        chart.update();
+      };
+    }
+
     // Mobil: koppla touchend på canvasen till legend-klick via Chart.js plugin API
     function attachLegendTouch(chart) {
       chart.canvas.addEventListener('touchend', function(ev) {
@@ -4641,6 +4708,13 @@
       '#00e5ff','#ff1266','#00ff9d','#ffd500','#b026ff',
       '#ff5e00','#2e4a5f','#8b3a9e','#1a8fa0','#e87db3'
     ];
+
+    // Målfärg (Min översikt): grön = uppfyllt, gul = delvis, röd = inga registreringar mot målet.
+    function goalColor(count, goal) {
+      if (count >= goal) return '#00ff9d';
+      if (count > 0)      return '#ffd500';
+      return '#ff1266';
+    }
 
     function makeTotalLine(barDatasets, n) {
       const totals = Array.from({length: n}, (_, i) =>
@@ -4724,7 +4798,7 @@
           label: ft,
           data: Object.values(rawByMonth).map(m => m[ft] || 0),
           borderColor: CHART_COLORS[i % CHART_COLORS.length],
-          backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + '55',
+          backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
           tension: 0.3, fill: true, pointRadius: 2,
         }));
 
@@ -4755,7 +4829,7 @@
         pieChart = new Chart(pieCtx, {
           type: 'pie',
           data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(pieChart)(e, li) } } }
         });
 
         // ── Tabeller ──────────────────────────────────────────────
@@ -5112,17 +5186,17 @@
       });
     }
 
-    function customConfirm(message) {
+    function customConfirm(message, okLabel, cancelLabel) {
       return new Promise(resolve => {
         const modal = document.getElementById('custom-dialog-modal');
         document.getElementById('custom-dialog-message').textContent = message;
         const btnRow = document.getElementById('custom-dialog-buttons');
         btnRow.innerHTML = '';
         const cancelBtn = document.createElement('button');
-        cancelBtn.className = 'btn-secondary'; cancelBtn.textContent = 'Avbryt';
+        cancelBtn.className = 'btn-secondary'; cancelBtn.textContent = cancelLabel || 'Avbryt';
         cancelBtn.onclick = () => { modal.style.display = 'none'; modal.classList.add('hidden'); resolve(false); };
         const okBtn = document.createElement('button');
-        okBtn.className = 'btn-primary'; okBtn.textContent = 'OK';
+        okBtn.className = 'btn-primary'; okBtn.textContent = okLabel || 'OK';
         okBtn.onclick = () => { modal.style.display = 'none'; modal.classList.add('hidden'); resolve(true); };
         btnRow.append(cancelBtn, okBtn);
         modal.style.display = 'flex'; modal.classList.remove('hidden');
@@ -5317,12 +5391,34 @@
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
               ${avg !== null ? `<span style="font-size:13px;color:#2e4a5f;font-weight:bold;">\u00d8\u00a0${avg}</span>` : ''}
             </div>
-            <div style="width:100%;aspect-ratio:4/2;"><canvas id="${canvasId}"></canvas></div>
+            <div style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
             ${descParts.length ? `<div style="margin-top:10px;font-size:11px;color:#8a97a0;line-height:1.6;">${descParts.map(p => esc(p)).join('&nbsp;&nbsp;&bull;&nbsp;&nbsp;')}</div>` : ''}
           </div>`;
 
-          pendingCharts.push({ canvasId, points, sorted, avg, minScale, maxScale });
+          pendingCharts.push({ canvasId, points, sorted, avg, minScale, maxScale, categorical: false, categories: null });
 
+        } else if (q.typ === 'radio' && q.options && q.options.length) {
+          // Textvärden (t.ex. Roll: Assistent/Blandbild/Operatör) — kategoriordning = ordningen
+          // frågan är definierad med i formulärbyggaren, samma varje gång.
+          const categories = q.options;
+          const points = sorted.map(s => {
+            const a = s.answers.find(a => a.question === q.question);
+            if (!a || !a.answer) return null;
+            const idx = categories.indexOf(a.answer.trim());
+            return idx === -1 ? null : idx;
+          });
+          const valid = points.filter(p => p !== null);
+
+          const canvasId = `pgc_${qi}`;
+          html += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+              <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
+              <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
+            </div>
+            <div style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
+          </div>`;
+
+          pendingCharts.push({ canvasId, points, sorted, avg: null, minScale: 0, maxScale: categories.length - 1, categorical: true, categories });
         }
         // fritext hanteras separat nedan (pool-metod)
       });
@@ -5366,7 +5462,7 @@
       el.innerHTML = html;
 
       requestAnimationFrame(() => {
-        pendingCharts.forEach(({ canvasId, points, sorted, avg, minScale, maxScale }) => {
+        pendingCharts.forEach(({ canvasId, points, sorted, avg, minScale, maxScale, categorical, categories }) => {
           const ctx = document.getElementById(canvasId)?.getContext('2d');
           if (!ctx) return;
 
@@ -5381,14 +5477,15 @@
           const xMax = dataPoints[dataPoints.length - 1].x;
 
           const datasets = [{
-            label: 'Po\u00e4ng',
+            label: categorical ? 'Svar' : 'Po\u00e4ng',
             data: dataPoints,
-            borderColor: '#2e4a5f',
-            backgroundColor: 'rgba(61,92,74,0.07)',
-            fill: true,
-            tension: 0.3,
+            borderColor: CHART_COLORS[0],
+            backgroundColor: CHART_COLORS[0] + '33',
+            fill: !categorical,
+            stepped: categorical ? 'middle' : false,
+            tension: categorical ? 0 : 0.3,
             borderWidth: 2,
-            pointBackgroundColor: '#2e4a5f',
+            pointBackgroundColor: CHART_COLORS[0],
             pointRadius: 5,
             pointHoverRadius: 7,
             spanGaps: true
@@ -5398,7 +5495,7 @@
             datasets.push({
               label: `Snitt ${avg}`,
               data: [{ x: xMin, y: avgVal }, { x: xMax, y: avgVal }],
-              borderColor: '#c8a96e',
+              borderColor: CHART_COLORS[3],
               borderDash: [6, 4],
               borderWidth: 1.5,
               pointRadius: 0,
@@ -5434,7 +5531,7 @@
                     scale.ticks = [];
                     for (let i = minScale; i <= maxScale; i++) scale.ticks.push({ value: i });
                   },
-                  ticks: { font: { size: 11 }, callback: v => v },
+                  ticks: { font: { size: 11 }, callback: v => categorical ? (categories[v] ?? '') : v },
                   grid: { color: 'rgba(0,0,0,0.13)', lineWidth: 1 }
                 }
               },
@@ -5449,7 +5546,7 @@
                       const d = new Date(items[0].parsed.x);
                       return isNaN(d) ? '' : d.toLocaleDateString('sv-SE', { year: 'numeric', month: 'short', day: 'numeric' });
                     },
-                    label: item => `Po\u00e4ng: ${item.parsed.y}`
+                    label: item => categorical ? (categories[item.parsed.y] ?? '') : `Po\u00e4ng: ${item.parsed.y}`
                   }
                 }
               }
@@ -5797,7 +5894,7 @@
       const nM = periodMonths || 0;
       const periodLabel = nM === -1 ? 'totalt' : nM === 0 ? 'senaste 6 mån' : (nM <= 1 ? 'senaste månaden' : 'senaste ' + nM + ' mån');
       const scaledGoal = (goal) => (nM === 0 || nM === -1) ? goal : Math.round(goal * nM / 6);
-      let s = `<div class="section-header" style="margin-top:24px;">${title}</div>`;
+      let s = `<div class="section-header" data-overview-goalgroup="1" style="margin-top:24px;">${title}</div>`;
       s += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px;margin-top:14px;max-width:600px;">';
       const dopsForms  = Object.entries(forms).filter(([ft]) => ft.startsWith('DOPS:') || ft.startsWith('DOPS '));
       const otherForms = Object.entries(forms).filter(([ft]) => !ft.startsWith('DOPS:') && !ft.startsWith('DOPS ') && ft !== 'Operationsspecifik DOPS');
@@ -5808,7 +5905,7 @@
           const countP   = periodCounts?.[ft] || 0;
           const countAll = allTimeCounts?.[ft] || v.count;
           const g        = scaledGoal(v.goal);
-          const color    = g ? (countP >= g ? '#4a9e62' : countP > 0 ? '#c8a96e' : '#9e2a18') : '#5b6b75';
+          const color    = g ? goalColor(countP, g) : '#5b6b75';
           s += `<div style="display:flex;align-items:center;gap:10px;padding:3px 0 3px 14px;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}','${role||'received'}')">`;
           s += `<div style="font-size:14px;color:#5b6b75;flex:1;">${esc(subName)}</div>`;
           s += `<div style="flex:2;max-width:160px;">${goalBar(countP, countAll, g, periodLabel)}</div>`;
@@ -5821,7 +5918,7 @@
         const countP   = periodCounts?.[ft] || 0;
         const countAll = allTimeCounts?.[ft] || v.count;
         const g        = scaledGoal(v.goal);
-        const color    = g ? (countP >= g ? '#4a9e62' : countP > 0 ? '#c8a96e' : '#9e2a18') : '#5b6b75';
+        const color    = g ? goalColor(countP, g) : '#5b6b75';
         s += `<div style="display:flex;align-items:center;gap:10px;padding:4px 0;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}','${role||'received'}')">`;
         s += `<div style="font-size:14px;font-weight:bold;color:#1c2b36;flex:1;">${esc(ft)}</div>`;
         s += `<div style="flex:2;max-width:160px;">${goalBar(countP, countAll, g, periodLabel)}</div>`;
@@ -5836,7 +5933,7 @@
       if (!goal) return '';
       const lbl = periodLabel || 'senaste 6 mån';
       const pct   = Math.min(100, Math.round(countPeriod / goal * 100));
-      const color = countPeriod >= goal ? '#4a9e62' : countPeriod > 0 ? '#c8a96e' : '#9e2a18';
+      const color = goalColor(countPeriod, goal);
       return `<div style="margin-top:4px;background:#c7d1d7;border-radius:4px;height:8px;max-width:200px;">
           <div style="background:${color};border-radius:4px;height:8px;width:${pct}%;transition:width 0.4s;"></div>
         </div>
@@ -5888,7 +5985,8 @@
         chartSpecs.forEach(spec => {
           html += `<div class="section-header">${spec.label}</div>`;
           html += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;margin-top:14px;">';
-          html += '<div style="width:100%;aspect-ratio:4/3;"><canvas id="overview-chart-' + spec.key + '"></canvas></div></div>';
+          html += '<div style="width:100%;aspect-ratio:4/3;"><canvas id="overview-chart-' + spec.key + '"></canvas></div>';
+          html += '<p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p></div>';
         });
       }
 
@@ -5924,7 +6022,7 @@
             label: ft,
             data: allMonthKeys.map(mk => ftByMonth[mk]?.[ft] || 0),
             borderColor: CHART_COLORS[i % CHART_COLORS.length],
-            backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + '55',
+            backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
             tension: 0.3, fill: true, pointRadius: 2,
           }));
           window._overviewChartDatas[spec.key] = { allMonthKeys, ftByMonth, allFtRaw };
@@ -6380,7 +6478,7 @@
           label: ft,
           data: filteredKeys.map(mk => d.ftByMonth?.[mk]?.[ft] || 0),
           borderColor: CHART_COLORS[i % CHART_COLORS.length],
-          backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + '55',
+          backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
           tension: 0.3, fill: true, pointRadius: 2,
         }));
         window._overviewCharts[key] = new Chart(ctx, {
@@ -6418,7 +6516,7 @@
       const el = document.getElementById('overview-content');
       if (!el) return;
       // Ta bort gamla section-headers och deras kort
-      el.querySelectorAll('.section-header').forEach(sh => {
+      el.querySelectorAll('.section-header[data-overview-goalgroup]').forEach(sh => {
         const txt = sh.textContent.trim();
         if (txt === 'Mottagna bedömningar' || txt === 'Registrerade bedömningar') {
           // Ta bort header + nästa syskon (kortet)
@@ -6433,13 +6531,15 @@
       const sentFR = (forms) => Object.fromEntries(Object.entries(forms).map(([ft, v]) => [ft, { ...v, goal: isSentReg ? (v.sentGoal || 0) : 0 }]));
       const effRecP = nMonths === 0 ? (od.rec6m || recP) : recP;
       const effSentP = nMonths === 0 ? (od.sent6m || sentP) : sentP;
-      // Vid en vald period (inte grundvyn) visas bara formulär med antal >0 den perioden.
+      // Vid en vald period (inte grundvyn) visas formulär med antal >0 den perioden,
+      // eller formulär som har ett aktivt målvärde (oavsett uppfyllt eller ej).
       const received = nMonths === -1 || nMonths > 0
-        ? Object.fromEntries(Object.entries(data.received).filter(([ft]) => (effRecP[ft] || 0) > 0))
+        ? Object.fromEntries(Object.entries(data.received).filter(([ft, v]) => (effRecP[ft] || 0) > 0 || v.goal))
         : data.received;
+      const sentFRData = sentFR(data.sent);
       const sent = nMonths === -1 || nMonths > 0
-        ? Object.fromEntries(Object.entries(sentFR(data.sent)).filter(([ft]) => (effSentP[ft] || 0) > 0))
-        : sentFR(data.sent);
+        ? Object.fromEntries(Object.entries(sentFRData).filter(([ft, v]) => (effSentP[ft] || 0) > 0 || v.goal))
+        : sentFRData;
       if (showReceived) frag.innerHTML += renderFormGroup('Mottagna bedömningar',     received, data.subGoals, effRecP,  recAllTime, 'received', nMonths);
       if (showSent)     frag.innerHTML += renderFormGroup('Registrerade bedömningar', sent,     data.subGoals, effSentP, sentAllTime, 'sent',     nMonths);
       el.appendChild(frag);
@@ -6462,7 +6562,42 @@
       const collapsed = sidebar.classList.toggle('collapsed');
       localStorage.setItem('dops_sidebar_collapsed', collapsed ? '1' : '0');
       document.getElementById('sidebar-collapse-icon').textContent = collapsed ? '›' : '‹';
+      fitSidebarMenu();
     }
+
+    // ── Menygruppering vid platsbrist ───────────────────────────────────
+    // Fälls in i denna ordning tills menyn får plats utan scroll: Inställningar → Översikter → Bedömningar.
+    const SIDEBAR_GROUP_ORDER = ['settings', 'overview', 'assessments'];
+
+    function toggleSidebarGroup(name) {
+      const el = document.querySelector('.sidebar-group[data-group="' + name + '"]');
+      if (!el || !el.classList.contains('sg-active')) return;
+      el.classList.toggle('sg-collapsed');
+    }
+
+    function sidebarNavOverflows() {
+      const nav = document.getElementById('sidebar-nav');
+      if (!nav) return false;
+      return nav.scrollHeight > nav.clientHeight + 1;
+    }
+
+    function fitSidebarMenu() {
+      const sidebar = document.getElementById('sidebar');
+      if (!sidebar || sidebar.classList.contains('collapsed')) return; // ikon-läget hanteras separat
+      const groups = SIDEBAR_GROUP_ORDER
+        .map(name => document.querySelector('.sidebar-group[data-group="' + name + '"]'))
+        .filter(Boolean);
+      groups.forEach(g => { g.classList.remove('sg-active', 'sg-collapsed'); });
+      if (!sidebarNavOverflows()) return;
+      for (const g of groups) {
+        g.classList.add('sg-active', 'sg-collapsed');
+        if (!sidebarNavOverflows()) break;
+      }
+    }
+    window.addEventListener('resize', () => {
+      clearTimeout(window._sidebarFitTimer);
+      window._sidebarFitTimer = setTimeout(fitSidebarMenu, 120);
+    });
     if (localStorage.getItem('dops_sidebar_collapsed') === '1') {
       document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sidebar').classList.add('collapsed');
@@ -6966,6 +7101,7 @@
       // Nollställ formulärdata – pending-state sätts separat av startRequestedAssessment
       savedAnswers = {};
       currentFormData = null;
+      _lastTillBedomningReady = false;
       // Lås upp eventuellt låsta fält
       document.querySelectorAll('input[name="category"]').forEach(r => { r.checked = false; r.disabled = false; });
       const recSel = document.getElementById('recipient');
@@ -7017,7 +7153,13 @@
       closeMenu();
       closeMenu();
       if (panel === 'assessment')       { if (!maybeResumeDraft()) { resetAssessment(); _assessmentStartTime = Date.now(); } }
-      if (panel === 'my-assessments')   { clearAssessmentBadge(); applyFilters(); }
+      if (panel === 'my-assessments')   {
+        clearAssessmentBadge();
+        document.getElementById('filter-date-from').value = '';
+        document.getElementById('filter-date-to').value   = '';
+        _resetFormTypeFilterOnNextRender = true;
+        applyFilters();
+      }
       if (panel === 'statistics') {
         // Visa klinikväljare för global admin
         const statKlinikRow = document.getElementById('stat-klinik-row');
