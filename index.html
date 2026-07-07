@@ -88,7 +88,6 @@
     .sidebar-btn i { font-size: 22px; flex-shrink: 0; width: 24px; text-align: center; }
     .sidebar-btn-label { white-space: nowrap; overflow: hidden; }
     .sidebar.collapsed .sidebar-btn-label, .sidebar.collapsed .sidebar-btn-badge { display: none; }
-    .sidebar.collapsed .sidebar-btn { justify-content: center; }
     .sidebar-btn:hover { background: #24384a; }
     .sidebar-btn.active { background: #2e4a5f; color: #fff; border-left-color: #5b9bd5; font-weight: bold; }
     .sidebar-btn.hidden { display: none; }
@@ -98,7 +97,6 @@
     .sidebar-btn-secondary { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 18px; font-size: 14px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #9fb2c0; font-family: Arial,sans-serif; }
     .sidebar-btn-secondary i { font-size: 21px; flex-shrink: 0; width: 24px; text-align: center; }
     .sidebar.collapsed .sidebar-btn-secondary .sidebar-btn-label, .sidebar.collapsed .sidebar-btn-secondary .sidebar-btn-badge { display: none; }
-    .sidebar.collapsed .sidebar-btn-secondary { justify-content: center; }
     .sidebar-btn-secondary:hover { background: #24384a; color: #fff; }
     .sidebar-btn-secondary.active { background: #2e4a5f; color: #fff; border-left-color: #5b9bd5; font-weight: bold; }
     .sidebar-btn-secondary.hidden { display: none; }
@@ -108,11 +106,14 @@
     .sidebar-priv { margin-top: 8px; }
     .sidebar-logout { width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.12); color: #d4dde3; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; text-align: left; box-sizing: border-box; }
     .sidebar-logout:hover { background: rgba(176,48,32,0.22); border-color: rgba(255,138,117,0.55); }
+    .sidebar-footer-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; box-sizing: border-box; margin-bottom: 6px; font-family: Arial,sans-serif; text-align: left; }
+    .sidebar-footer-btn i { font-size: 21px; width: 24px; text-align: center; flex-shrink: 0; }
+    .tab-row { display: flex; border-bottom: 1.5px solid #c7d1d7; margin-bottom: 16px; gap: 4px; }
+    .tab-btn { background: none; border: none; padding: 10px 18px; font-size: 16px; color: #8a97a0; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; font-family: Arial,sans-serif; }
+    .tab-btn.active { color: #1c2b36; font-weight: bold; border-bottom-color: #2e4a5f; }
     .formtype-card:focus-within { box-shadow: 0 0 0 2px #2e4a5f; }
-    .sidebar-collapsed-only { display: none; }
-    .sidebar.collapsed .sidebar-collapsed-only { display: inline; }
     .sidebar.collapsed #sidebar-user-btn, .sidebar.collapsed #privilege-inline, .sidebar.collapsed .sidebar-priv { display: none; }
-    .main-content { flex: 1; padding: 28px 36px; max-width: 900px; min-width: 0; }
+    .main-content { flex: 1; padding: 28px 36px; max-width: 1100px; min-width: 0; margin: 0 auto; }
     .nav button { flex-shrink: 0; }
     .nav-right {
       margin-left: auto; display: flex; gap: 12px;
@@ -521,11 +522,9 @@
         </div>
         <div class="sidebar-footer">
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
-          <button onclick="openFeedbackModal()" style="width:100%;background:transparent;border:1.5px solid #3d6a8a;border-radius:6px;padding:9px 4px;cursor:pointer;font-size:13px;color:#d4dde3;box-sizing:border-box;line-height:1.2;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
-          <div style="display:flex;gap:6px;align-items:stretch;">
-            <button onclick="clearCache()" style="flex:1;background:transparent;border:1.5px solid #3d5a70;border-radius:6px;padding:10px 4px;cursor:pointer;font-size:13px;color:#d4dde3;box-sizing:border-box;line-height:1.2;"><span class="sidebar-btn-label">Rensa cache</span><i class="ti ti-refresh sidebar-collapsed-only" aria-hidden="true"></i></button>
-            <button class="sidebar-logout" onclick="doLogout()" style="flex:1;padding:10px 4px;box-sizing:border-box;line-height:1.2;margin:0;"><span class="sidebar-btn-label">Logga ut</span><i class="ti ti-logout sidebar-collapsed-only" aria-hidden="true"></i></button>
-          </div>
+          <button onclick="openFeedbackModal()" class="sidebar-footer-btn" style="border:1.5px solid #3d6a8a;color:#d4dde3;background:transparent;"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
+          <button onclick="clearCache()" class="sidebar-footer-btn" style="border:1.5px solid #3d5a70;color:#d4dde3;background:transparent;"><i class="ti ti-refresh" aria-hidden="true"></i><span class="sidebar-btn-label">Rensa cache</span></button>
+          <button class="sidebar-footer-btn sidebar-logout" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span class="sidebar-btn-label">Logga ut</span></button>
           <div id="sidebar-version" style="text-align:center;font-size:13px;font-weight:bold;color:#9fb2c0;margin-top:8px;"></div>
         </div>
       </div>
@@ -624,9 +623,9 @@
       <h2>Mina bedömningar</h2>
       <div id="assessment-swr-status" style="min-height:18px;margin-bottom:6px;"></div>
       <!-- Åtgärdsrad: tabbar + filtrerknapp alltid synlig -->
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;">
-        <button class="btn-primary"   id="tab-received" onclick="setAssessmentTab('received')">Mottagna</button>
-        <button class="btn-secondary" id="tab-sent"     onclick="setAssessmentTab('sent')">Skickade</button>
+      <div class="tab-row">
+        <button class="tab-btn active" id="tab-received" onclick="setAssessmentTab('received')">Mottagna</button>
+        <button class="tab-btn" id="tab-sent"     onclick="setAssessmentTab('sent')">Skickade</button>
       </div>
       <!-- Kollapsbart filter -->
       <div id="assessment-filter-panel" class="hidden filter-box" style="margin-bottom:14px;">
@@ -1197,9 +1196,9 @@
     <div id="panel-inbox" class="hidden">
       <h2>Förfrågningar</h2>
       <div id="inbox-swr-status" style="min-height:18px;margin-bottom:6px;"></div>
-      <div style="display:flex;gap:10px;margin-bottom:16px;">
-        <button class="btn-primary"   id="inbox-tab-inbox"  onclick="setInboxTab('inbox')">Mottagna</button>
-        <button class="btn-secondary" id="inbox-tab-outbox" onclick="setInboxTab('outbox')">Skickade</button>
+      <div class="tab-row" style="align-items:center;">
+        <button class="tab-btn active" id="inbox-tab-inbox"  onclick="setInboxTab('inbox')">Mottagna</button>
+        <button class="tab-btn" id="inbox-tab-outbox" onclick="setInboxTab('outbox')">Skickade</button>
         <button id="inbox-request-btn" class="btn-secondary btn-small" onclick="showRequestForm()" style="margin-left:auto;">+ Begär bedömning</button>
         <span id="bulk-request-btn-wrap" class="hidden">
           <button class="btn-secondary btn-small" onclick="showBulkRequestForm()">+ Gruppförfrågan</button>
@@ -1422,7 +1421,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.14.0';
+    const APP_VERSION = 'v4.14.1';
 
     let appData = null;
     let currentUser = null;
@@ -2763,8 +2762,8 @@
 
     function setAssessmentTab(role) {
       currentAssessmentRole = role;
-      document.getElementById('tab-sent').className     = role === 'sent'     ? 'btn-primary' : 'btn-secondary';
-      document.getElementById('tab-received').className = role === 'received' ? 'btn-primary' : 'btn-secondary';
+      document.getElementById('tab-sent').className     = role === 'sent'     ? 'tab-btn active' : 'tab-btn';
+      document.getElementById('tab-received').className = role === 'received' ? 'tab-btn active' : 'tab-btn';
       document.getElementById('my-assessments-list').innerHTML = '';
       if (role === 'received') clearAssessmentBadge();
       applyFilters();
@@ -5158,8 +5157,8 @@
       currentInboxTab = tab;
       const ib = document.getElementById('inbox-tab-inbox');
       const ob = document.getElementById('inbox-tab-outbox');
-      if (ib) { ib.className = tab==='inbox'  ? 'btn-primary' : 'btn-secondary'; ib.disabled = false; }
-      if (ob) { ob.className = tab==='outbox' ? 'btn-primary' : 'btn-secondary'; ob.disabled = false; }
+      if (ib) { ib.className = tab==='inbox'  ? 'tab-btn active' : 'tab-btn'; ib.disabled = false; }
+      if (ob) { ob.className = tab==='outbox' ? 'tab-btn active' : 'tab-btn'; ob.disabled = false; }
       renderInbox();
     }
 
