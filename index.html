@@ -1293,19 +1293,19 @@
         <div class="section-header" style="margin-top:24px;">Aviseringar</div>
         <div class="field">
           <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;">
-            <input type="checkbox" id="profile-email-notify" style="width:20px;height:20px;accent-color:#3d5c4a;">
+            <input type="checkbox" id="profile-email-notify" style="width:20px;height:20px;flex-shrink:0;accent-color:#3d5c4a;">
             Skicka e-post när jag tar emot en bedömning
           </label>
         </div>
         <div class="field">
           <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;">
-            <input type="checkbox" id="profile-email-notify-requests" style="width:20px;height:20px;accent-color:#3d5c4a;">
+            <input type="checkbox" id="profile-email-notify-requests" style="width:20px;height:20px;flex-shrink:0;accent-color:#3d5c4a;">
             Skicka e-post när jag får en förfrågan om bedömning
           </label>
         </div>
         <div class="field">
           <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;">
-            <input type="checkbox" id="profile-sound-notify" onchange="toggleSoundNotify(this.checked)" style="width:20px;height:20px;accent-color:#3d5c4a;">
+            <input type="checkbox" id="profile-sound-notify" onchange="toggleSoundNotify(this.checked)" style="width:20px;height:20px;flex-shrink:0;accent-color:#3d5c4a;">
             Ljud + systemnotis vid nya förfrågningar/bedömningar (den här enheten)
           </label>
         </div>
@@ -1371,7 +1371,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.13.5';
+    const APP_VERSION = 'v4.13.6';
 
     let appData = null;
     let currentUser = null;
@@ -3235,7 +3235,8 @@
         card.style.cssText = 'margin-top:10px; cursor:pointer;';
         card.innerHTML = '<div style="font-weight:bold;font-size:16px;">' + esc(u.firstName) + ' ' + esc(u.lastName)
           + (u.inaktiverad ? ' <span style="font-size:12px;background:#f0d8d0;color:#9e2a18;padding:2px 6px;border-radius:8px;">Inaktiverad</span>' : '')
-          + (u.pendingActivation ? ' <span style="font-size:12px;background:#f0e0b0;color:#7a5a10;padding:2px 6px;border-radius:8px;">Inväntar aktivering</span>' : '') + '</div>'
+          + (u.pendingActivation ? ' <span style="font-size:12px;background:#f0e0b0;color:#7a5a10;padding:2px 6px;border-radius:8px;">Inväntar aktivering</span>' : '')
+          + (u.mustChangePin ? ' <span style="font-size:12px;background:#e0d8f0;color:#4a2a9e;padding:2px 6px;border-radius:8px;">Väntar på lösenordsbyte</span>' : '') + '</div>'
           + '<div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + esc(u.email) + '</div>'
           + '<div style="font-size:14px;margin-top:4px;">' + esc(u.jobRole) + ' · ' + esc(u.clinic) + ' · ' + esc(u.userRole) + '</div>'
           + (u.senastAktiv ? '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">Senast aktiv: ' + esc(u.senastAktiv) + '</div>' : '');
@@ -6559,53 +6560,32 @@
       });
     }
 
-    // Kompletterar ett <input type=date> med separata år/månad/dag-textrutor bredvid
-    // (musväljaren i type=date behålls oförändrad). Synkar båda hållen.
+    // Kompletterar ett <input type=date> med en klickbar datumknapp som öppnar
+    // kalendern (musväljaren i type=date behålls oförändrad, bara visuellt dold).
     function setupDateTriple(dateInputId) {
       const dateInput = document.getElementById(dateInputId);
       if (!dateInput || dateInput.dataset.tripleSetup) return;
       dateInput.dataset.tripleSetup = '1';
 
-      const outer = document.createElement('span');
-      outer.style.cssText = 'position:relative;display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle;align-items:center;';
-      const mkField = (ph, len) => {
-        const inp = document.createElement('input');
-        inp.type = 'text'; inp.inputMode = 'numeric'; inp.placeholder = ph; inp.maxLength = len;
-        inp.style.cssText = `width:${len === 4 ? '54px' : '36px'};padding:6px 4px;text-align:center;font-size:15px;border:1.5px solid #c4b8ac;border-radius:5px;background:#f5f1ec;`;
-        return inp;
-      };
-      const yInp = mkField('ÅÅÅÅ', 4), mInp = mkField('MM', 2), dInp = mkField('DD', 2);
-      const calBtn = document.createElement('button');
-      calBtn.type = 'button'; calBtn.title = 'Öppna kalender'; calBtn.textContent = '📅';
-      calBtn.style.cssText = 'border:1.5px solid #c4b8ac;background:#f5f1ec;border-radius:5px;padding:5px 8px;cursor:pointer;font-size:15px;line-height:1;';
-      calBtn.onclick = () => {
+      const isFrom = dateInputId.includes('from');
+      const placeholder = isFrom ? 'Start' : 'Idag';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.style.cssText = 'margin-left:6px;vertical-align:middle;border:1.5px solid #c4b8ac;background:#f5f1ec;border-radius:5px;padding:6px 12px;font-size:15px;cursor:pointer;min-width:110px;text-align:center;';
+      btn.onclick = () => {
         if (dateInput.showPicker) { try { dateInput.showPicker(); return; } catch (e) { /* faller igenom */ } }
         dateInput.focus();
       };
-      outer.append(yInp, document.createTextNode('-'), mInp, document.createTextNode('-'), dInp, calBtn);
-      dateInput.insertAdjacentElement('afterend', outer);
-      // Behåll fältet funktionellt (för showPicker/change-event) men göm det visuellt —
-      // ingen dubblettruta, år/månad/dag + kalenderknappen är enda synliga UI:t.
+      dateInput.insertAdjacentElement('afterend', btn);
+      // Behåll fältet funktionellt (för showPicker/change-event) men göm det visuellt.
       dateInput.style.cssText = 'opacity:0;position:absolute;width:28px;height:28px;padding:0;border:none;pointer-events:none;';
-      outer.insertBefore(dateInput, outer.firstChild);
 
-      function fromDateInput() {
-        if (dateInput.value) {
-          const [y, m, d] = dateInput.value.split('-');
-          yInp.value = y; mInp.value = m; dInp.value = d;
-        } else { yInp.value = ''; mInp.value = ''; dInp.value = ''; }
+      function updateBtnText() {
+        btn.textContent = dateInput.value || placeholder;
       }
-      function toDateInput() {
-        if (yInp.value.length === 4 && mInp.value.length === 2 && dInp.value.length === 2) {
-          dateInput.value = `${yInp.value}-${mInp.value}-${dInp.value}`;
-          dateInput.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      }
-      yInp.addEventListener('input', () => { if (yInp.value.length >= 4) mInp.focus(); toDateInput(); });
-      mInp.addEventListener('input', () => { if (mInp.value.length >= 2) dInp.focus(); toDateInput(); });
-      dInp.addEventListener('input', toDateInput);
-      dateInput.addEventListener('change', fromDateInput);
-      fromDateInput();
+      dateInput.addEventListener('change', updateBtnText);
+      updateBtnText();
     }
 
     // Kör setup vid sidladdning
@@ -6689,9 +6669,11 @@
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const o = ctx.createOscillator(), g = ctx.createGain();
         o.connect(g); g.connect(ctx.destination);
-        o.frequency.value = 880; g.gain.value = 0.15;
+        o.type = 'sine'; o.frequency.value = 1568;
+        g.gain.setValueAtTime(0.2, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
         o.start();
-        setTimeout(() => { o.stop(); ctx.close(); }, 180);
+        setTimeout(() => { o.stop(); ctx.close(); }, 400);
       } catch (e) { /* tyst */ }
     }
 
@@ -6707,10 +6689,12 @@
     let _lastInboxCount = null;
     async function pollForUpdates() {
       const now = Date.now();
-      if (document.hidden && now - _lastPollTs < 10 * 60 * 1000) return; // dold flik: max var 10:e minut
+      if (document.hidden && now - _lastPollTs < 60 * 1000) return; // dold flik: max var 1:a minut
       _lastPollTs = now;
-      await checkForNewVersion();
-      updatePendingUsersBadge();
+      if (!document.hidden) {
+        await checkForNewVersion();
+        updatePendingUsersBadge();
+      }
       try {
         // Kolla nya förfrågningar
         const reqData = await api('getAssessmentRequests', { email: currentUser.email });
@@ -6731,7 +6715,6 @@
           if (badge) {
             badge.textContent = '+' + diff;
             badge.classList.remove('hidden');
-            setTimeout(() => { badge.classList.add('hidden'); updateFaviconNotification(); }, 10000);
           }
           updateFaviconNotification();
           notifyNewActivity('Ny bedömning mottagen — MoraDOPS', `Du har fått ${diff} ny bedömning.`);
