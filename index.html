@@ -106,13 +106,12 @@
     .sidebar-priv { margin-top: 8px; }
     .sidebar-logout { width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.12); color: #d4dde3; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; text-align: left; box-sizing: border-box; }
     .sidebar-logout:hover { background: rgba(176,48,32,0.22); border-color: rgba(255,138,117,0.55); }
-    .sidebar-footer-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; box-sizing: border-box; margin-bottom: 6px; font-family: Arial,sans-serif; text-align: left; }
-    .sidebar-footer-btn i { font-size: 21px; width: 24px; text-align: center; flex-shrink: 0; }
     .tab-row { display: flex; border-bottom: 1.5px solid #c7d1d7; margin-bottom: 16px; gap: 4px; }
     .tab-btn { background: none; border: none; padding: 10px 18px; font-size: 16px; color: #8a97a0; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; font-family: Arial,sans-serif; }
     .tab-btn.active { color: #1c2b36; font-weight: bold; border-bottom-color: #2e4a5f; }
     .formtype-card:focus-within { box-shadow: 0 0 0 2px #2e4a5f; }
     .sidebar.collapsed #sidebar-user-btn, .sidebar.collapsed #privilege-inline, .sidebar.collapsed .sidebar-priv { display: none; }
+    .sidebar.collapsed #sidebar-user-icon-collapsed { display: flex !important; }
     .main-content { flex: 1; padding: 28px 36px; max-width: 1100px; min-width: 0; margin: 0 auto; }
     .nav button { flex-shrink: 0; }
     .nav-right {
@@ -505,6 +504,7 @@
           <button class="sidebar-btn-secondary hidden" id="nav-btn-reminders"       onclick="showPanel('reminders')"><i class="ti ti-bell" aria-hidden="true"></i><span class="sidebar-btn-label">Påminnelser</span></button>
         </div>
         <div class="sidebar-nav-bottom">
+          <button class="sidebar-btn-secondary" id="sidebar-user-icon-collapsed" onclick="togglePrivilegeFromUserBtn()" style="display:none;"><i class="ti ti-id-badge" aria-hidden="true"></i></button>
           <div id="sidebar-user-btn" onclick="togglePrivilegeFromUserBtn()" style="width:100%;text-align:left;background:#24384a;border:1.5px solid #c7d1d7;border-radius:6px;padding:8px 12px;cursor:pointer;margin-bottom:4px;box-sizing:border-box;">
             <div id="nav-user" style="font-weight:bold;font-size:15px;color:#fff;"></div>
             <div id="nav-jobrole" style="font-size:12px;color:#9fb2c0;margin-top:1px;"></div>
@@ -522,9 +522,9 @@
         </div>
         <div class="sidebar-footer">
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
-          <button onclick="openFeedbackModal()" class="sidebar-footer-btn" style="border:1.5px solid #3d6a8a;color:#d4dde3;background:transparent;"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
-          <button onclick="clearCache()" class="sidebar-footer-btn" style="border:1.5px solid #3d5a70;color:#d4dde3;background:transparent;"><i class="ti ti-refresh" aria-hidden="true"></i><span class="sidebar-btn-label">Rensa cache</span></button>
-          <button class="sidebar-footer-btn sidebar-logout" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span class="sidebar-btn-label">Logga ut</span></button>
+          <button onclick="openFeedbackModal()" class="sidebar-btn-secondary"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
+          <button onclick="clearCache()" class="sidebar-btn-secondary"><i class="ti ti-refresh" aria-hidden="true"></i><span class="sidebar-btn-label">Rensa cache</span></button>
+          <button class="sidebar-btn-secondary sidebar-logout" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span class="sidebar-btn-label">Logga ut</span></button>
           <div id="sidebar-version" style="text-align:center;font-size:13px;font-weight:bold;color:#9fb2c0;margin-top:8px;"></div>
         </div>
       </div>
@@ -685,11 +685,11 @@
       <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:24px;width:100%;" id="stat-charts">
         <div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Bedömningar över tid</div>
-          <canvas id="chart-line" height="220"></canvas>
+          <div style="width:100%;aspect-ratio:4/3;"><canvas id="chart-line"></canvas></div>
         </div>
         <div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Fördelning per formulärtyp</div>
-          <canvas id="chart-pie" height="220"></canvas>
+          <div style="width:100%;aspect-ratio:4/3;"><canvas id="chart-pie"></canvas></div>
         </div>
       </div>
       <div id="statistics-content"></div>
@@ -1421,7 +1421,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.14.1';
+    const APP_VERSION = 'v4.14.2';
 
     let appData = null;
     let currentUser = null;
@@ -4637,8 +4637,8 @@
     }
 
     const CHART_COLORS = [
-      '#00c2ff','#ff3d81','#00e0a4','#ffb800','#a742ff',
-      '#ff5c3d','#2e4a5f','#8b3a9e','#1a8fa0','#e87db3'
+      '#00e5ff','#ff1266','#00ff9d','#ffd500','#b026ff',
+      '#ff5e00','#2e4a5f','#8b3a9e','#1a8fa0','#e87db3'
     ];
 
     function makeTotalLine(barDatasets, n) {
@@ -4730,12 +4730,11 @@
         if (lineChart) lineChart.destroy();
         const lineCtx = document.getElementById('chart-line').getContext('2d');
         const lineBarDs = areaDatasets.map(d => ({ ...d, fill: undefined, tension: undefined, pointRadius: undefined }));
-        const isMobile = window.innerWidth < 600;
         lineChart = new Chart(lineCtx, {
           type: 'bar',
           data: { labels: Object.values(rawByMonth).map(m => m.label), datasets: [...lineBarDs, makeTotalLine(lineBarDs, lineBarDs[0]?.data.length || 0)] },
           options: {
-            responsive: true, maintainAspectRatio: !isMobile,
+            responsive: true, maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(lineChart)(e, li) } },
             scales: {
               y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } },
@@ -4755,7 +4754,7 @@
         pieChart = new Chart(pieCtx, {
           type: 'pie',
           data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
-          options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
         });
 
         // ── Tabeller ──────────────────────────────────────────────
@@ -5311,13 +5310,13 @@
             .filter(p => /^\d+:\s*.+/.test(p));
 
           const canvasId = `pgc_${qi}`;
-          html += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;max-width:700px;">
+          html += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
             <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
               <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
               ${avg !== null ? `<span style="font-size:13px;color:#2e4a5f;font-weight:bold;">\u00d8\u00a0${avg}</span>` : ''}
             </div>
-            <div style="position:relative;height:170px;"><canvas id="${canvasId}"></canvas></div>
+            <div style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
             ${descParts.length ? `<div style="margin-top:10px;font-size:11px;color:#8a97a0;line-height:1.6;">${descParts.map(p => esc(p)).join('&nbsp;&nbsp;&bull;&nbsp;&nbsp;')}</div>` : ''}
           </div>`;
 
@@ -5887,8 +5886,8 @@
       if (months.length > 0) {
         chartSpecs.forEach(spec => {
           html += `<div class="section-header">${spec.label}</div>`;
-          html += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;margin-top:14px;max-width:700px;">';
-          html += '<div style="position:relative;width:100%;height:' + (window.innerWidth < 600 ? 400 : 220) + 'px;"><canvas id="overview-chart-' + spec.key + '"></canvas></div></div>';
+          html += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;margin-top:14px;">';
+          html += '<div style="width:100%;aspect-ratio:4/3;"><canvas id="overview-chart-' + spec.key + '"></canvas></div></div>';
         });
       }
 
