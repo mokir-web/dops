@@ -5,37 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="format-detection" content="telephone=no">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'><circle cx='22' cy='22' r='17' fill='none' stroke='%232a1f18' stroke-width='2'/><text x='22' y='27' font-family='Arial' font-size='13' font-weight='700' fill='%232a1f18' text-anchor='middle'>MD</text><circle cx='35' cy='35' r='8' fill='%234a9e62'/></svg>">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
     * { box-sizing: border-box; }
     html { width: 100%; font-size: 16px; }
     body { min-width: 0 !important; }
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #1e1612; font-size: 19px; -webkit-text-size-adjust: 100%; background: #e6e0d8; }
-    h2 { color: #2a1f18; margin-top: 0; font-size: 26px; }
-    h3 { color: #2a1f18; font-size: 21px; }
-    h4 { color: #6b5c52; margin: 20px 0 4px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #1c2b36; font-size: 19px; -webkit-text-size-adjust: 100%; background: #e4e9ec; }
+    h2 { color: #1c2b36; margin-top: 0; font-size: 26px; }
+    h3 { color: #1c2b36; font-size: 21px; }
+    h4 { color: #5b6b75; margin: 20px 0 4px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
     .field { margin-top: 22px; }
-    label.field-label { display: block; font-weight: bold; margin-bottom: 5px; color: #1e1612; font-size: 19px; }
-    .field-description { font-size: 14px; color: #6b5c52; margin-bottom: 8px; line-height: 1.6; padding-left: 8px; border-left: 2px solid #d8cfc5; }
+    label.field-label { display: block; font-weight: bold; margin-bottom: 5px; color: #1c2b36; font-size: 19px; }
+    .field-description { font-size: 14px; color: #5b6b75; margin-bottom: 8px; line-height: 1.6; padding-left: 8px; border-left: 2px solid #c7d1d7; }
     input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], select, textarea {
       width: 100%; max-width: 560px; padding: 11px 10px; font-size: 18px;
-      border: 1.5px solid #c4b8ac; border-radius: 5px;
-      background: #f5f1ec; color: #1e1612; }
+      border: 1.5px solid #c7d1d7; border-radius: 5px;
+      background: #eef1f3; color: #1c2b36; }
     textarea { max-width: 760px; }
     textarea { min-height: 90px; }
-    .radio-group label { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; font-weight: normal; cursor: pointer; color: #1e1612; font-size: 18px; }
+    .radio-group label { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; font-weight: normal; cursor: pointer; color: #1c2b36; font-size: 18px; }
     .radio-group label span { display: block; }
     .radio-group input[type=radio] { flex-shrink: 0; margin-top: 3px; width: 18px; height: 18px; }
-    .checkbox-group label { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; font-weight: normal; cursor: pointer; color: #1e1612; font-size: 18px; }
+    .checkbox-group label { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; font-weight: normal; cursor: pointer; color: #1c2b36; font-size: 18px; }
     .checkbox-group label span { display: block; }
     .checkbox-group input[type=checkbox] { flex-shrink: 0; margin-top: 3px; width: 18px; height: 18px; cursor: pointer; }
 
     .scale-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-    .kb-focused { outline: 2px solid #3d5c4a; outline-offset: 6px; border-radius: 6px; }
+    .kb-focused { outline: 2px solid #2e4a5f; outline-offset: 6px; border-radius: 6px; }
     .scale-group label {
       display: flex; flex-direction: column; align-items: center;
       cursor: pointer; font-size: 15px;
-      min-width: 40px; padding: 5px 3px; color: #1e1612;
+      min-width: 40px; padding: 5px 3px; color: #1c2b36;
     }
     .scale-group input { margin-bottom: 5px; width: 22px; height: 22px; cursor: pointer; }
 
@@ -43,24 +43,24 @@
     .slider-value-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
     .slider-value-label {
       min-width: 28px; text-align: center; font-size: 17px; font-weight: bold;
-      color: #9e8e82; transition: color 0.15s;
+      color: #8a97a0; transition: color 0.15s;
     }
-    .slider-value-label.touched { color: #3d5c4a; }
+    .slider-value-label.touched { color: #2e4a5f; }
     input[type=range].skala-slider {
       flex: 1; -webkit-appearance: none; appearance: none; height: 6px;
-      border-radius: 3px; background: #d8cfc5; outline: none; cursor: pointer;
+      border-radius: 3px; background: #c7d1d7; outline: none; cursor: pointer;
     }
     input[type=range].skala-slider::-webkit-slider-thumb {
       -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
-      background: #9e8e82; cursor: pointer; border: 2px solid #f5f1ec; transition: background 0.15s;
+      background: #8a97a0; cursor: pointer; border: 2px solid #eef1f3; transition: background 0.15s;
     }
-    input[type=range].skala-slider.touched::-webkit-slider-thumb { background: #3d5c4a; }
+    input[type=range].skala-slider.touched::-webkit-slider-thumb { background: #2e4a5f; }
     input[type=range].skala-slider::-moz-range-thumb {
-      width: 24px; height: 24px; border-radius: 50%; border: 2px solid #f5f1ec;
-      background: #9e8e82; cursor: pointer; transition: background 0.15s;
+      width: 24px; height: 24px; border-radius: 50%; border: 2px solid #eef1f3;
+      background: #8a97a0; cursor: pointer; transition: background 0.15s;
     }
-    input[type=range].skala-slider.touched::-moz-range-thumb { background: #3d5c4a; }
-    .slider-marks { position: relative; height: 16px; font-size: 11px; color: #9e8e82; margin-top: 3px; }
+    input[type=range].skala-slider.touched::-moz-range-thumb { background: #2e4a5f; }
+    .slider-marks { position: relative; height: 16px; font-size: 11px; color: #8a97a0; margin-top: 3px; }
     .slider-marks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
 
     .hidden { display: none !important; }
@@ -68,7 +68,7 @@
     .nav {
       display: flex; gap: 8px; margin-bottom: 24px;
       flex-wrap: wrap; align-items: center;
-      padding-bottom: 16px; border-bottom: 1.5px solid #c4b8ac;
+      padding-bottom: 16px; border-bottom: 1.5px solid #c7d1d7;
     }
     /* Sidebar layout */
     .app-layout { display: flex; min-height: 100vh; align-items: flex-start; }
@@ -101,10 +101,10 @@
     .sidebar-btn-secondary.active { background: #2e4a5f; color: #fff; border-left-color: #5b9bd5; font-weight: bold; }
     .sidebar-btn-secondary.hidden { display: none; }
     .sidebar-divider { height: 1px; background: #2e4a5f; margin: 6px 18px; display: none; }
-    .sidebar-user { font-size: 14px; font-weight: bold; color: #2a1f18; }
-    .sidebar-clinic { font-size: 12px; color: #6b5c52; margin-top: 2px; }
+    .sidebar-user { font-size: 14px; font-weight: bold; color: #1c2b36; }
+    .sidebar-clinic { font-size: 12px; color: #5b6b75; margin-top: 2px; }
     .sidebar-priv { margin-top: 8px; }
-    .sidebar-logout { width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.12); color: #ff8a75; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; text-align: left; box-sizing: border-box; }
+    .sidebar-logout { width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.12); color: #d4dde3; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; text-align: left; box-sizing: border-box; }
     .sidebar-logout:hover { background: rgba(176,48,32,0.22); border-color: rgba(255,138,117,0.55); }
     .sidebar-collapsed-only { display: none; }
     .sidebar.collapsed .sidebar-collapsed-only { display: inline; }
@@ -113,33 +113,33 @@
     .nav button { flex-shrink: 0; }
     .nav-right {
       margin-left: auto; display: flex; gap: 12px;
-      align-items: center; font-size: 15px; color: #6b5c52;
+      align-items: center; font-size: 15px; color: #5b6b75;
     }
     .nav-user-info { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
-    .nav-mobile-user { display: flex; flex-direction: column; gap: 2px; padding: 10px 0 14px; border-bottom: 1px solid #c4b8ac; margin-bottom: 8px; }
+    .nav-mobile-user { display: flex; flex-direction: column; gap: 2px; padding: 10px 0 14px; border-bottom: 1px solid #c7d1d7; margin-bottom: 8px; }
     .nav-logo-desktop { display: flex; align-items: center; gap: 8px; margin-right: 16px; }
     .nav-mobile-top { display: none; align-items: center; justify-content: space-between; flex: 1; margin-left: 10px; }
     .nav-mobile-user-top { display: flex; flex-direction: column; gap: 1px; }
     .nav-desktop-btns { display: grid; grid-template-columns: repeat(4, auto); gap: 6px; align-items: start; justify-content: start; }
-    .hamburger { display: none; background: #3d5c4a; color: #f0ede8; border: none; border-radius: 5px; padding: 13px 18px; cursor: pointer; font-size: 20px; line-height: 1; min-height: 48px; }
+    .hamburger { display: none; background: #2e4a5f; color: #eef1f3; border: none; border-radius: 5px; padding: 13px 18px; cursor: pointer; font-size: 20px; line-height: 1; min-height: 48px; }
     .nav-menu { display: none; }
     .nav-mobile-top { display: none; }
 
     .btn-row { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
     button.btn-primary {
       padding: 13px 22px; font-size: 18px;
-      background: #3d5c4a; color: #f0ede8;
+      background: #2e4a5f; color: #eef1f3;
       border: none; border-radius: 5px; cursor: pointer;
       min-height: 48px;
     }
-    button.btn-primary:hover { background: #2a4234; }
+    button.btn-primary:hover { background: #1c2b36; }
     button.btn-secondary {
       padding: 13px 22px; font-size: 18px;
-      background: #ddd5ca; color: #1e1612;
-      border: 1.5px solid #c4b8ac; border-radius: 5px; cursor: pointer;
+      background: #dde3e7; color: #1c2b36;
+      border: 1.5px solid #c7d1d7; border-radius: 5px; cursor: pointer;
       min-height: 48px;
     }
-    button.btn-secondary:hover { background: #cfc5b8; }
+    button.btn-secondary:hover { background: #cdd6db; }
     button.btn-danger {
       padding: 11px 16px; font-size: 16px;
       background: rgba(176,48,32,0.12); color: #9e2a18;
@@ -150,39 +150,39 @@
     button.btn-small { padding: 7px 15px; font-size: 15px; min-height: 38px; }
 
     .section-header {
-      background: #d8cfc5; padding: 12px 16px;
+      background: #c7d1d7; padding: 12px 16px;
       border-radius: 5px; margin-top: 28px;
-      font-weight: bold; color: #2a1f18; font-size: 18px;
-      border-left: 4px solid #9e7c68;
+      font-weight: bold; color: #1c2b36; font-size: 18px;
+      border-left: 4px solid #5b6b75;
     }
-    .question-label { font-weight: bold; margin-bottom: 3px; color: #1e1612; font-size: 18px; }
-    hr { border: none; border-top: 1.5px solid #c4b8ac; margin: 24px 0; }
+    .question-label { font-weight: bold; margin-bottom: 3px; color: #1c2b36; font-size: 18px; }
+    hr { border: none; border-top: 1.5px solid #c7d1d7; margin: 24px 0; }
     .status-ok  { color: #3a6e30; font-weight: bold; margin-top: 14px; font-size: 18px; }
     .status-err { color: #9e2a18; font-weight: bold; margin-top: 14px; font-size: 18px; }
 
-    .assessment-card { border: 1.5px solid #c4b8ac; border-radius: 7px; padding: 16px; margin-top: 16px; background: #f5f1ec; }
-    .assessment-card h4 { margin: 0 0 7px; color: #2a1f18; font-size: 17px; text-transform: none; letter-spacing: 0; }
-    .assessment-card .meta { font-size: 14px; color: #6b5c52; margin-bottom: 10px; }
+    .assessment-card { border: 1.5px solid #b9c3ca; border-radius: 7px; padding: 16px; margin-top: 16px; background: #ffffff; box-shadow: 0 1px 3px rgba(30,22,18,0.08); }
+    .assessment-card h4 { margin: 0 0 7px; color: #1c2b36; font-size: 17px; text-transform: none; letter-spacing: 0; }
+    .assessment-card .meta { font-size: 14px; color: #5b6b75; margin-bottom: 10px; }
     .assessment-answers { font-size: 16px; margin-top: 10px; }
-    .ans-section { font-weight: bold; margin-top: 12px; color: #2a1f18; font-size: 16px; }
-    .ans-row { margin: 5px 0 1px 14px; color: #1e1612; font-size: 16px; }
-    .ans-desc { margin: 0 0 4px 28px; color: #6b5c52; font-size: 13px; line-height: 1.5; }
+    .ans-section { font-weight: bold; margin-top: 12px; color: #1c2b36; font-size: 16px; }
+    .ans-row { margin: 5px 0 1px 14px; color: #1c2b36; font-size: 16px; }
+    .ans-desc { margin: 0 0 4px 28px; color: #5b6b75; font-size: 13px; line-height: 1.5; }
 
-    @keyframes spin { to { transform: rotate(360deg); } } margin-top: 16px; padding: 16px; background: #d8cfc5; border-radius: 7px; }
+    @keyframes spin { to { transform: rotate(360deg); } } margin-top: 16px; padding: 16px; background: #c7d1d7; border-radius: 7px; }
     .filter-chip {
       font-size: 15px; cursor: pointer;
-      background: #f5f1ec; border: 1.5px solid #c4b8ac;
+      background: #eef1f3; border: 1.5px solid #c7d1d7;
       padding: 7px 14px; border-radius: 14px;
       display: inline-flex; align-items: center; gap: 7px;
-      min-height: 38px; color: #1e1612;
+      min-height: 38px; color: #1c2b36;
     }
     .date-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
     #login-panel {
       max-width: 420px; width: 100%;
       margin: 48px auto; padding: 28px;
-      border: 1.5px solid #c4b8ac; border-radius: 9px;
-      background: #f5f1ec;
+      border: 1.5px solid #c7d1d7; border-radius: 9px;
+      background: #eef1f3;
     }
     #login-panel h2 { text-align: center; }
 
@@ -192,31 +192,31 @@
     .priv-toggle { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
     .priv-btn {
       padding: 6px 12px; font-size: 13px; border-radius: 14px;
-      border: 1.5px solid #c4b8ac; background: #f5f1ec; color: #6b5c52;
+      border: 1.5px solid #c7d1d7; background: #eef1f3; color: #5b6b75;
       cursor: pointer; white-space: nowrap;
     }
-    .priv-btn:hover { background: #e8e2da; }
-    .priv-btn.active { background: #3d5c4a; color: #f0ede8; border-color: #3d5c4a; font-weight: bold; }
+    .priv-btn:hover { background: #dde3e7; }
+    .priv-btn.active { background: #2e4a5f; color: #eef1f3; border-color: #2e4a5f; font-weight: bold; }
 
     /* Enhetlig display-fält (klinik, registrerare) */
     .display-field {
       width: 100%; max-width: 560px; padding: 11px 10px; font-size: 18px;
-      border: 1.5px solid #c4b8ac; border-radius: 5px;
-      background: #f5f1ec; color: #6b5c52;
+      border: 1.5px solid #c7d1d7; border-radius: 5px;
+      background: #eef1f3; color: #5b6b75;
       font-style: italic;
     }
 
     /* Nav-knappar: alla lika, aktiv får accentfärg */
     .nav-btn {
       padding: 13px 22px; font-size: 18px;
-      background: #ddd5ca; color: #1e1612;
-      border: 1.5px solid #c4b8ac; border-radius: 5px; cursor: pointer;
+      background: #dde3e7; color: #1c2b36;
+      border: 1.5px solid #c7d1d7; border-radius: 5px; cursor: pointer;
       min-height: 48px; font-weight: normal;
     }
-    .nav-btn:hover { background: #cfc5b8; }
+    .nav-btn:hover { background: #cdd6db; }
     .nav-btn.active {
-      background: #3d5c4a; color: #f0ede8;
-      border-color: #3d5c4a; font-weight: bold;
+      background: #2e4a5f; color: #eef1f3;
+      border-color: #2e4a5f; font-weight: bold;
     }
 
     /* Frågegrupp-avstånd */
@@ -224,7 +224,7 @@
     .field + .field { margin-top: 24px; }
 
     /* Radio/checkbox accent – använd palett-färg istället för system-blå */
-    input[type=radio], input[type=checkbox] { accent-color: #3d5c4a; }
+    input[type=radio], input[type=checkbox] { accent-color: #2e4a5f; }
 
     /* Disabled radio-label */
     .radio-group label.disabled-option {
@@ -232,24 +232,24 @@
     }
     .radio-group label.disabled-option::after {
       content: " (ej tillgänglig)";
-      font-size: 14px; color: #9e8e82; font-style: italic;
+      font-size: 14px; color: #8a97a0; font-style: italic;
     }
 
     /* Logga ut – tonas ned */
     button.btn-danger {
       padding: 11px 16px; font-size: 16px;
-      background: transparent; color: #9e8e82;
-      border: 1.5px solid #c4b8ac; border-radius: 5px; cursor: pointer;
+      background: transparent; color: #8a97a0;
+      border: 1.5px solid #c7d1d7; border-radius: 5px; cursor: pointer;
       min-height: 48px;
     }
     button.btn-danger:hover { background: rgba(176,48,32,0.10); color: #9e2a18; border-color: rgba(176,48,32,0.35); }
 
     /* Sektionsavgränsare luftigare */
     .section-header {
-      background: #d8cfc5; padding: 10px 14px;
+      background: #c7d1d7; padding: 10px 14px;
       border-radius: 5px; margin-top: 36px; margin-bottom: 4px;
-      font-weight: bold; color: #2a1f18; font-size: 17px;
-      border-left: 4px solid #3d5c4a;
+      font-weight: bold; color: #1c2b36; font-size: 17px;
+      border-left: 4px solid #2e4a5f;
     }
 
     /* Mobil logo med text */
@@ -258,7 +258,7 @@
     }
     .nav-mobile-logo-text {
       font-family: Arial, sans-serif; font-size: 11px; font-weight: 700;
-      color: #2a1f18; letter-spacing: 0.5px;
+      color: #1c2b36; letter-spacing: 0.5px;
     }
 
     /* ── Mobile overrides (max 600px = phone) ── */
@@ -276,7 +276,7 @@
         padding: 10px;
         font-size: 17px;
         max-width: 100%;
-        background: #f0ede8;
+        background: #eef1f3;
       }
       h2 { font-size: 22px; }
       h3 { font-size: 18px; }
@@ -329,12 +329,12 @@
     <div style="display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:24px;">
       <div style="display:flex;align-items:center;gap:10px;">
         <svg width="42" height="42" viewBox="0 0 44 44" style="overflow:visible;">
-          <circle cx="22" cy="22" r="17" fill="none" stroke="#2a1f18" stroke-width="2"/>
-          <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#2a1f18" text-anchor="middle">MD</text>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#1c2b36" stroke-width="2"/>
+          <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#1c2b36" text-anchor="middle">MD</text>
           <circle cx="35" cy="35" r="8" fill="#4a9e62"/>
-          <polyline points="30,35 33,38 40,31" fill="none" stroke="#f0ede8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="30,35 33,38 40,31" fill="none" stroke="#eef1f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span style="font-family:Arial,sans-serif;font-size:19px;font-weight:700;color:#2a1f18;letter-spacing:-0.3px;">MoraDOPS</span>
+        <span style="font-family:Arial,sans-serif;font-size:19px;font-weight:700;color:#1c2b36;letter-spacing:-0.3px;">MoraDOPS</span>
       </div>
     </div>
 
@@ -358,7 +358,7 @@
         <a href="#" id="login-forgot-link" onclick="showLoginView('forgot'); return false;" style="font-size:13px; color:#1a73e8;">Glömt PIN?</a>
       </div>
       <div id="login-status"></div>
-      <div style="margin-top:24px;text-align:center;font-size:12px;color:#b0a090;" id="login-version"></div>
+      <div style="margin-top:24px;text-align:center;font-size:12px;color:#8a97a0;" id="login-version"></div>
     </div>
 
     <div id="forgot-view" class="hidden">
@@ -444,20 +444,20 @@
   <!-- ═══ APP ══════════════════════════════════════════════════════ -->
 
   <div id="app" class="hidden">
-    <div id="app-loading" style="position:fixed;inset:0;background:#e6e0d8;z-index:500;display:flex;align-items:center;justify-content:center;"><div style="color:#6b5c52;font-size:16px;">Laddar...</div></div>
+    <div id="app-loading" style="position:fixed;inset:0;background:#e4e9ec;z-index:500;display:flex;align-items:center;justify-content:center;"><div style="color:#5b6b75;font-size:16px;">Laddar...</div></div>
 
     <!-- Mobil hamburger + logo -->
-    <div id="mobile-topbar" style="display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#e6e0d8;z-index:140;align-items:center;padding:0 16px;">
+    <div id="mobile-topbar" style="display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#e4e9ec;z-index:140;align-items:center;padding:0 16px;">
       <button class="hamburger" id="hamburger-btn" aria-label="Meny" style="position:static;min-height:44px;">☰</button>
       <!-- Logga centrerad i topbar -->
       <div onclick="showPanel('overview')" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;cursor:pointer;">
         <svg width="30" height="30" viewBox="0 0 44 44" style="overflow:visible;">
-          <circle cx="22" cy="22" r="17" fill="none" stroke="#2a1f18" stroke-width="2"/>
-          <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#2a1f18" text-anchor="middle">MD</text>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#1c2b36" stroke-width="2"/>
+          <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#1c2b36" text-anchor="middle">MD</text>
           <circle cx="35" cy="35" r="8" fill="#4a9e62"/>
-          <polyline points="30,35 33,38 40,31" fill="none" stroke="#f0ede8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="30,35 33,38 40,31" fill="none" stroke="#eef1f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span style="font-weight:700;font-size:15px;color:#2a1f18;">MoraDOPS</span>
+        <span style="font-weight:700;font-size:15px;color:#1c2b36;">MoraDOPS</span>
       </div>
     </div>
 
@@ -473,10 +473,10 @@
             <circle cx="22" cy="22" r="17" fill="none" stroke="#fff" stroke-width="2"/>
             <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">MD</text>
             <circle cx="35" cy="35" r="8" fill="#4a9e62"/>
-            <polyline points="30,35 33,38 40,31" fill="none" stroke="#f0ede8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="30,35 33,38 40,31" fill="none" stroke="#eef1f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span class="sidebar-logo-text">MoraDOPS</span>
-          <button class="sidebar-collapse-toggle" id="sidebar-collapse-btn" onclick="event.stopPropagation(); toggleSidebarCollapse();" title="Fäll in/ut meny"><i class="ti ti-chevron-left" id="sidebar-collapse-icon" aria-hidden="true"></i></button>
+          <button class="sidebar-collapse-toggle" id="sidebar-collapse-btn" onclick="event.stopPropagation(); toggleSidebarCollapse();" title="Fäll in/ut meny"><span id="sidebar-collapse-icon" style="font-size:15px;">‹</span></button>
         </div>
         <div class="sidebar-nav">
           <button class="sidebar-btn"        id="nav-btn-inbox"          onclick="showPanel('inbox')">
@@ -507,20 +507,20 @@
           <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
         </div>
         <div class="sidebar-footer">
-          <div id="sidebar-user-btn" onclick="togglePrivilegeFromUserBtn()" style="width:100%;text-align:left;background:#ede8e2;border:1.5px solid #c4b8ac;border-radius:6px;padding:8px 12px;cursor:pointer;margin-bottom:4px;box-sizing:border-box;">
-            <div id="nav-user" style="font-weight:bold;font-size:15px;color:#2a1f18;"></div>
-            <div id="nav-jobrole" style="font-size:12px;color:#6b5c52;margin-top:1px;"></div>
-            <div id="nav-clinic" style="font-size:12px;color:#6b5c52;"></div>
-            <div id="nav-role-label" style="font-size:12px;color:#3d5c4a;font-weight:bold;margin-top:2px;"></div>
-            <div id="nav-other-roles" style="font-size:11px;color:#9e8e82;margin-top:2px;display:none;"></div>
+          <div id="sidebar-user-btn" onclick="togglePrivilegeFromUserBtn()" style="width:100%;text-align:left;background:#24384a;border:1.5px solid #c7d1d7;border-radius:6px;padding:8px 12px;cursor:pointer;margin-bottom:4px;box-sizing:border-box;">
+            <div id="nav-user" style="font-weight:bold;font-size:15px;color:#fff;"></div>
+            <div id="nav-jobrole" style="font-size:12px;color:#9fb2c0;margin-top:1px;"></div>
+            <div id="nav-clinic" style="font-size:12px;color:#9fb2c0;"></div>
+            <div id="nav-role-label" style="font-size:12px;color:#7fd4a0;font-weight:bold;margin-top:2px;"></div>
+            <div id="nav-other-roles" style="font-size:11px;color:#9fb2c0;margin-top:2px;display:none;"></div>
           </div>
           <!-- Rollval expanderas under knappen -->
-          <div id="privilege-inline" class="hidden" style="background:#ede8e2;border:1.5px solid #c4b8ac;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
+          <div id="privilege-inline" class="hidden" style="background:#24384a;border:1.5px solid #c7d1d7;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
           </div>
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
-          <button onclick="openFeedbackModal()" style="width:100%;background:transparent;border:1.5px solid #3d6a8a;border-radius:6px;padding:9px 4px;cursor:pointer;font-size:13px;color:#7fb2dd;box-sizing:border-box;line-height:1.2;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
+          <button onclick="openFeedbackModal()" style="width:100%;background:transparent;border:1.5px solid #3d6a8a;border-radius:6px;padding:9px 4px;cursor:pointer;font-size:13px;color:#d4dde3;box-sizing:border-box;line-height:1.2;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
           <div style="display:flex;gap:6px;align-items:stretch;">
-            <button onclick="clearCache()" style="flex:1;background:transparent;border:1.5px solid #c4b8ac;border-radius:6px;padding:10px 4px;cursor:pointer;font-size:13px;color:#6b5c52;box-sizing:border-box;line-height:1.2;"><span class="sidebar-btn-label">Rensa cache</span><i class="ti ti-refresh sidebar-collapsed-only" aria-hidden="true"></i></button>
+            <button onclick="clearCache()" style="flex:1;background:transparent;border:1.5px solid #3d5a70;border-radius:6px;padding:10px 4px;cursor:pointer;font-size:13px;color:#d4dde3;box-sizing:border-box;line-height:1.2;"><span class="sidebar-btn-label">Rensa cache</span><i class="ti ti-refresh sidebar-collapsed-only" aria-hidden="true"></i></button>
             <button class="sidebar-logout" onclick="doLogout()" style="flex:1;padding:10px 4px;box-sizing:border-box;line-height:1.2;margin:0;"><span class="sidebar-btn-label">Logga ut</span><i class="ti ti-logout sidebar-collapsed-only" aria-hidden="true"></i></button>
           </div>
           <div id="sidebar-version" style="text-align:center;font-size:13px;font-weight:bold;color:#9fb2c0;margin-top:8px;"></div>
@@ -600,12 +600,12 @@
     <div id="panel-confirmation" class="hidden">
       <div style="max-width:560px;text-align:center;padding:40px 20px;">
         <div style="font-size:56px;margin-bottom:16px;">✓</div>
-        <h2 style="color:#3d5c4a;margin-bottom:8px;">Bedömning skickad!</h2>
-        <p id="confirm-recipient" style="color:#6b5c52;font-size:16px;margin-bottom:24px;"></p>
-          <div id="confirm-time-saving" class="hidden" style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:20px;margin-bottom:28px;text-align:left;">
-          <div style="font-size:18px;font-weight:bold;color:#3d5c4a;margin-bottom:12px;">Uppskattad tidsbesparing j&#228;mf&#246;rt papper</div>
-          <div id="confirm-time-this" style="font-size:28px;font-weight:bold;color:#3d5c4a;line-height:1.1;"></div>
-          <div id="confirm-time-total" style="font-size:13px;color:#9e8e82;margin-top:12px;"></div>
+        <h2 style="color:#2e4a5f;margin-bottom:8px;">Bedömning skickad!</h2>
+        <p id="confirm-recipient" style="color:#5b6b75;font-size:16px;margin-bottom:24px;"></p>
+          <div id="confirm-time-saving" class="hidden" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:20px;margin-bottom:28px;text-align:left;">
+          <div style="font-size:18px;font-weight:bold;color:#2e4a5f;margin-bottom:12px;">Uppskattad tidsbesparing j&#228;mf&#246;rt papper</div>
+          <div id="confirm-time-this" style="font-size:28px;font-weight:bold;color:#2e4a5f;line-height:1.1;"></div>
+          <div id="confirm-time-total" style="font-size:13px;color:#8a97a0;margin-top:12px;"></div>
           <div id="confirm-time-context"></div>
         </div>
         <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
@@ -647,7 +647,7 @@
         </label>
         <button class="btn-primary btn-small" onclick="exportSelected()">Exportera</button>
         <button class="btn-secondary btn-small" id="filter-toggle-btn" onclick="toggleAssessmentFilter()">Filtrera</button>
-        <span id="selected-count" style="font-size:13px;color:#6b5c52;margin-left:auto;"></span>
+        <span id="selected-count" style="font-size:13px;color:#5b6b75;margin-left:auto;"></span>
       </div>
       <div id="my-assessments-list"></div>
       <div id="export-status" style="margin-top:12px;"></div>
@@ -681,12 +681,12 @@
       </div>
       <!-- Grafer -->
       <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:24px;width:100%;" id="stat-charts">
-        <div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;min-width:0;">
-          <div style="font-weight:bold;font-size:16px;color:#2a1f18;margin-bottom:12px;">Bedömningar över tid</div>
+        <div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
+          <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Bedömningar över tid</div>
           <canvas id="chart-line" height="220"></canvas>
         </div>
-        <div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;min-width:0;">
-          <div style="font-weight:bold;font-size:16px;color:#2a1f18;margin-bottom:12px;">Fördelning per formulärtyp</div>
+        <div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
+          <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Fördelning per formulärtyp</div>
           <canvas id="chart-pie" height="220"></canvas>
         </div>
       </div>
@@ -694,7 +694,7 @@
     </div>
     <div id="panel-documents" class="hidden">
       <h2>Dokument</h2>
-      <p style="color:#6b5c52;">Nedladdningsbara mallar och avtal för kliniker som vill ansluta till MoraDOPS.</p>
+      <p style="color:#5b6b75;">Nedladdningsbara mallar och avtal för kliniker som vill ansluta till MoraDOPS.</p>
       <div id="documents-list" style="margin-top:16px;"><p style="color:#888;">Läser in...</p></div>
     </div>
 
@@ -747,16 +747,16 @@
 
         <div class="section-header">Navigation och tangentbordsanv&#228;ndning</div>
         <p>MoraDOPS navigeras via sidopanelen till v&#228;nster. P&#229; mobil &#246;ppnas menyn via hamburgerikonen uppe till v&#228;nster.</p>
-        <p><strong>Allm&#228;n navigering:</strong> Klicka i sidopanelen f&#246;r att byta sektion. Sidor laddar automatiskt och visar alltid aktuell data. Anv&#228;nd <kbd style="background:#e8e2db;border:1px solid #c4b8ac;border-radius:3px;padding:1px 5px;font-size:12px;">Tab</kbd> f&#246;r att navigera mellan interaktiva element med tangentbordet.</p>
+        <p><strong>Allm&#228;n navigering:</strong> Klicka i sidopanelen f&#246;r att byta sektion. Sidor laddar automatiskt och visar alltid aktuell data. Anv&#228;nd <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Tab</kbd> f&#246;r att navigera mellan interaktiva element med tangentbordet.</p>
         <p><strong>Registrering av bed&#246;mning:</strong> Formulär navigeras smidigt med tangentbord som alternativ till musklick.</p>
         <ul style="line-height:1.9;margin:8px 0 0 0;padding-left:20px;">
-          <li><kbd style="background:#e8e2db;border:1px solid #c4b8ac;border-radius:3px;padding:1px 5px;font-size:12px;">Tab</kbd> / <kbd style="background:#e8e2db;border:1px solid #c4b8ac;border-radius:3px;padding:1px 5px;font-size:12px;">&#8679; Tab</kbd> — byter f&#228;lt fram och tillbaka</li>
-          <li><kbd style="background:#e8e2db;border:1px solid #c4b8ac;border-radius:3px;padding:1px 5px;font-size:12px;">↑ ↓</kbd> — navigerar bland svarsalternativ i radioknappar</li>
-          <li><kbd style="background:#e8e2db;border:1px solid #c4b8ac;border-radius:3px;padding:1px 5px;font-size:12px;">Space</kbd> — markerar valt alternativ</li>
-          <li><kbd style="background:#e8e2db;border:1px solid #c4b8ac;border-radius:3px;padding:1px 5px;font-size:12px;">0-9</kbd> — v&#228;ljer och g&#229;r vidare direkt p&#229; numrerade skalfr&#229;gor</li>
-          <li><kbd style="background:#e8e2db;border:1px solid #c4b8ac;border-radius:3px;padding:1px 5px;font-size:12px;">Enter</kbd> — bekr&#228;ftar val och g&#229;r till n&#228;sta fr&#229;ga</li>
+          <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Tab</kbd> / <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">&#8679; Tab</kbd> — byter f&#228;lt fram och tillbaka</li>
+          <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">↑ ↓</kbd> — navigerar bland svarsalternativ i radioknappar</li>
+          <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Space</kbd> — markerar valt alternativ</li>
+          <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">0-9</kbd> — v&#228;ljer och g&#229;r vidare direkt p&#229; numrerade skalfr&#229;gor</li>
+          <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Enter</kbd> — bekr&#228;ftar val och g&#229;r till n&#228;sta fr&#229;ga</li>
         </ul>
-        <p style="color:#9e8e82;font-size:14px;">Tangentbordsanv&#228;ndning &#228;r ett alternativ f&#246;r snabbare navigering, s&#228;rskilt anv&#228;ndbart vid registrering av m&#229;nga bed&#246;mningar i f&#246;ljd.</p>
+        <p style="color:#8a97a0;font-size:14px;">Tangentbordsanv&#228;ndning &#228;r ett alternativ f&#246;r snabbare navigering, s&#228;rskilt anv&#228;ndbart vid registrering av m&#229;nga bed&#246;mningar i f&#246;ljd.</p>
 
         <div class="section-header">Behörighetsnivåer</div>
         <p>Systemet använder en hierarki för vem som kan bedöma vem. Specialister (Spec) kan bedöma alla. ST-läkare kan bedöma AT- och BT-läkare. Rollen sätts vid registrering och kan ändras under Min profil. Det är vid registrering och under profil möjligt att välja om användaren ska både kunna registrera och ta emot bedömningar.</p>
@@ -769,7 +769,7 @@
 
         <div class="section-header">Systemadministratör och utvecklare</div>
         <p>Simon Wigge<br>
-        <a href="mailto:simon@wigge.se" style="color:#3d5c4a;">simon@wigge.se</a><br>
+        <a href="mailto:simon@wigge.se" style="color:#2e4a5f;">simon@wigge.se</a><br>
         02504 93 121<br>
         ST-läkare Kirurgkliniken Mora</p>
 
@@ -795,7 +795,7 @@
           <button class="btn-primary btn-small" onclick="exportCoSelected()">Exportera</button>
         </span>
         <button class="btn-secondary btn-small" id="co-filter-toggle-btn" onclick="toggleCoFilter()">Filtrera</button>
-        <span id="co-selected-count" style="font-size:13px;color:#6b5c52;margin-left:auto;"></span>
+        <span id="co-selected-count" style="font-size:13px;color:#5b6b75;margin-left:auto;"></span>
       </div>
       <div id="co-filter-panel" class="hidden filter-box" style="margin-bottom:14px;">
         <div class="date-grid">
@@ -838,20 +838,20 @@
       </div>
 
       <div class="section-header">Sektioner i formulärväljaren</div>
-      <p style="color:#6b5c52;font-size:13px;">Grupperar formulär i väljaren när man registrerar en bedömning. Formulär utan tilldelad sektion hamnar sist under "Övrigt".</p>
+      <p style="color:#5b6b75;font-size:13px;">Grupperar formulär i väljaren när man registrerar en bedömning. Formulär utan tilldelad sektion hamnar sist under "Övrigt".</p>
       <div id="cs-groups-list" style="margin:10px 0;"></div>
       <div class="btn-row" style="margin-bottom:8px;">
         <input type="text" id="cs-new-group" placeholder="Ny sektion, t.ex. Ingrepp" style="max-width:260px;">
         <button class="btn-secondary btn-small" onclick="addClinicFormGroup()">+ Lägg till</button>
       </div>
       <div id="cs-groups-apply-all" class="hidden btn-row" style="margin-bottom:20px;align-items:center;">
-        <label style="font-size:12px;color:#6b5c52;display:flex;align-items:center;gap:5px;"><input type="checkbox" id="cs-groups-overwrite"> Skriv över kliniker som redan har egna sektioner</label>
+        <label style="font-size:12px;color:#5b6b75;display:flex;align-items:center;gap:5px;"><input type="checkbox" id="cs-groups-overwrite"> Skriv över kliniker som redan har egna sektioner</label>
         <button class="btn-secondary btn-small" onclick="applyClinicFormGroupsToAll()">Applicera sektionsstruktur på alla kliniker</button>
         <span id="cs-groups-apply-status" style="font-size:13px;"></span>
       </div>
 
       <div class="section-header">Målvärden och synlighet</div>
-      <p style="color:#6b5c52;font-size:13px;">Per formulärtyp. Ingen begränsning satt = synlig för alla yrkesroller.</p>
+      <p style="color:#5b6b75;font-size:13px;">Per formulärtyp. Ingen begränsning satt = synlig för alla yrkesroller.</p>
       <div id="cs-list" style="margin-top:14px;"></div>
     </div>
 
@@ -867,7 +867,7 @@
       </div>
 
       <div id="new-clinic-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
-        <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:420px;width:100%;">
+        <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:420px;width:100%;">
           <h3 style="margin-top:0;">Ny klinik</h3>
           <div class="field"><label class="field-label">Namn</label><input type="text" id="newclinic-name"></div>
           <div class="field"><label class="field-label">Kontaktperson</label><input type="text" id="newclinic-contact"></div>
@@ -895,7 +895,7 @@
 
       <!-- Registrera ny användare (admin) -->
       <div id="add-user-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
-        <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
+        <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
           <h3 style="margin-top:0;">Registrera användare</h3>
           <div class="field"><label class="field-label">Förnamn</label><input type="text" id="addu-firstname"></div>
           <div class="field"><label class="field-label">Efternamn</label><input type="text" id="addu-lastname"></div>
@@ -923,9 +923,9 @@
 
       <!-- CSV-import -->
       <div id="csv-import-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
-        <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;">
+        <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;">
           <h3 style="margin-top:0;">Ladda upp CSV</h3>
-          <p style="color:#6b5c52;font-size:14px;">Ladda ner mallen, fyll i/redigera, ladda upp igen. Rader med befintlig e-post uppdateras, nya skapas med tillfällig PIN. Ogiltiga rader hoppas över.</p>
+          <p style="color:#5b6b75;font-size:14px;">Ladda ner mallen, fyll i/redigera, ladda upp igen. Rader med befintlig e-post uppdateras, nya skapas med tillfällig PIN. Ogiltiga rader hoppas över.</p>
           <input type="file" id="csv-file-input" accept=".csv">
           <div class="btn-row" style="margin-top:16px;">
             <button class="btn-primary" onclick="submitCsvImport()">Ladda upp</button>
@@ -933,8 +933,8 @@
             <button class="btn-secondary" onclick="closeCsvImportModal()">Avbryt</button>
           </div>
           <div id="csv-import-status" style="margin-top:10px;"></div>
-          <div id="user-csv-editor" class="hidden" style="margin-top:16px;border-top:1px solid #d8cfc5;padding-top:16px;">
-            <p style="color:#6b5c52;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Yrkesroll: ST/Spec/AT/BT/Admin. Användarroll: Registrerare/Mottagare/Blandbild/Administratör.</p>
+          <div id="user-csv-editor" class="hidden" style="margin-top:16px;border-top:1px solid #c7d1d7;padding-top:16px;">
+            <p style="color:#5b6b75;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Yrkesroll: ST/Spec/AT/BT/Admin. Användarroll: Registrerare/Mottagare/Blandbild/Administratör.</p>
             <div style="overflow-x:auto;"><table id="user-csv-table" style="border-collapse:collapse;width:100%;"></table></div>
             <div class="btn-row" style="margin-top:10px;">
               <button class="btn-secondary btn-small" onclick="addUserCsvRow()">+ Lägg till rad</button>
@@ -947,7 +947,7 @@
       </div>
       <!-- Redigera användare modal -->
       <div id="admin-edit-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
-        <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
+        <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
           <h3 style="margin-top:0;">Redigera användare</h3>
           <div class="field"><label class="field-label">Förnamn</label><input type="text" id="edit-firstname"></div>
           <div class="field"><label class="field-label">Efternamn</label><input type="text" id="edit-lastname"></div>
@@ -958,7 +958,7 @@
             <select id="edit-userrole"><option value="Registrerare">Registrerare</option><option value="Mottagare">Mottagare</option><option value="Blandbild">Blandbild</option><option value="Administratör">Administratör</option></select>
           </div>
           <div class="field"><label class="field-label">Klinik</label>
-            <select id="edit-clinic" style="font-size:15px;padding:8px;border:1.5px solid #c4b8ac;border-radius:6px;background:#f5f1ec;width:100%;"></select>
+            <select id="edit-clinic" style="font-size:15px;padding:8px;border:1.5px solid #c7d1d7;border-radius:6px;background:#eef1f3;width:100%;"></select>
           </div>
           <input type="hidden" id="edit-klinikid">
           <div class="field"><label class="field-label">Nytt lösenord (lämna tomt för oförändrat)</label><input type="password" id="edit-pin" maxlength="6" placeholder="4–6 siffror"></div>
@@ -1022,7 +1022,7 @@
           <button class="btn-secondary btn-small" onclick="toggleQuestionCsvEditor()">Redigera CSV</button>
         </div>
         <div id="question-csv-editor" class="hidden assessment-card" style="margin-bottom:14px;">
-          <p style="color:#6b5c52;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Lämna "Id" tom för nya frågor. Typ: rubrik/radio/fritext/multi/skala.</p>
+          <p style="color:#5b6b75;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Lämna "Id" tom för nya frågor. Typ: rubrik/radio/fritext/multi/skala.</p>
           <div style="overflow-x:auto;"><table id="question-csv-table" style="border-collapse:collapse;width:100%;"></table></div>
           <div class="btn-row" style="margin-top:10px;">
             <button class="btn-secondary btn-small" onclick="addQuestionCsvRow()">+ Lägg till rad</button>
@@ -1038,16 +1038,16 @@
     <!-- ── ANVÄNDARGODKÄNNANDE ──────────────────────────────────────── -->
     <div id="panel-pending-users" class="hidden">
       <h2>Användargodkännande</h2>
-      <p style="color:#6b5c52;font-size:14px;">Självregistrerade konton som väntar på godkännande.</p>
+      <p style="color:#5b6b75;font-size:14px;">Självregistrerade konton som väntar på godkännande.</p>
       <div id="pending-users-list" style="margin-top:14px;"><p style="color:#888;">Läser in...</p></div>
     </div>
 
     <div id="panel-error-reports" class="hidden">
       <h2>Felanmälningar</h2>
-      <p style="color:#6b5c52;font-size:14px;">Feedback och felanmälningar som skickats in från "Feedback/felanmälan" i sidomenyn.</p>
+      <p style="color:#5b6b75;font-size:14px;">Feedback och felanmälningar som skickats in från "Feedback/felanmälan" i sidomenyn.</p>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
-        <label style="font-size:14px;color:#6b5c52;">Felanmälningar skickas till</label>
-        <input type="email" id="global-feedback-email" placeholder="global-admin@moradops.se" style="flex:1;min-width:200px;padding:6px;border:1.5px solid #c4b8ac;border-radius:5px;font-size:14px;">
+        <label style="font-size:14px;color:#5b6b75;">Felanmälningar skickas till</label>
+        <input type="email" id="global-feedback-email" placeholder="global-admin@moradops.se" style="flex:1;min-width:200px;padding:6px;border:1.5px solid #c7d1d7;border-radius:5px;font-size:14px;">
         <button class="btn-secondary btn-small" onclick="saveGlobalFeedbackEmail()">Spara</button>
       </div>
       <div id="error-reports-global-list"><p style="color:#888;">Läser in...</p></div>
@@ -1055,7 +1055,7 @@
 
     <!-- Modal: ny formulärtyp -->
     <div id="fb-newtype-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
+      <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
         <h3 style="margin-top:0;">Ny formulärtyp</h3>
         <div class="field"><label class="field-label">Namn</label><input type="text" id="newtype-name"></div>
         <div class="field"><label class="field-label">Synlig för</label><div id="newtype-categories"></div></div>
@@ -1070,7 +1070,7 @@
 
     <!-- Modal: ny fråga -->
     <div id="fb-newq-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;">
+      <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;">
         <h3 style="margin-top:0;">Ny fråga</h3>
         <div id="newq-fields"></div>
         <div class="btn-row" style="margin-top:16px;">
@@ -1092,9 +1092,9 @@
     <div id="panel-request-stats" class="hidden">
       <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:0;">
         <h2 style="margin:0;">Förfrågningsöversikt</h2>
-        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#6b5c52;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#5b6b75;">
           <label for="expiry-select">Inaktuella efter</label>
-          <select id="expiry-select" style="font-size:13px;padding:3px 6px;border:1px solid #d8cfc5;border-radius:4px;background:#f5f1ec;" onchange="saveRequestExpiry(this.value)">
+          <select id="expiry-select" style="font-size:13px;padding:3px 6px;border:1px solid #c7d1d7;border-radius:4px;background:#eef1f3;" onchange="saveRequestExpiry(this.value)">
             <option value="0">Ingen gräns</option>
             <option value="1">1 vecka</option>
             <option value="2">2 veckor</option>
@@ -1116,7 +1116,7 @@
     <!-- ── PÅMINNELSER ───────────────────────────────────────────── -->
     <div id="panel-reminders" class="hidden">
       <h2>Påminnelser</h2>
-      <p style="font-size:14px;color:#6b5c52;margin:0 0 16px;">Automatiska veckovisa e-postpåminnelser med statistik till valda användare.</p>
+      <p style="font-size:14px;color:#5b6b75;margin:0 0 16px;">Automatiska veckovisa e-postpåminnelser med statistik till valda användare.</p>
       <button class="btn-secondary btn-small" onclick="showScheduleForm()">+ Ny påminnelse</button>
       <div id="schedule-list" style="margin-top:16px;max-width:560px;"></div>
 
@@ -1129,7 +1129,7 @@
         </div>
 
         <div class="field"><label class="field-label">Klinik</label>
-          <select id="sch-klinik" style="font-size:15px;padding:8px;border:1.5px solid #c4b8ac;border-radius:6px;background:#f5f1ec;width:100%;"></select>
+          <select id="sch-klinik" style="font-size:15px;padding:8px;border:1.5px solid #c7d1d7;border-radius:6px;background:#eef1f3;width:100%;"></select>
         </div>
 
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -1148,7 +1148,7 @@
         </div>
 
         <div class="field"><label class="field-label">Innehåll</label>
-          <div style="background:#fff;border:1px solid #d8cfc5;border-radius:6px;padding:10px 14px;">
+          <div style="background:#fff;border:1px solid #c7d1d7;border-radius:6px;padding:10px 14px;">
             <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-bottom:6px;">
               <input type="checkbox" id="sch-content-sent" checked> Registrerade bedömningar (per formulärtyp)
             </label>
@@ -1167,7 +1167,7 @@
           </div>
         </div>
         <div class="field"><label class="field-label">Tidsperiod (veckor bakåt)</label>
-          <input type="number" id="sch-period" value="1" min="1" max="52" style="width:90px;font-size:15px;padding:8px;border:1.5px solid #c4b8ac;border-radius:6px;background:#f5f1ec;">
+          <input type="number" id="sch-period" value="1" min="1" max="52" style="width:90px;font-size:15px;padding:8px;border:1.5px solid #c7d1d7;border-radius:6px;background:#eef1f3;">
         </div>
 
         <div class="field"><label class="field-label">Mottagargrupp</label>
@@ -1179,7 +1179,7 @@
           </select>
         </div>
         <div class="field"><label class="field-label">Välj mottagare</label>
-          <div id="sch-recipients" style="max-height:200px;overflow-y:auto;border:1px solid #d8cfc5;border-radius:6px;padding:8px;background:#fff;"></div>
+          <div id="sch-recipients" style="max-height:200px;overflow-y:auto;border:1px solid #c7d1d7;border-radius:6px;padding:8px;background:#fff;"></div>
         </div>
 
         <div class="btn-row" style="margin-top:14px;">
@@ -1225,14 +1225,14 @@
         <div id="request-status"></div>
       </div>
       <!-- E-postavisering förfrågningar -->
-      <div style="margin-top:16px;padding:12px 16px;background:#f5f1ec;border-radius:6px;border:1px solid #d8cfc5;">
+      <div style="margin-top:16px;padding:12px 16px;background:#eef1f3;border-radius:6px;border:1px solid #c7d1d7;">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:15px;">
-          <input type="checkbox" id="inbox-email-notify" style="width:18px;height:18px;accent-color:#3d5c4a;">
+          <input type="checkbox" id="inbox-email-notify" style="width:18px;height:18px;accent-color:#2e4a5f;">
           Skicka e-post när jag får en ny förfrågan om bedömning
         </label>
         <div style="margin-top:8px;display:flex;align-items:center;gap:10px;">
           <button class="btn-secondary btn-small" onclick="saveInboxEmailNotify(this)" style="font-size:14px;padding:6px 14px;">Spara inställning</button>
-          <span id="inbox-notify-status" style="font-size:13px;color:#3d5c4a;"></span>
+          <span id="inbox-notify-status" style="font-size:13px;color:#2e4a5f;"></span>
         </div>
       </div>
       <!-- Bulk-förfrågan formulär -->
@@ -1253,7 +1253,7 @@
           </select>
         </div>
         <div class="field">
-          <label class="field-label">Mottagare <small style="color:#6b5c52;">(kryssa i dem du vill skicka till)</small></label>
+          <label class="field-label">Mottagare <small style="color:#5b6b75;">(kryssa i dem du vill skicka till)</small></label>
           <div id="bulk-recipients" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
           <label style="font-size:13px;cursor:pointer;margin-top:8px;display:block;">
             <input type="checkbox" id="bulk-select-all" onchange="toggleBulkAll(this.checked)"> Markera alla
@@ -1324,19 +1324,19 @@
         <div class="section-header" style="margin-top:24px;">Aviseringar</div>
         <div class="field">
           <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;">
-            <input type="checkbox" id="profile-email-notify" style="width:20px;height:20px;flex-shrink:0;accent-color:#3d5c4a;">
+            <input type="checkbox" id="profile-email-notify" style="width:20px;height:20px;flex-shrink:0;accent-color:#2e4a5f;">
             Skicka e-post när jag tar emot en bedömning
           </label>
         </div>
         <div class="field">
           <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;">
-            <input type="checkbox" id="profile-email-notify-requests" style="width:20px;height:20px;flex-shrink:0;accent-color:#3d5c4a;">
+            <input type="checkbox" id="profile-email-notify-requests" style="width:20px;height:20px;flex-shrink:0;accent-color:#2e4a5f;">
             Skicka e-post när jag får en förfrågan om bedömning
           </label>
         </div>
         <div class="field">
           <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;">
-            <input type="checkbox" id="profile-sound-notify" onchange="toggleSoundNotify(this.checked)" style="width:20px;height:20px;flex-shrink:0;accent-color:#3d5c4a;">
+            <input type="checkbox" id="profile-sound-notify" onchange="toggleSoundNotify(this.checked)" style="width:20px;height:20px;flex-shrink:0;accent-color:#2e4a5f;">
             Ljud + systemnotis vid nya förfrågningar/bedömningar (den här enheten)
           </label>
         </div>
@@ -1345,7 +1345,7 @@
         <div class="section-header" style="margin-top:24px;">Startsida</div>
         <div class="field">
           <label class="field-label">Välj startsida</label>
-          <select id="profile-startpage" style="font-size:15px;padding:8px;border:1.5px solid #c4b8ac;border-radius:6px;background:#f5f1ec;"></select>
+          <select id="profile-startpage" style="font-size:15px;padding:8px;border:1.5px solid #c7d1d7;border-radius:6px;background:#eef1f3;"></select>
         </div>
 
         <!-- PIN -->
@@ -1371,7 +1371,7 @@
 
         <!-- Radera -->
         <h3 style="color:#9e2a18;border-bottom:2px solid rgba(176,48,32,0.2);padding-bottom:6px;">Radera profil</h3>
-        <p style="color:#6b5c52;font-size:15px;">Raderar ditt konto permanent. Bedömningar du registrerat finns kvar.</p>
+        <p style="color:#5b6b75;font-size:15px;">Raderar ditt konto permanent. Bedömningar du registrerat finns kvar.</p>
         <div class="btn-row">
           <button class="btn-danger" onclick="confirmDeleteProfile()">Radera min profil</button>
         </div>
@@ -1384,16 +1384,16 @@
   </div><!-- /app -->
 
   <div id="custom-dialog-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:600;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:420px;width:100%;">
-      <p id="custom-dialog-message" style="font-size:16px;color:#1e1612;margin:0 0 20px;white-space:pre-line;line-height:1.5;"></p>
+    <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:420px;width:100%;">
+      <p id="custom-dialog-message" style="font-size:16px;color:#1c2b36;margin:0 0 20px;white-space:pre-line;line-height:1.5;"></p>
       <div class="btn-row" id="custom-dialog-buttons"></div>
     </div>
   </div>
 
   <div id="must-change-pin-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:420px;width:100%;">
+    <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:420px;width:100%;">
       <h3 style="margin-top:0;">Byt PIN</h3>
-      <p style="color:#6b5c52;font-size:14px;">Du har en tillfällig PIN. Välj en ny PIN (4–6 siffror) för att fortsätta.</p>
+      <p style="color:#5b6b75;font-size:14px;">Du har en tillfällig PIN. Välj en ny PIN (4–6 siffror) för att fortsätta.</p>
       <div class="field"><label class="field-label">Ny PIN</label><input type="password" id="mcp-new-pin" maxlength="6"></div>
       <div class="field"><label class="field-label">Bekräfta PIN</label><input type="password" id="mcp-confirm-pin" maxlength="6"></div>
       <div class="btn-row" style="margin-top:16px;"><button class="btn-primary" onclick="submitMustChangePin()">Spara och fortsätt</button></div>
@@ -1402,13 +1402,13 @@
   </div>
 
   <div id="feedback-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
-    <div style="background:#f5f1ec;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;">
+    <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;">
       <h3 style="margin-top:0;">Feedback/felanmälan</h3>
-      <p style="color:#6b5c52;font-size:14px;">Använd detta för att rapportera buggar, oväntat beteende, eller ge förslag på förbättringar. Beskriv gärna vad du gjorde och vad som hände — det gör det lättare att hitta orsaken.</p>
+      <p style="color:#5b6b75;font-size:14px;">Använd detta för att rapportera buggar, oväntat beteende, eller ge förslag på förbättringar. Beskriv gärna vad du gjorde och vad som hände — det gör det lättare att hitta orsaken.</p>
       <div class="field"><label class="field-label">Beskrivning</label><textarea id="feedback-message" rows="5" placeholder="Vad hände, och vad förväntade du dig?"></textarea></div>
       <div class="field">
         <label class="field-label">Systeminformation som skickas med</label>
-        <div id="feedback-sysinfo" style="background:#ede8e2;border:1px solid #c4b8ac;border-radius:6px;padding:10px 12px;font-size:12px;color:#6b5c52;white-space:pre-wrap;max-height:160px;overflow-y:auto;"></div>
+        <div id="feedback-sysinfo" style="background:#eef1f3;border:1px solid #c7d1d7;border-radius:6px;padding:10px 12px;font-size:12px;color:#5b6b75;white-space:pre-wrap;max-height:160px;overflow-y:auto;"></div>
       </div>
       <div class="btn-row" style="margin-top:16px;">
         <button class="btn-primary" onclick="submitFeedback()">Skicka</button>
@@ -1419,7 +1419,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.13.7';
+    const APP_VERSION = 'v4.13.8';
 
     let appData = null;
     let currentUser = null;
@@ -1505,7 +1505,7 @@
       if (cached) {
         renderFn(cached);
         if (statusEl) statusEl.innerHTML =
-          '<span style="font-size:12px;color:#b0a090;display:flex;align-items:center;gap:5px;">' +
+          '<span style="font-size:12px;color:#8a97a0;display:flex;align-items:center;gap:5px;">' +
           '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>' +
           'Söker efter uppdateringar…</span>';
         try {
@@ -1516,14 +1516,14 @@
             renderFn(fresh);
             const n = diffFn ? diffFn(fresh, cached) : 0;
             if (statusEl) statusEl.innerHTML = n > 0
-              ? `<span style="font-size:12px;color:#3d5c4a;">↑ ${n} ny${n===1?'':'a'}</span>`
+              ? `<span style="font-size:12px;color:#2e4a5f;">↑ ${n} ny${n===1?'':'a'}</span>`
               : '';
           } else {
             if (statusEl) statusEl.innerHTML = '';
           }
         } catch(e) { if (statusEl) statusEl.innerHTML = ''; }
       } else {
-        if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Hämtar innehåll…</span>';
+        if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#8a97a0;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Hämtar innehåll…</span>';
         try {
           const fresh = await fetchFn();
           bgSet(cacheKey, fresh);
@@ -1744,7 +1744,7 @@
       const storedVersion = localStorage.getItem('dops_deployed_version');
       if (storedVersion && storedVersion !== APP_VERSION) {
         const msg = document.createElement('div');
-        msg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#3d5c4a;color:#f0ede8;text-align:center;padding:14px;font-size:15px;z-index:9999;';
+        msg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#2e4a5f;color:#eef1f3;text-align:center;padding:14px;font-size:15px;z-index:9999;';
         msg.textContent = 'Systemet uppdateras till senaste version…';
         document.body.appendChild(msg);
         const _savedUser = localStorage.getItem('dops_user'); // bevaras genom uppdatering
@@ -1873,7 +1873,7 @@
       const container = document.getElementById('privilege-toggle');
       if (!container) return;
       if (privs.length === 0) { container.innerHTML = ''; return; }
-      let html = '<div style="margin-top:8px;"><select id="priv-select" onchange="setPrivilegeFromSelect(this.value)" style="width:100%;padding:6px 8px;font-size:13px;border:1.5px solid #c4b8ac;border-radius:5px;background:#f5f1ec;color:#2a1f18;cursor:pointer;"><option value="">Mitt konto</option>';
+      let html = '<div style="margin-top:8px;"><select id="priv-select" onchange="setPrivilegeFromSelect(this.value)" style="width:100%;padding:6px 8px;font-size:13px;border:1.5px solid #c7d1d7;border-radius:5px;background:#eef1f3;color:#1c2b36;cursor:pointer;"><option value="">Mitt konto</option>';
       privs.forEach(p => {
         const val = p.privilege + '|' + p.klinikId;
         const sel = activePrivilege === p.privilege ? 'selected' : '';
@@ -1935,8 +1935,7 @@
       const isAdminRole = !hasPriv && _role === 'Administratör';
       const showProgress = ((_role === 'Mottagare' || _role === 'Blandbild') || isStudierektor) && !isAdmin;
       if (progressBtn) {
-        progressBtn.classList.toggle('hidden', !showProgress);
-        progressBtn.textContent = isStudierektor ? 'Progress' : 'Min progress';
+        progressBtn.innerHTML = '<i class="ti ti-chart-line" aria-hidden="true"></i><span class="sidebar-btn-label">' + (isStudierektor ? 'Progress' : 'Min progress') + '</span>';
         progressBtn.className = (isStudierektor ? 'sidebar-btn-secondary' : 'sidebar-btn') + (showProgress ? '' : ' hidden');
       }
 
@@ -2120,7 +2119,7 @@
       try {
         await api('submitErrorReport', { message, systemInfo: window._feedbackSystemInfoObj || {} });
         statusEl.textContent = 'Tack! Din feedback har skickats.';
-        statusEl.style.color = '#3d5c4a';
+        statusEl.style.color = '#2e4a5f';
         setTimeout(closeFeedbackModal, 1500);
       } catch (e) {
         statusEl.textContent = 'Kunde inte skicka: ' + e.message;
@@ -2142,7 +2141,7 @@
       const statusEl = document.getElementById('mcp-status');
       if (!/^\d{4,6}$/.test(newPin)) { statusEl.textContent = 'PIN måste vara 4–6 siffror.'; statusEl.style.color = '#9e2a18'; return; }
       if (newPin !== confirmPin) { statusEl.textContent = 'PIN-koderna matchar inte.'; statusEl.style.color = '#9e2a18'; return; }
-      statusEl.textContent = 'Sparar…'; statusEl.style.color = '#6b5c52';
+      statusEl.textContent = 'Sparar…'; statusEl.style.color = '#5b6b75';
       try {
         await api('updateProfile', { updates: { newPin } });
         currentUser.mustChangePin = false;
@@ -2235,10 +2234,10 @@
         groupsData.forEach(g => {
           const isOpen = _formTypeGroupOpen === g.group;
           const wrap = document.createElement('div');
-          wrap.style.cssText = 'border:1px solid #d8cfc5;border-radius:6px;margin-bottom:8px;overflow:hidden;';
+          wrap.style.cssText = 'border:1px solid #c7d1d7;border-radius:6px;margin-bottom:8px;overflow:hidden;';
           const header = document.createElement('div');
-          header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:9px 12px;cursor:pointer;font-weight:bold;color:#2a1f18;background:#ede8e2;';
-          header.innerHTML = `<span>${esc(g.group)}</span><span style="color:#9e8e82;">${isOpen ? '▲' : '▼'}</span>`;
+          header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:9px 12px;cursor:pointer;font-weight:bold;color:#1c2b36;background:#eef1f3;';
+          header.innerHTML = `<span>${esc(g.group)}</span><span style="color:#8a97a0;">${isOpen ? '▲' : '▼'}</span>`;
           header.onclick = () => { _formTypeGroupOpen = isOpen ? null : g.group; renderFormTypeSelector(containerEl, formNames, groupsData); };
           wrap.appendChild(header);
           if (isOpen) {
@@ -2790,7 +2789,7 @@
         );
         return;
       }
-      if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#9e8e82;">Söker efter uppdateringar…</span>';
+      if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#8a97a0;">Söker efter uppdateringar…</span>';
       document.getElementById('select-all').checked = false;
       show('assessment-actions', false);
       try {
@@ -2871,9 +2870,7 @@
           ? `${a.timestamp} — Mottagare: ${(a.recipient || '').split(' -- ')[0]}`
           : `${a.timestamp} — Registrerare: ${a.registrar || ''}`;
         card.appendChild(meta);
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'btn-secondary btn-small';
-        toggleBtn.textContent = 'Visa svar';
+        card.style.cursor = 'pointer';
         const answersDiv = document.createElement('div');
         answersDiv.className = 'assessment-answers hidden';
         let lastSection = '';
@@ -2902,11 +2899,10 @@
             answersDiv.appendChild(r);
           }
         });
-        toggleBtn.onclick = () => {
-          const hidden = answersDiv.classList.toggle('hidden');
-          toggleBtn.textContent = hidden ? 'Visa svar' : 'Dölj svar';
+        card.onclick = (e) => {
+          if (e.target === cb || e.target.tagName === 'BUTTON') return;
+          answersDiv.classList.toggle('hidden');
         };
-        card.appendChild(toggleBtn);
         if (role === 'sent') {
           const delBtn = document.createElement('button');
           delBtn.className = 'btn-danger btn-small';
@@ -2968,7 +2964,7 @@
         formTypes: [...document.querySelectorAll('#co-formtypes input:checked')].map(cb => cb.value)
       };
       const list = document.getElementById('co-list');
-      list.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
+      list.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       show('co-select-wrap', false);
       try {
         const assessments = await api('getClinicAssessments', { klinikId, filters });
@@ -3035,17 +3031,17 @@
       }
       const totalMinutes = assessments.reduce((sum, a) => sum + (appData?.timeSavings?.[a.formType] || 0), 0);
       const timeStr = m => { const h = Math.floor(m / 60), mm = m % 60; return h > 0 ? `${h} tim ${mm > 0 ? mm + ' min' : ''}`.trim() : `${mm} min`; };
-      let headerHtml = `<p style="color:#6b5c52;font-size:13px;">${assessments.length} bedömning(ar)</p>`;
+      let headerHtml = `<p style="color:#5b6b75;font-size:13px;">${assessments.length} bedömning(ar)</p>`;
       if (totalMinutes > 0 || _clinicAllTimeMinutes) {
         headerHtml += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;">';
         if (totalMinutes > 0) {
-          headerHtml += `<div style="background:#3d5c4a;color:#f0ede8;border-radius:8px;padding:12px 18px;display:inline-block;">
+          headerHtml += `<div style="background:#2e4a5f;color:#eef1f3;border-radius:8px;padding:12px 18px;display:inline-block;">
             <div style="font-size:11px;opacity:0.8;letter-spacing:1px;">SPARAD TID (URVAL)</div>
             <div style="font-size:22px;font-weight:bold;">${timeStr(totalMinutes)}</div>
           </div>`;
         }
         if (_clinicAllTimeMinutes) {
-          headerHtml += `<div style="background:#9e7c68;color:#f0ede8;border-radius:8px;padding:12px 18px;display:inline-block;">
+          headerHtml += `<div style="background:#5b6b75;color:#eef1f3;border-radius:8px;padding:12px 18px;display:inline-block;">
             <div style="font-size:11px;opacity:0.8;letter-spacing:1px;">SPARAD TID (ALLT)</div>
             <div style="font-size:22px;font-weight:bold;">${timeStr(_clinicAllTimeMinutes)}</div>
           </div>`;
@@ -3072,9 +3068,7 @@
         meta.className = 'meta';
         meta.textContent = `${a.timestamp || ''} · ${a.recipient ? a.recipient.split(' -- ')[0] : ''} (${a.category || ''}) · Registr: ${a.registrar || ''}`;
         card.appendChild(meta);
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'btn-secondary btn-small';
-        toggleBtn.textContent = 'Visa svar';
+        card.style.cursor = 'pointer';
         const answersDiv = document.createElement('div');
         answersDiv.className = 'assessment-answers hidden';
         let lastSection = '';
@@ -3103,11 +3097,10 @@
           }
           answersDiv.appendChild(r);
         });
-        toggleBtn.onclick = () => {
-          const hidden = answersDiv.classList.toggle('hidden');
-          toggleBtn.textContent = hidden ? 'Visa svar' : 'Dölj svar';
+        card.onclick = (e) => {
+          if (e.target === cb || e.target.tagName === 'BUTTON') return;
+          answersDiv.classList.toggle('hidden');
         };
-        card.appendChild(toggleBtn);
         if (activePrivilege === 'Studierektor' || activePrivilege === 'Administratör') {
           const delBtn = document.createElement('button');
           delBtn.className = 'btn-danger btn-small';
@@ -3168,7 +3161,7 @@
     async function loadAdminPanel() {
       showClinicList();
       const el = document.getElementById('admin-clinic-list');
-      el.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
+      el.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       try {
         // Hämta alltid alla användare för admin (filtrera lokalt)
         const result = await api('getAllUsers', { klinikId: '*', includeInaktiverade: true });
@@ -3201,7 +3194,7 @@
           const allBtn = document.createElement('div');
           allBtn.className = 'assessment-card';
           allBtn.style.cssText = 'cursor:pointer;';
-          allBtn.innerHTML = '<strong style="font-size:17px;">Alla kliniker</strong><div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + allAdminUsers.length + ' användare totalt</div>';
+          allBtn.innerHTML = '<strong style="font-size:17px;">Alla kliniker</strong><div style="font-size:14px;color:#5b6b75;margin-top:3px;">' + allAdminUsers.length + ' användare totalt</div>';
           allBtn.onclick = () => loadClinicDetail('*');
           el.appendChild(allBtn);
 
@@ -3210,7 +3203,7 @@
             const noneBtn = document.createElement('div');
             noneBtn.className = 'assessment-card';
             noneBtn.style.cssText = 'cursor:pointer;';
-            noneBtn.innerHTML = '<strong style="font-size:17px;">Ingen klinik</strong><div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + noneCount + ' användare</div>';
+            noneBtn.innerHTML = '<strong style="font-size:17px;">Ingen klinik</strong><div style="font-size:14px;color:#5b6b75;margin-top:3px;">' + noneCount + ' användare</div>';
             noneBtn.onclick = () => loadClinicDetail('__none__');
             el.appendChild(noneBtn);
           }
@@ -3227,7 +3220,7 @@
           card.className = 'assessment-card';
           card.style.cssText = 'cursor:pointer; margin-top:10px;';
           card.innerHTML = '<strong style="font-size:17px;">' + esc(displayName) + '</strong>'
-            + '<div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + users.length + ' användare</div>';
+            + '<div style="font-size:14px;color:#5b6b75;margin-top:3px;">' + users.length + ' användare</div>';
           card.onclick = () => loadClinicDetail(kid);
           el.appendChild(card);
         });
@@ -3252,7 +3245,7 @@
       const contactPerson = document.getElementById('newclinic-contact').value.trim();
       const statusEl = document.getElementById('newclinic-status');
       if (!name) { statusEl.textContent = 'Ange ett namn.'; statusEl.style.color = '#9e2a18'; return; }
-      statusEl.textContent = 'Skapar…'; statusEl.style.color = '#6b5c52';
+      statusEl.textContent = 'Skapar…'; statusEl.style.color = '#5b6b75';
       try {
         const res = await api('createClinic', { name, contactPerson });
         if (res.error) { statusEl.textContent = res.error; statusEl.style.color = '#9e2a18'; return; }
@@ -3295,9 +3288,9 @@
           // Inaktiveringsgräns
           const månader = settings?.inaktiveringsMånader || 24;
           html += '<div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
-          html += '<label style="font-size:14px;color:#6b5c52;">Inaktivera användare efter</label>';
-          html += '<input type="number" id="klinik-inaktiv-månader" value="' + månader + '" min="1" max="120" style="width:70px;padding:6px;border:1.5px solid #c4b8ac;border-radius:5px;font-size:14px;">';
-          html += '<label style="font-size:14px;color:#6b5c52;">månaders inaktivitet</label>';
+          html += '<label style="font-size:14px;color:#5b6b75;">Inaktivera användare efter</label>';
+          html += '<input type="number" id="klinik-inaktiv-månader" value="' + månader + '" min="1" max="120" style="width:70px;padding:6px;border:1.5px solid #c7d1d7;border-radius:5px;font-size:14px;">';
+          html += '<label style="font-size:14px;color:#5b6b75;">månaders inaktivitet</label>';
           html += '<button class="btn-secondary btn-small" onclick="saveInaktiveringsgräns(\'' + klinikId + '\')">Spara</button>';
           html += '</div>';
           html += '</div>';
@@ -3354,9 +3347,9 @@
           + (u.inaktiverad ? ' <span style="font-size:12px;background:#f0d8d0;color:#9e2a18;padding:2px 6px;border-radius:8px;">Inaktiverad</span>' : '')
           + (u.pendingActivation ? ' <span style="font-size:12px;background:#f0e0b0;color:#7a5a10;padding:2px 6px;border-radius:8px;">Inväntar aktivering</span>' : '')
           + (u.mustChangePin ? ' <span style="font-size:12px;background:#e0d8f0;color:#4a2a9e;padding:2px 6px;border-radius:8px;">Väntar på lösenordsbyte</span>' : '') + '</div>'
-          + '<div style="font-size:14px;color:#6b5c52;margin-top:3px;">' + esc(u.email) + '</div>'
+          + '<div style="font-size:14px;color:#5b6b75;margin-top:3px;">' + esc(u.email) + '</div>'
           + '<div style="font-size:14px;margin-top:4px;">' + esc(u.jobRole) + ' · ' + esc(u.clinic) + ' · ' + esc(u.userRole) + '</div>'
-          + (u.senastAktiv ? '<div style="font-size:12px;color:#9e8e82;margin-top:2px;">Senast aktiv: ' + esc(u.senastAktiv) + '</div>' : '');
+          + (u.senastAktiv ? '<div style="font-size:12px;color:#8a97a0;margin-top:2px;">Senast aktiv: ' + esc(u.senastAktiv) + '</div>' : '');
         if (u.pendingActivation) {
           const approveBtn = document.createElement('button');
           approveBtn.className = 'btn-primary btn-small';
@@ -3425,7 +3418,7 @@
         if (!privs.length) { el.innerHTML = '<span style="color:#888;font-size:14px;">Inga privilegier</span>'; return; }
         el.innerHTML = privs.map(p =>
           `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            <span style="font-size:15px;">${esc(p.privilege)} <span style="color:#6b5c52;">(${esc(p.klinikId) || 'Global'})</span></span>
+            <span style="font-size:15px;">${esc(p.privilege)} <span style="color:#5b6b75;">(${esc(p.klinikId) || 'Global'})</span></span>
             <button class="btn-danger btn-small" onclick="removePrivilege('${esc(id)}','${esc(p.privilege)}')">Ta bort</button>
           </div>`
         ).join('');
@@ -3509,7 +3502,7 @@
       if (!firstName || !lastName || !email) { statusEl.textContent = 'Fyll i namn och e-post.'; statusEl.style.color = '#9e2a18'; return; }
       if (!tempPin && !/^\d{4,6}$/.test(pin)) { statusEl.textContent = 'PIN måste vara 4–6 siffror.'; statusEl.style.color = '#9e2a18'; return; }
       const clinicName = Object.entries(appData?.klinikIdMap || {}).find(([, kid]) => kid === currentAdminKlinikId)?.[0] || currentUser.clinic;
-      statusEl.textContent = 'Registrerar…'; statusEl.style.color = '#6b5c52';
+      statusEl.textContent = 'Registrerar…'; statusEl.style.color = '#5b6b75';
       try {
         const user = { firstName, lastName, email, jobRole, userRole, clinic: clinicName, klinikId: currentAdminKlinikId !== '*' ? currentAdminKlinikId : '' };
         if (tempPin) user.generatePin = true; else user.pin = pin;
@@ -3521,7 +3514,7 @@
           statusEl.textContent = '✓ Skapad!';
         }
         setTimeout(closeAddUserModal, 1500);
-        statusEl.style.color = '#3d5c4a';
+        statusEl.style.color = '#2e4a5f';
         loadClinicDetail(currentAdminKlinikId);
       } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
     }
@@ -3568,7 +3561,7 @@
       const fileInput = document.getElementById('csv-file-input');
       const statusEl = document.getElementById('csv-import-status');
       if (!fileInput.files.length) { statusEl.textContent = 'Välj en CSV-fil.'; statusEl.style.color = '#9e2a18'; return; }
-      statusEl.textContent = 'Läser fil…'; statusEl.style.color = '#6b5c52';
+      statusEl.textContent = 'Läser fil…'; statusEl.style.color = '#5b6b75';
       try {
         const text = await fileInput.files[0].text();
         const rows = parseCsv(text.replace(/^\uFEFF/, ''));
@@ -3587,7 +3580,7 @@
           ).join('<br>');
         }
         statusEl.innerHTML = msg;
-        statusEl.style.color = '#3d5c4a';
+        statusEl.style.color = '#2e4a5f';
         loadClinicDetail(currentAdminKlinikId);
         if (!res.skippedRows?.length) setTimeout(closeCsvImportModal, 2500);
       } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
@@ -3601,7 +3594,7 @@
         columns.forEach(c => {
           const th = document.createElement('th');
           th.textContent = c.label;
-          th.style.cssText = 'text-align:left;padding:4px 6px;font-size:12px;color:#6b5c52;white-space:nowrap;';
+          th.style.cssText = 'text-align:left;padding:4px 6px;font-size:12px;color:#5b6b75;white-space:nowrap;';
           thead.appendChild(th);
         });
         thead.appendChild(document.createElement('th'));
@@ -3612,7 +3605,7 @@
             const td = document.createElement('td'); td.style.padding = '2px';
             const inp = document.createElement('input');
             inp.type = 'text'; inp.value = row[c.key] || '';
-            inp.style.cssText = 'width:100%;min-width:80px;padding:5px 6px;font-size:13px;border:1px solid #c4b8ac;border-radius:3px;';
+            inp.style.cssText = 'width:100%;min-width:80px;padding:5px 6px;font-size:13px;border:1px solid #c7d1d7;border-radius:3px;';
             inp.addEventListener('input', () => { row[c.key] = inp.value; });
             inp.addEventListener('paste', e => handleGridPaste(e, r, ci));
             td.appendChild(inp);
@@ -3699,7 +3692,7 @@
         if (errs.length) problems.push(`Rad ${i + 1}: ${errs.join('; ')}`);
       });
       if (problems.length) { validationEl.innerHTML = problems.join('<br>'); return; }
-      validationEl.style.color = '#6b5c52'; validationEl.textContent = 'Laddar upp…';
+      validationEl.style.color = '#5b6b75'; validationEl.textContent = 'Laddar upp…';
       try {
         const res = await api('bulkImportUsers', { clinicId: currentAdminKlinikId, rows });
         if (res.error) { validationEl.style.color = '#9e2a18'; validationEl.textContent = res.error; return; }
@@ -3707,7 +3700,7 @@
         if (res.skippedRows?.length) {
           msg += '<br><br><strong>Överhoppade rader:</strong><br>' + res.skippedRows.map(sr => `Rad ${sr.row}: ${esc(sr.reason)}`).join('<br>');
         }
-        validationEl.style.color = '#3d5c4a';
+        validationEl.style.color = '#2e4a5f';
         validationEl.innerHTML = msg;
         loadClinicDetail(currentAdminKlinikId);
       } catch (err) { validationEl.style.color = '#9e2a18'; validationEl.textContent = err.message; }
@@ -3771,7 +3764,7 @@
       const groupsList = document.getElementById('cs-groups-list');
       document.getElementById('cs-groups-apply-all').classList.toggle('hidden', !(activeKlinikId === '*' && klinikId));
       if (!klinikId) { list.innerHTML = '<p style="color:#888;">Välj en klinik.</p>'; groupsList.innerHTML = ''; return; }
-      list.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
+      list.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       try {
         const [settings, groups] = await Promise.all([
           api('getClinicFormSettings', { klinikId }),
@@ -3793,7 +3786,7 @@
             <button class="btn-secondary btn-small" style="padding:1px 7px;min-height:0;" ${idx === csGroupsCache.length - 1 ? 'disabled' : ''} onclick="moveClinicFormGroup('${klinikId}',${idx},1)">▼</button>
           </div>
           <span style="flex:1;font-size:14px;">${esc(g.name)}</span>
-          <label style="font-size:12px;color:#6b5c52;display:flex;align-items:center;gap:4px;cursor:pointer;">
+          <label style="font-size:12px;color:#5b6b75;display:flex;align-items:center;gap:4px;cursor:pointer;">
             <input type="checkbox" ${g.hidden ? 'checked' : ''} onchange="toggleClinicFormGroupHidden('${klinikId}',${idx})"> Dölj för klinikens användare
           </label>
           <button class="btn-danger btn-small" onclick="removeClinicFormGroup('${klinikId}',${idx})">Ta bort</button>
@@ -3871,7 +3864,7 @@
         html += '<div style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:13px;">';
         html += '<tr><td></td>' + ROLE_LIST.map(r => `<td style="padding:2px 8px;font-weight:bold;text-align:center;">${r}</td>`).join('') + '</tr>';
         ['mottagen', 'registrerad'].forEach(metric => {
-          html += `<tr><td style="padding:2px 8px;color:#6b5c52;">${metric === 'mottagen' ? 'Mål mottagna' : 'Mål registrerade'}</td>`;
+          html += `<tr><td style="padding:2px 8px;color:#5b6b75;">${metric === 'mottagen' ? 'Mål mottagna' : 'Mål registrerade'}</td>`;
           ROLE_LIST.forEach(role => {
             const val = s.targets?.[role]?.[metric] || '';
             html += `<td style="padding:2px 4px;"><input type="number" min="0" style="width:56px;padding:3px;" data-role="${role}" data-metric="${metric}" value="${val}"></td>`;
@@ -3897,7 +3890,7 @@
         html += '<div class="btn-row" style="margin-top:10px;align-items:center;">';
         html += '<button class="btn-primary btn-small">Spara</button>';
         if (activeKlinikId === '*') {
-          html += '<label style="font-size:12px;color:#6b5c52;display:flex;align-items:center;gap:5px;margin-left:8px;"><input type="checkbox" class="cs-overwrite"> Skriv över kliniker med egna inställningar</label>';
+          html += '<label style="font-size:12px;color:#5b6b75;display:flex;align-items:center;gap:5px;margin-left:8px;"><input type="checkbox" class="cs-overwrite"> Skriv över kliniker med egna inställningar</label>';
           html += '<button class="btn-secondary btn-small cs-apply-all">Applicera på alla kliniker</button>';
         }
         html += '<span class="cs-save-status" style="margin-left:4px;font-size:13px;"></span></div>';
@@ -3998,15 +3991,15 @@
       container.innerHTML = reports.map(r => {
         const namn = esc((r.first_name || '') + ' ' + (r.last_name || ''));
         const datum = new Date(r.created_at).toLocaleString('sv-SE');
-        const klinikRad = showClinic ? '<div style="font-size:12px;color:#6b5c52;">' + esc(r.clinic_name || '') + '</div>' : '';
+        const klinikRad = showClinic ? '<div style="font-size:12px;color:#5b6b75;">' + esc(r.clinic_name || '') + '</div>' : '';
         const sysInfo = esc(JSON.stringify(r.system_info, null, 2));
         return '<div class="assessment-card" style="margin-bottom:10px;">'
           + '<div style="font-weight:bold;">' + namn + ' &middot; ' + esc(r.email || '') + '</div>'
           + klinikRad
-          + '<div style="font-size:12px;color:#6b5c52;margin-bottom:6px;">' + datum + '</div>'
+          + '<div style="font-size:12px;color:#5b6b75;margin-bottom:6px;">' + datum + '</div>'
           + '<div style="font-size:14px;white-space:pre-wrap;margin-bottom:8px;">' + esc(r.message) + '</div>'
-          + '<details><summary style="cursor:pointer;font-size:12px;color:#6b5c52;">Systeminformation</summary>'
-          + '<pre style="font-size:11px;white-space:pre-wrap;background:#ede8e2;padding:8px;border-radius:5px;margin-top:6px;">' + sysInfo + '</pre></details>'
+          + '<details><summary style="cursor:pointer;font-size:12px;color:#5b6b75;">Systeminformation</summary>'
+          + '<pre style="font-size:11px;white-space:pre-wrap;background:#eef1f3;padding:8px;border-radius:5px;margin-top:6px;">' + sysInfo + '</pre></details>'
           + '</div>';
       }).join('');
     }
@@ -4030,7 +4023,7 @@
 
     async function loadPendingUsers() {
       const el = document.getElementById('pending-users-list');
-      el.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
+      el.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       try {
         const users = await api('getPendingUsers');
         if (!users.length) { el.innerHTML = '<p style="color:#888;">Inga användare väntar på godkännande.</p>'; return; }
@@ -4040,7 +4033,7 @@
           card.className = 'assessment-card';
           card.style.marginTop = '10px';
           card.innerHTML = `<div style="font-weight:bold;font-size:16px;">${esc(u.firstName)} ${esc(u.lastName)}</div>
-            <div style="font-size:14px;color:#6b5c52;margin-top:3px;">${esc(u.email)}</div>
+            <div style="font-size:14px;color:#5b6b75;margin-top:3px;">${esc(u.email)}</div>
             <div style="font-size:14px;margin-top:4px;">${esc(u.jobRole)} · ${esc(u.clinic)} · ${esc(u.userRole)}</div>`;
           const approveBtn = document.createElement('button');
           approveBtn.className = 'btn-primary btn-small';
@@ -4064,7 +4057,7 @@
       show('fb-questions-view', false);
       fbExpandedTypeId = null; fbEditingTypeId = null;
       const list = document.getElementById('fb-types-list');
-      list.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
+      list.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       try {
         fbFormTypesCache = await api('getFormTypesAdmin');
         renderFormTypesList();
@@ -4087,7 +4080,7 @@
             <button class="btn-secondary btn-small" style="padding:2px 8px;min-height:0;" ${idx === 0 ? 'disabled' : ''} onclick="moveFormType('${t.id}',-1)">▲</button>
             <button class="btn-secondary btn-small" style="padding:2px 8px;min-height:0;" ${idx === fbFormTypesCache.length - 1 ? 'disabled' : ''} onclick="moveFormType('${t.id}',1)">▼</button>
           </div>
-          <div style="flex:1;cursor:pointer;" onclick="toggleFormTypeExpand('${t.id}')"><strong>${esc(t.name)}</strong> <span style="font-size:13px;color:#6b5c52;">— ${t.questionCount} fråga(or)</span></div>
+          <div style="flex:1;cursor:pointer;" onclick="toggleFormTypeExpand('${t.id}')"><strong>${esc(t.name)}</strong> <span style="font-size:13px;color:#5b6b75;">— ${t.questionCount} fråga(or)</span></div>
         `;
         const btnRow = document.createElement('div');
         btnRow.className = 'btn-row'; btnRow.style.margin = '0';
@@ -4110,7 +4103,7 @@
 
         if (expanded) {
           const body = document.createElement('div');
-          body.style.cssText = 'margin-top:12px;border-top:1px solid #d8cfc5;padding-top:12px;';
+          body.style.cssText = 'margin-top:12px;border-top:1px solid #c7d1d7;padding-top:12px;';
           if (editing) {
             body.innerHTML = `
               <div class="field"><label class="field-label">Namn</label><input type="text" id="fbt-edit-name-${t.id}" value="${esc(t.name)}"></div>
@@ -4126,7 +4119,7 @@
             body.querySelector('.btn-secondary').onclick = () => { fbEditingTypeId = null; renderFormTypesList(); };
           } else {
             body.innerHTML = `
-              <div style="font-size:14px;color:#6b5c52;line-height:1.8;">
+              <div style="font-size:14px;color:#5b6b75;line-height:1.8;">
                 <div><strong>Synlig för:</strong> ${esc(t.categories || 'alla (ingen begränsning)')}</div>
                 <div><strong>Tidsbesparing:</strong> ${t.timeSavingsMinutes ? t.timeSavingsMinutes + ' min' : '—'}</div>
               </div>
@@ -4207,7 +4200,7 @@
       show('fb-questions-view', true);
       document.getElementById('fbq-title').textContent = formTypeName;
       const list = document.getElementById('fb-questions-list');
-      list.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
+      list.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       try {
         fbQuestionsCache = await api('getFormTypeQuestionsAdmin', { formTypeId });
         renderQuestionsList();
@@ -4236,7 +4229,7 @@
             <button class="btn-secondary btn-small" style="padding:2px 8px;min-height:0;" ${idx === fbQuestionsCache.length - 1 ? 'disabled' : ''} onclick="moveQuestion('${q.id}',1)">▼</button>
           </div>
           <div style="flex:1;cursor:pointer;" onclick="toggleQuestionExpand('${q.id}')">
-            <strong>${esc(q.section || '')}</strong> — ${esc(q.question)} <span style="color:#6b5c52;font-size:13px;">(${esc(q.type)})</span>
+            <strong>${esc(q.section || '')}</strong> — ${esc(q.question)} <span style="color:#5b6b75;font-size:13px;">(${esc(q.type)})</span>
           </div>
         `;
         const btnRow = document.createElement('div');
@@ -4255,7 +4248,7 @@
 
         if (expanded) {
           body = document.createElement('div');
-          body.style.cssText = 'margin-top:12px;border-top:1px solid #d8cfc5;padding-top:12px;';
+          body.style.cssText = 'margin-top:12px;border-top:1px solid #c7d1d7;padding-top:12px;';
           if (editing) {
             const prefix = 'fbq-edit-' + q.id;
             body.innerHTML = fbQuestionFormHtml(prefix, q);
@@ -4271,7 +4264,7 @@
             body.appendChild(statusEl);
           } else {
             body.innerHTML = `
-              <div style="font-size:14px;color:#6b5c52;line-height:1.8;">
+              <div style="font-size:14px;color:#5b6b75;line-height:1.8;">
                 ${q.nextSection ? `<div><strong>Nästa avsnitt:</strong> ${esc(q.nextSection)}</div>` : ''}
                 ${q.description ? `<div><strong>Beskrivning:</strong> ${esc(q.description)}</div>` : ''}
                 ${q.options ? `<div><strong>Alternativ:</strong> ${esc(q.options)}</div>` : ''}
@@ -4356,7 +4349,7 @@
         if (errs.length) problems.push(`Rad ${i + 1}: ${errs.join('; ')}`);
       });
       if (problems.length) { statusEl.style.color = '#9e2a18'; statusEl.innerHTML = problems.join('<br>'); return; }
-      statusEl.style.color = '#6b5c52'; statusEl.textContent = 'Sparar…';
+      statusEl.style.color = '#5b6b75'; statusEl.textContent = 'Sparar…';
       try {
         const res = await api('bulkImportQuestions', { formTypeId: fbCurrentFormTypeId, rows });
         if (res.error) { statusEl.style.color = '#9e2a18'; statusEl.textContent = res.error; return; }
@@ -4364,7 +4357,7 @@
         if (res.skippedRows?.length) {
           msg += '<br><br><strong>Överhoppade rader:</strong><br>' + res.skippedRows.map(sr => `Rad ${sr.row}: ${esc(sr.reason)}`).join('<br>');
         }
-        statusEl.style.color = '#3d5c4a';
+        statusEl.style.color = '#2e4a5f';
         statusEl.innerHTML = msg;
         openFormQuestions(fbCurrentFormTypeId, fbCurrentFormTypeName);
       } catch (err) { statusEl.style.color = '#9e2a18'; statusEl.textContent = err.message; }
@@ -4453,7 +4446,7 @@
         if (opt === answer) o.selected = true;
         answerSel.appendChild(o);
       });
-      const arrow = document.createElement('span'); arrow.textContent = '→'; arrow.style.color = '#6b5c52';
+      const arrow = document.createElement('span'); arrow.textContent = '→'; arrow.style.color = '#5b6b75';
       const sectionSel = document.createElement('select');
       sectionSel.className = 'jumpto-section';
       sectionSel.style.cssText = 'flex:1;font-size:14px;padding:4px;';
@@ -4566,8 +4559,8 @@
         el.innerHTML = docs.map(d => `
           <div class="assessment-card" style="margin-top:12px;">
             <div style="font-weight:bold;font-size:17px;">${d.title}</div>
-            ${d.description ? '<div style="font-size:15px;color:#6b5c52;margin-top:4px;">' + d.description + '</div>' : ''}
-            <div style="font-size:13px;color:#9e8e82;margin-top:4px;">Version ${d.version || '–'} · ${d.date || ''}</div>
+            ${d.description ? '<div style="font-size:15px;color:#5b6b75;margin-top:4px;">' + d.description + '</div>' : ''}
+            <div style="font-size:13px;color:#8a97a0;margin-top:4px;">Version ${d.version || '–'} · ${d.date || ''}</div>
             ${d.url ? '<div class="btn-row" style="margin-top:10px;"><a href="' + d.url + '" target="_blank" class="btn-secondary btn-small" style="text-decoration:none;display:inline-block;padding:7px 14px;">Ladda ned</a></div>' : ''}
           </div>`).join('');
       } catch(err) { el.innerHTML = '<p class="status-err">' + err.message + '</p>'; }
@@ -4640,7 +4633,7 @@
     }
 
     const CHART_COLORS = [
-      '#3d5c4a','#e05c2a','#2670b5','#c4292a','#8b3a9e',
+      '#2e4a5f','#e05c2a','#2670b5','#c4292a','#8b3a9e',
       '#d4a017','#1a8fa0','#e87db3','#7a5230','#4a9e62'
     ];
 
@@ -4682,7 +4675,7 @@
           );
           return;
         }
-        if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Hämtar innehåll…</span>';
+        if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#8a97a0;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Hämtar innehåll…</span>';
         stats = await api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik });
         renderStatistics(stats, checkedForms);
         if (statusEl) statusEl.innerHTML = '';
@@ -4741,8 +4734,8 @@
             responsive: true, maintainAspectRatio: !isMobile,
             plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(lineChart)(e, li) } },
             scales: {
-              y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } },
-              x: { stacked: true, grid: { color: '#d8cfc5' } }
+              y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } },
+              x: { stacked: true, grid: { color: '#c7d1d7' } }
             }
           }
         });
@@ -4757,24 +4750,24 @@
         const pieCtx = document.getElementById('chart-pie').getContext('2d');
         pieChart = new Chart(pieCtx, {
           type: 'pie',
-          data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#f5f1ec', borderWidth: 2 }] },
+          data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
           options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } } }
         });
 
         // ── Tabeller ──────────────────────────────────────────────
         let html = '';
         html += '<div class="section-header">Totalt antal bedömningar</div>';
-        html += '<p style="font-size:28px;font-weight:bold;color:#3d5c4a;margin:12px 0;">' + stats.total + '</p>';
+        html += '<p style="font-size:28px;font-weight:bold;color:#2e4a5f;margin:12px 0;">' + stats.total + '</p>';
         html += '<div class="section-header">Mest aktiva registrerare</div>';
         html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
         Object.entries(stats.byRegistrar).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
-          html += '<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">' + v + '</td></tr>';
+          html += '<tr><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;text-align:right;font-weight:bold;">' + v + '</td></tr>';
         });
         html += '</table>';
         html += '<div class="section-header">Mest bedömda</div>';
         html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
         Object.entries(stats.byRecipient).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
-          html += '<tr><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #d8d0c8;text-align:right;font-weight:bold;">' + v + '</td></tr>';
+          html += '<tr><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;text-align:right;font-weight:bold;">' + v + '</td></tr>';
         });
         html += '</table>';
         el.innerHTML = html;
@@ -5081,7 +5074,7 @@
         label.textContent = message;
         label.style.marginBottom = '10px';
         const input = document.createElement('input');
-        input.type = inputType; input.style.cssText = 'width:100%;padding:10px;font-size:16px;border:1.5px solid #c4b8ac;border-radius:5px;background:#f5f1ec;margin-bottom:6px;';
+        input.type = inputType; input.style.cssText = 'width:100%;padding:10px;font-size:16px;border:1.5px solid #c7d1d7;border-radius:5px;background:#eef1f3;margin-bottom:6px;';
         msgEl.appendChild(label);
         msgEl.appendChild(input);
         const btnRow = document.getElementById('custom-dialog-buttons');
@@ -5175,7 +5168,7 @@
       show('progress-recipient-row', isStudierektor);
 
       const statusEl  = document.getElementById('progress-swr-status');
-      const SPIN = '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>H\u00e4mtar inneh\u00e5ll\u2026</span>';
+      const SPIN = '<span style="font-size:12px;color:#8a97a0;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>H\u00e4mtar inneh\u00e5ll\u2026</span>';
 
       // Fyll läkarväljare för studierektor (en gång)
       if (isStudierektor) {
@@ -5245,7 +5238,7 @@
       if (!formType || (isStudierektor && !recipientEmail)) {
         if (el) {
           const showGuide = !formType && (!isStudierektor || !!recipientEmail);
-          el.innerHTML = showGuide ? '<p style="color:#9e8e82;margin-top:8px;">V\u00e4lj formulärtyp ovan f\u00f6r att visa din progress.</p>' : '';
+          el.innerHTML = showGuide ? '<p style="color:#8a97a0;margin-top:8px;">V\u00e4lj formulärtyp ovan f\u00f6r att visa din progress.</p>' : '';
         }
         if (statusEl) statusEl.innerHTML = '';
         return;
@@ -5256,7 +5249,7 @@
 
       const cacheKey = 'progressData_' + recipientEmail + '_' + formType + '_' + (dateFrom || 'x') + '_' + (dateTo || 'x');
       const cachedData = bgGet(cacheKey);
-      const SPIN = '<span style="font-size:12px;color:#9e8e82;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>H\u00e4mtar inneh\u00e5ll\u2026</span>';
+      const SPIN = '<span style="font-size:12px;color:#8a97a0;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>H\u00e4mtar inneh\u00e5ll\u2026</span>';
 
       if (cachedData) {
         renderProgress(cachedData);
@@ -5283,7 +5276,7 @@
     function renderProgress({ submissions, formDef }) {
       const el = document.getElementById('progress-content');
       if (!submissions || !submissions.length) {
-        el.innerHTML = '<p style="color:#9e8e82;margin-top:8px;">Inga bed\u00f6mningar hittades f\u00f6r valt urval.</p>';
+        el.innerHTML = '<p style="color:#8a97a0;margin-top:8px;">Inga bed\u00f6mningar hittades f\u00f6r valt urval.</p>';
         return;
       }
 
@@ -5314,14 +5307,14 @@
             .filter(p => /^\d+:\s*.+/.test(p));
 
           const canvasId = `pgc_${qi}`;
-          html += `<div style="margin-bottom:24px;background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;max-width:700px;">
+          html += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;max-width:700px;">
             <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
               <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
-              <span style="font-size:12px;color:#9e8e82;">n=${valid.length}</span>
-              ${avg !== null ? `<span style="font-size:13px;color:#3d5c4a;font-weight:bold;">\u00d8\u00a0${avg}</span>` : ''}
+              <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
+              ${avg !== null ? `<span style="font-size:13px;color:#2e4a5f;font-weight:bold;">\u00d8\u00a0${avg}</span>` : ''}
             </div>
             <div style="position:relative;height:170px;"><canvas id="${canvasId}"></canvas></div>
-            ${descParts.length ? `<div style="margin-top:10px;font-size:11px;color:#9e8e82;line-height:1.6;">${descParts.map(p => esc(p)).join('&nbsp;&nbsp;&bull;&nbsp;&nbsp;')}</div>` : ''}
+            ${descParts.length ? `<div style="margin-top:10px;font-size:11px;color:#8a97a0;line-height:1.6;">${descParts.map(p => esc(p)).join('&nbsp;&nbsp;&bull;&nbsp;&nbsp;')}</div>` : ''}
           </div>`;
 
           pendingCharts.push({ canvasId, points, sorted, avg, minScale, maxScale });
@@ -5358,8 +5351,8 @@
         ftKeys.forEach(question => {
           html += `<div style="font-weight:bold;font-size:14px;margin:12px 0 6px;">${esc(question)}</div>`;
           freeTextPool[question].forEach(a => {
-            html += `<div style="background:#fff;border:1.5px solid #d8cfc5;border-radius:8px;padding:10px 14px;margin-bottom:8px;max-width:700px;">
-              <div style="font-size:11px;color:#9e8e82;margin-bottom:4px;">${esc(a.ts)} \u2014 ${esc(a.registrar)}</div>
+            html += `<div style="background:#fff;border:1.5px solid #c7d1d7;border-radius:8px;padding:10px 14px;margin-bottom:8px;max-width:700px;">
+              <div style="font-size:11px;color:#8a97a0;margin-bottom:4px;">${esc(a.ts)} \u2014 ${esc(a.registrar)}</div>
               <div style="font-size:14px;">${esc(a.text)}</div>
             </div>`;
           });
@@ -5386,12 +5379,12 @@
           const datasets = [{
             label: 'Po\u00e4ng',
             data: dataPoints,
-            borderColor: '#3d5c4a',
+            borderColor: '#2e4a5f',
             backgroundColor: 'rgba(61,92,74,0.07)',
             fill: true,
             tension: 0.3,
             borderWidth: 2,
-            pointBackgroundColor: '#3d5c4a',
+            pointBackgroundColor: '#2e4a5f',
             pointRadius: 5,
             pointHoverRadius: 7,
             spanGaps: true
@@ -5466,11 +5459,11 @@
     function saveRequestExpiry(weeks) {
       const kid = activeKlinikId && activeKlinikId !== '*' ? activeKlinikId : currentUser.klinikId;
       const statusEl = document.getElementById('expiry-save-status');
-      if (statusEl) { statusEl.textContent = 'Sparar…'; statusEl.style.color = '#6b5c52'; }
+      if (statusEl) { statusEl.textContent = 'Sparar…'; statusEl.style.color = '#5b6b75'; }
       api('saveKlinikSettings', { klinikId: kid, settings: { requestExpiry: parseInt(weeks) || 0 } })
         .then(() => {
           bgInvalidate('inbox_' + currentUser.email); loadInbox();
-          if (statusEl) { statusEl.style.color = '#3d5c4a'; statusEl.textContent = '✓ Sparat'; setTimeout(() => statusEl.textContent = '', 2500); }
+          if (statusEl) { statusEl.style.color = '#2e4a5f'; statusEl.textContent = '✓ Sparat'; setTimeout(() => statusEl.textContent = '', 2500); }
         })
         .catch(e => { console.error('saveRequestExpiry:', e); if (statusEl) { statusEl.style.color = '#9e2a18'; statusEl.textContent = 'Kunde inte spara: ' + e.message; } });
     }
@@ -5551,13 +5544,13 @@
         const card = document.createElement('div');
         card.className = 'assessment-card';
         card.style.marginTop = '12px';
-        if (currentInboxTab === 'inbox' && !item.read) card.style.borderLeft = '4px solid #3d5c4a';
+        if (currentInboxTab === 'inbox' && !item.read) card.style.borderLeft = '4px solid #2e4a5f';
         const isInbox = currentInboxTab === 'inbox';
         const personName = isInbox ? item.fromName : item.toName;
         card.innerHTML =
           '<div style="font-weight:bold;font-size:16px;">' + esc(personName) + '</div>' +
-          (item.formType ? '<div style="font-size:13px;color:#3d5c4a;font-weight:bold;margin-top:2px;">📋 ' + esc(item.formType) + '</div>' : '') +
-          '<div style="font-size:13px;color:#6b5c52;margin-top:2px;">' + esc(item.timestamp) + '</div>' +
+          (item.formType ? '<div style="font-size:13px;color:#2e4a5f;font-weight:bold;margin-top:2px;">📋 ' + esc(item.formType) + '</div>' : '') +
+          '<div style="font-size:13px;color:#5b6b75;margin-top:2px;">' + esc(item.timestamp) + '</div>' +
           '<div style="margin-top:8px;font-size:15px;">' + esc(item.message) + '</div>';
         if (isInbox) {
           const btn = document.createElement('button');
@@ -5568,7 +5561,7 @@
           card.appendChild(btn);
         } else if (!isInbox && item.status === 'Inaktuell') {
           const tag = document.createElement('div');
-          tag.style.cssText = 'margin-top:8px;font-size:13px;color:#9e8e82;font-weight:bold;';
+          tag.style.cssText = 'margin-top:8px;font-size:13px;color:#8a97a0;font-weight:bold;';
           tag.textContent = '× Inaktuell — förfrågan har passerat tidsgränsen';
           card.appendChild(tag);
         } else if (!isInbox && item.status !== 'Utförd') {
@@ -5801,32 +5794,32 @@
       const periodLabel = nM === -1 ? 'totalt' : nM === 0 ? 'senaste 6 mån' : (nM <= 1 ? 'senaste månaden' : 'senaste ' + nM + ' mån');
       const scaledGoal = (goal) => (nM === 0 || nM === -1) ? goal : Math.round(goal * nM / 6);
       let s = `<div class="section-header" style="margin-top:24px;">${title}</div>`;
-      s += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:14px;margin-top:14px;max-width:600px;">';
+      s += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px;margin-top:14px;max-width:600px;">';
       const dopsForms  = Object.entries(forms).filter(([ft]) => ft.startsWith('DOPS:') || ft.startsWith('DOPS '));
       const otherForms = Object.entries(forms).filter(([ft]) => !ft.startsWith('DOPS:') && !ft.startsWith('DOPS ') && ft !== 'Operationsspecifik DOPS');
       if (dopsForms.length) {
-        s += '<div style="font-size:15px;font-weight:bold;color:#2a1f18;margin-bottom:4px;">DOPS</div>';
+        s += '<div style="font-size:15px;font-weight:bold;color:#1c2b36;margin-bottom:4px;">DOPS</div>';
         dopsForms.sort((a,b) => a[0].localeCompare(b[0])).forEach(([ft, v]) => {
           const subName  = ft.replace('DOPS: ','').replace('DOPS:','');
           const countP   = periodCounts?.[ft] || 0;
           const countAll = allTimeCounts?.[ft] || v.count;
           const g        = scaledGoal(v.goal);
-          const color    = g ? (countP >= g ? '#4a9e62' : countP > 0 ? '#c8a96e' : '#9e2a18') : '#6b5c52';
+          const color    = g ? (countP >= g ? '#4a9e62' : countP > 0 ? '#c8a96e' : '#9e2a18') : '#5b6b75';
           s += `<div style="display:flex;align-items:center;gap:10px;padding:3px 0 3px 14px;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}','${role||'received'}')">`;
-          s += `<div style="font-size:14px;color:#6b5c52;flex:1;">${esc(subName)}</div>`;
+          s += `<div style="font-size:14px;color:#5b6b75;flex:1;">${esc(subName)}</div>`;
           s += `<div style="flex:2;max-width:160px;">${goalBar(countP, countAll, g, periodLabel)}</div>`;
           s += `<div style="font-size:16px;font-weight:bold;color:${color};min-width:28px;text-align:right;">${countP}</div>`;
           s += '</div>';
         });
-        if (otherForms.length) s += '<div style="height:1px;background:#d8cfc5;margin:10px 0;"></div>';
+        if (otherForms.length) s += '<div style="height:1px;background:#c7d1d7;margin:10px 0;"></div>';
       }
       otherForms.sort((a,b) => a[0].localeCompare(b[0])).forEach(([ft, v]) => {
         const countP   = periodCounts?.[ft] || 0;
         const countAll = allTimeCounts?.[ft] || v.count;
         const g        = scaledGoal(v.goal);
-        const color    = g ? (countP >= g ? '#4a9e62' : countP > 0 ? '#c8a96e' : '#9e2a18') : '#6b5c52';
+        const color    = g ? (countP >= g ? '#4a9e62' : countP > 0 ? '#c8a96e' : '#9e2a18') : '#5b6b75';
         s += `<div style="display:flex;align-items:center;gap:10px;padding:4px 0;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}','${role||'received'}')">`;
-        s += `<div style="font-size:14px;font-weight:bold;color:#2a1f18;flex:1;">${esc(ft)}</div>`;
+        s += `<div style="font-size:14px;font-weight:bold;color:#1c2b36;flex:1;">${esc(ft)}</div>`;
         s += `<div style="flex:2;max-width:160px;">${goalBar(countP, countAll, g, periodLabel)}</div>`;
         s += `<div style="font-size:16px;font-weight:bold;color:${color};min-width:28px;text-align:right;">${countP}</div>`;
         s += '</div>';
@@ -5840,10 +5833,10 @@
       const lbl = periodLabel || 'senaste 6 mån';
       const pct   = Math.min(100, Math.round(countPeriod / goal * 100));
       const color = countPeriod >= goal ? '#4a9e62' : countPeriod > 0 ? '#c8a96e' : '#9e2a18';
-      return `<div style="margin-top:4px;background:#d8cfc5;border-radius:4px;height:8px;max-width:200px;">
+      return `<div style="margin-top:4px;background:#c7d1d7;border-radius:4px;height:8px;max-width:200px;">
           <div style="background:${color};border-radius:4px;height:8px;width:${pct}%;transition:width 0.4s;"></div>
         </div>
-        <div style="font-size:11px;color:#9e8e82;margin-top:2px;">${countPeriod} / ${goal} ${lbl} <span style="color:${color};">${countPeriod >= goal ? '✓' : ''}</span></div>`;
+        <div style="font-size:11px;color:#8a97a0;margin-top:2px;">${countPeriod} / ${goal} ${lbl} <span style="color:${color};">${countPeriod >= goal ? '✓' : ''}</span></div>`;
     }
 
     function renderOverview(data) {
@@ -5856,7 +5849,7 @@
       if (months.length > 0) {
         html += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
         [['1 vecka',7],['1 månad',30],['3 månader',90],['6 månader',180],['1 år',365],['MAX',0]].forEach(([label, days], i) => {
-          const active = i === 3 ? 'background:#3d5c4a;color:#f0ede8;' : 'background:#d8cfc5;color:#2a1f18;';
+          const active = i === 3 ? 'background:#2e4a5f;color:#eef1f3;' : 'background:#c7d1d7;color:#1c2b36;';
           html += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
         });
         html += '</div>';
@@ -5866,7 +5859,7 @@
       if (data.totalMinutesSaved > 0 && (userRole === 'Registrerare' || userRole === 'Blandbild')) {
         const h = Math.floor(data.totalMinutesSaved / 60), m = data.totalMinutesSaved % 60;
         const totStr = h > 0 ? `${h} tim ${m} min` : `${m} min`;
-        html += `<div style="background:#3d5c4a;color:#f0ede8;border-radius:8px;padding:16px 20px;margin-bottom:8px;display:inline-block;min-width:220px;">
+        html += `<div style="background:#2e4a5f;color:#eef1f3;border-radius:8px;padding:16px 20px;margin-bottom:8px;display:inline-block;min-width:220px;">
           <div style="font-size:12px;opacity:0.8;letter-spacing:1px;">TOTALT SPARAT MED MORADOPS</div>
           <div style="font-size:28px;font-weight:bold;margin-top:4px;">${totStr}</div>
         </div>`;
@@ -5890,7 +5883,7 @@
       if (months.length > 0) {
         chartSpecs.forEach(spec => {
           html += `<div class="section-header">${spec.label}</div>`;
-          html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:16px;margin-top:14px;max-width:700px;">';
+          html += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;margin-top:14px;max-width:700px;">';
           html += '<div style="position:relative;width:100%;height:' + (window.innerWidth < 600 ? 400 : 220) + 'px;"><canvas id="overview-chart-' + spec.key + '"></canvas></div></div>';
         });
       }
@@ -5938,7 +5931,7 @@
             options: {
               responsive: true, maintainAspectRatio: false,
               plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[spec.key])(e, li) } },
-              scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { stacked: true, grid: { color: '#d8cfc5' } } }
+              scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } }, x: { stacked: true, grid: { color: '#c7d1d7' } } }
             }
           });
           attachLegendTouch(window._overviewCharts[spec.key]);
@@ -5961,10 +5954,10 @@
         const isActive = activePrivilege === o.value;
         return `<div onclick="selectPrivilegeInline('${o.value}','${o.klinikId||''}')"
           style="padding:8px 12px;font-size:14px;cursor:pointer;
-          background:${isActive ? '#d4e8d8' : 'transparent'};
-          color:${isActive ? '#3d5c4a' : '#2a1f18'};
+          background:${isActive ? '#2e4a5f' : 'transparent'};
+          color:${isActive ? '#7fd4a0' : '#d4dde3'};
           font-weight:${isActive ? 'bold' : 'normal'};
-          border-top:${i>0 ? '1px solid #d8cfc5' : 'none'};">
+          border-top:${i>0 ? '1px solid #3d5a70' : 'none'};">
           ${esc(o.label)}${isActive ? ' ✓' : ''}
         </div>`;
       }).join('');
@@ -6019,7 +6012,7 @@
       }).catch(err => {
         console.error('emailNotifyRequests:', err);
         if (btn) { btn.textContent = origText; btn.disabled = false; }
-        if (statusEl) { statusEl.style.color = '#9e2a18'; statusEl.textContent = 'Kunde inte spara'; setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = '#3d5c4a'; }, 3000); }
+        if (statusEl) { statusEl.style.color = '#9e2a18'; statusEl.textContent = 'Kunde inte spara'; setTimeout(() => { statusEl.textContent = ''; statusEl.style.color = '#2e4a5f'; }, 3000); }
       });
     }
 
@@ -6029,7 +6022,7 @@
     async function loadSchedules() {
       const el = document.getElementById('schedule-list');
       if (!el) return;
-      el.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
+      el.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       const klinikId = activeKlinikId || currentUser.klinikId || '*';
       try {
         const schedules = await api('getScheduledEmails', { klinikId });
@@ -6048,9 +6041,9 @@
           return `<div class="assessment-card" style="margin-top:10px;max-width:560px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <div style="font-weight:bold;font-size:15px;">${esc(s.namn)}</div>
-              <span style="font-size:12px;padding:2px 8px;border-radius:10px;background:${s.aktiv?'#e8f4ec':'#f0ede8'};color:${s.aktiv?'#3d5c4a':'#9e8e82'};">${s.aktiv?'Aktiv':'Inaktiv'}</span>
+              <span style="font-size:12px;padding:2px 8px;border-radius:10px;background:${s.aktiv?'#e8f4ec':'#eef1f3'};color:${s.aktiv?'#2e4a5f':'#8a97a0'};">${s.aktiv?'Aktiv':'Inaktiv'}</span>
             </div>
-            <div style="font-size:13px;color:#6b5c52;margin-top:4px;">${esc(dagLabel)} ${tidLabel} · ${s.mottagare.length} mottagare</div>
+            <div style="font-size:13px;color:#5b6b75;margin-top:4px;">${esc(dagLabel)} ${tidLabel} · ${s.mottagare.length} mottagare</div>
             <div style="margin-top:8px;display:flex;gap:8px;">
               <button class="btn-secondary btn-small" onclick='editSchedule(${JSON.stringify(s).replace(/'/g,"&#39;")})'>Redigera</button>
               <button class="btn-secondary btn-small" onclick="toggleSchedule('${s.id}')">${s.aktiv ? 'Pausa' : 'Aktivera'}</button>
@@ -6173,7 +6166,7 @@
     }
     async function loadRequestStats() {
       const el = document.getElementById('reqstat-content');
-      el.innerHTML = '<p style="color:#9e8e82;font-size:13px;">Hämtar innehåll…</p>';
+      el.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       try {
         const klinikId = activeKlinikId || currentUser.klinikId || '*';
         const [data, settings] = await Promise.all([
@@ -6195,23 +6188,23 @@
 
       // Sammanfattning
       html += '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">';
-      html += `<div style="background:#3d5c4a;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">TOTALT</div><div style="font-size:28px;font-weight:bold;">${s.total}</div></div>`;
-      html += `<div style="background:#4a9e62;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">UTFÖRDA</div><div style="font-size:28px;font-weight:bold;">${s.done}</div></div>`;
-      if (s.inaktuell) html += `<div style="background:#9e8e82;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">INAKTUELLA</div><div style="font-size:28px;font-weight:bold;">${s.inaktuell}</div></div>`;
-      html += `<div style="background:#c8a96e;color:#f0ede8;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">VÄNTANDE</div><div style="font-size:28px;font-weight:bold;">${s.pending}</div></div>`;
+      html += `<div style="background:#2e4a5f;color:#eef1f3;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">TOTALT</div><div style="font-size:28px;font-weight:bold;">${s.total}</div></div>`;
+      html += `<div style="background:#4a9e62;color:#eef1f3;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">UTFÖRDA</div><div style="font-size:28px;font-weight:bold;">${s.done}</div></div>`;
+      if (s.inaktuell) html += `<div style="background:#8a97a0;color:#eef1f3;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">INAKTUELLA</div><div style="font-size:28px;font-weight:bold;">${s.inaktuell}</div></div>`;
+      html += `<div style="background:#c8a96e;color:#eef1f3;border-radius:8px;padding:14px 20px;min-width:120px;text-align:center;"><div style="font-size:11px;opacity:0.8;letter-spacing:1px;">VÄNTANDE</div><div style="font-size:28px;font-weight:bold;">${s.pending}</div></div>`;
       html += '</div>';
 
       // Per formulärtyp
       if (Object.keys(s.byFormType).length) {
         html += '<div class="section-header" style="margin-bottom:10px;">Per formulärtyp</div>';
-        html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:14px;margin-bottom:20px;max-width:500px;">';
+        html += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px;margin-bottom:20px;max-width:500px;">';
         Object.entries(s.byFormType).sort((a,b) => b[1].total - a[1].total).forEach(([ft, v], i, arr) => {
           const pct = v.total > 0 ? Math.round(v.done / v.total * 100) : 0;
           const color = pct >= 100 ? '#4a9e62' : pct > 0 ? '#c8a96e' : '#9e2a18';
-          if (i > 0) html += '<div style="height:1px;background:#d8cfc5;margin:8px 0;"></div>';
+          if (i > 0) html += '<div style="height:1px;background:#c7d1d7;margin:8px 0;"></div>';
           html += `<div style="display:flex;align-items:center;gap:10px;">
             <span style="flex:1;font-size:14px;">${esc(ft)}</span>
-            <span style="font-size:13px;color:#6b5c52;">${v.done}/${v.total}</span>
+            <span style="font-size:13px;color:#5b6b75;">${v.done}/${v.total}</span>
             <span style="font-size:13px;font-weight:bold;color:${color};">${pct}%</span>
           </div>`;
         });
@@ -6221,12 +6214,12 @@
       // Per yrkesroll
       if (Object.keys(s.byRole).length) {
         html += '<div class="section-header" style="margin-bottom:10px;">Per yrkesroll (mottagare)</div>';
-        html += '<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:8px;padding:14px;margin-bottom:20px;max-width:500px;">';
+        html += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px;margin-bottom:20px;max-width:500px;">';
         Object.entries(s.byRole).sort((a,b) => a[0].localeCompare(b[0])).forEach(([role, v], i) => {
-          if (i > 0) html += '<div style="height:1px;background:#d8cfc5;margin:8px 0;"></div>';
+          if (i > 0) html += '<div style="height:1px;background:#c7d1d7;margin:8px 0;"></div>';
           html += `<div style="display:flex;align-items:center;gap:10px;">
             <span style="flex:1;font-size:14px;font-weight:bold;">${esc(role)}</span>
-            <span style="font-size:13px;color:#6b5c52;">${v.done} av ${v.total} utförda</span>
+            <span style="font-size:13px;color:#5b6b75;">${v.done} av ${v.total} utförda</span>
           </div>`;
         });
         html += '</div>';
@@ -6237,14 +6230,14 @@
         html += '<div class="section-header" style="margin-bottom:10px;">Senaste förfrågningar</div>';
         html += '<div style="display:flex;flex-direction:column;gap:8px;">';
         data.requests.slice(0, 20).forEach(r => {
-          const statusColor = r.status === 'Utförd' ? '#4a9e62' : r.status === 'Inaktuell' ? '#9e8e82' : '#c8a96e';
+          const statusColor = r.status === 'Utförd' ? '#4a9e62' : r.status === 'Inaktuell' ? '#8a97a0' : '#c8a96e';
           const statusText  = r.status === 'Utförd' ? '✓ Utförd' : r.status === 'Inaktuell' ? '✕ Inaktuell' : '⏳ Väntande';
-          html += `<div style="background:#f5f1ec;border:1.5px solid #d8cfc5;border-radius:6px;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          html += `<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:6px;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
             <div style="flex:1;min-width:180px;">
               <span style="font-weight:bold;">${esc(r.toName)}</span>
-              <span style="font-size:13px;color:#6b5c52;"> (${esc(r.toRole)})</span>
-              ${r.isSelf ? '<span style="font-size:12px;background:#e8f4ea;color:#3d5c4a;border-radius:4px;padding:1px 6px;margin-left:4px;">självskattning</span>' : ''}
-              <div style="font-size:12px;color:#9e8e82;margin-top:2px;">${esc(r.formType || '')} · från ${esc(r.fromName)} · ${esc(r.timestamp)}</div>
+              <span style="font-size:13px;color:#5b6b75;"> (${esc(r.toRole)})</span>
+              ${r.isSelf ? '<span style="font-size:12px;background:#e8f4ea;color:#2e4a5f;border-radius:4px;padding:1px 6px;margin-left:4px;">självskattning</span>' : ''}
+              <div style="font-size:12px;color:#8a97a0;margin-top:2px;">${esc(r.formType || '')} · från ${esc(r.fromName)} · ${esc(r.timestamp)}</div>
             </div>
             <span style="font-size:13px;font-weight:bold;color:${statusColor};">${statusText}</span>
           </div>`;
@@ -6284,7 +6277,7 @@
       names.forEach(name => {
         const shortName = name.split(' -- ')[0].trim();
         const label = document.createElement('label');
-        label.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;background:#f5f1ec;border:1px solid #d8cfc5;border-radius:4px;padding:4px 10px;';
+        label.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;background:#eef1f3;border:1px solid #c7d1d7;border-radius:4px;padding:4px 10px;';
         const cb = document.createElement('input');
         cb.type = 'checkbox'; cb.value = name; cb.checked = true;
         cb.className = 'bulk-recipient-cb';
@@ -6333,8 +6326,8 @@
       ['7d','30d','90d','180d','365d','max'].forEach(p => {
         const btn = document.getElementById('period-' + p);
         if (!btn) return;
-        btn.style.background = p === period ? '#3d5c4a' : '#d8cfc5';
-        btn.style.color      = p === period ? '#f0ede8' : '#2a1f18';
+        btn.style.background = p === period ? '#2e4a5f' : '#c7d1d7';
+        btn.style.color      = p === period ? '#eef1f3' : '#1c2b36';
       });
       const chartData = window._overviewChartData;
       if (!chartData) return;
@@ -6364,8 +6357,8 @@
 
     function filterTrend(days, btn) {
       document.querySelectorAll('#trend-filter-btns button').forEach(b => {
-        b.style.background = b === btn ? '#3d5c4a' : '#d8cfc5';
-        b.style.color = b === btn ? '#f0ede8' : '#2a1f18';
+        b.style.background = b === btn ? '#2e4a5f' : '#c7d1d7';
+        b.style.color = b === btn ? '#eef1f3' : '#1c2b36';
       });
       const keys = window._overviewChartKeys || [];
       const filteredKeysByDirection = {};
@@ -6392,7 +6385,7 @@
           options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[key])(e, li) } },
-            scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#d8cfc5' } }, x: { stacked: true, grid: { color: '#d8cfc5' } } }
+            scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } }, x: { stacked: true, grid: { color: '#c7d1d7' } } }
           }
         });
         attachLegendTouch(window._overviewCharts[key]);
@@ -6464,12 +6457,12 @@
       const sidebar = document.getElementById('sidebar');
       const collapsed = sidebar.classList.toggle('collapsed');
       localStorage.setItem('dops_sidebar_collapsed', collapsed ? '1' : '0');
-      document.getElementById('sidebar-collapse-icon').className = collapsed ? 'ti ti-chevron-right' : 'ti ti-chevron-left';
+      document.getElementById('sidebar-collapse-icon').textContent = collapsed ? '›' : '‹';
     }
     if (localStorage.getItem('dops_sidebar_collapsed') === '1') {
       document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sidebar').classList.add('collapsed');
-        document.getElementById('sidebar-collapse-icon').className = 'ti ti-chevron-right';
+        document.getElementById('sidebar-collapse-icon').textContent = '›';
       });
     }
 
@@ -6737,7 +6730,7 @@
 
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.style.cssText = 'margin-left:6px;vertical-align:middle;border:1.5px solid #c4b8ac;background:#f5f1ec;border-radius:5px;padding:6px 12px;font-size:15px;cursor:pointer;min-width:110px;text-align:center;';
+      btn.style.cssText = 'margin-left:6px;vertical-align:middle;border:1.5px solid #c7d1d7;background:#eef1f3;border-radius:5px;padding:6px 12px;font-size:15px;cursor:pointer;min-width:110px;text-align:center;';
       btn.onclick = () => {
         if (dateInput.showPicker) { try { dateInput.showPicker(); return; } catch (e) { /* faller igenom */ } }
         dateInput.focus();
