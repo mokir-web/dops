@@ -104,7 +104,7 @@
     .sidebar-user { font-size: 14px; font-weight: bold; color: #1c2b36; }
     .sidebar-clinic { font-size: 12px; color: #5b6b75; margin-top: 2px; }
     .sidebar-priv { margin-top: 8px; }
-    .sidebar-logout { width: 100%; padding: 8px 12px; font-size: 14px; background: rgba(176,48,32,0.12); color: #d4dde3; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; text-align: left; box-sizing: border-box; }
+    .sidebar-logout { width: 100%; background: rgba(176,48,32,0.12); color: #d4dde3; border: 1.5px solid rgba(255,138,117,0.35); border-radius: 5px; cursor: pointer; box-sizing: border-box; }
     .sidebar-logout:hover { background: rgba(176,48,32,0.22); border-color: rgba(255,138,117,0.55); }
     .tab-row { display: flex; border-bottom: 1.5px solid #c7d1d7; margin-bottom: 16px; gap: 4px; }
     .tab-btn { background: none; border: none; padding: 10px 18px; font-size: 16px; color: #8a97a0; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; font-family: Arial,sans-serif; }
@@ -482,14 +482,14 @@
           <span id="sidebar-collapse-icon" style="font-size:20px;color:#9fb2c0;">‹</span>
         </div>
         <div class="sidebar-nav">
+          <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')"><i class="ti ti-edit" aria-hidden="true"></i><span class="sidebar-btn-label">Registrera bedömning</span></button>
           <button class="sidebar-btn"        id="nav-btn-inbox"          onclick="showPanel('inbox')">
             <i class="ti ti-question-mark" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningar</span> <span id="inbox-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
           </button>
-          <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')"><i class="ti ti-edit" aria-hidden="true"></i><span class="sidebar-btn-label">Registrera bedömning</span></button>
-          <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i><span class="sidebar-btn-label">Min översikt</span></button>
           <button class="sidebar-btn" id="nav-btn-my-assessments" onclick="showPanel('my-assessments')">
             <i class="ti ti-list-check" aria-hidden="true"></i><span class="sidebar-btn-label">Mina bedömningar</span> <span id="my-assessments-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
           </button>
+          <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i><span class="sidebar-btn-label">Min översikt</span></button>
           <button class="sidebar-btn hidden" id="nav-btn-progress" onclick="showPanel('progress')"><i class="ti ti-chart-line" aria-hidden="true"></i><span class="sidebar-btn-label">Min progress</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')"><i class="ti ti-building-hospital" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens bedömningar</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-settings" onclick="showPanel('clinic-settings')"><i class="ti ti-settings" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens inställningar</span></button>
@@ -519,12 +519,13 @@
           <div style="height:1px;background:#2e4a5f;margin:4px 0;"></div>
           <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens statistik</span></button>
           <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
-        </div>
-        <div class="sidebar-footer">
-          <div class="sidebar-priv hidden" id="privilege-toggle"></div>
+          <div style="height:1px;background:#2e4a5f;margin:4px 0;"></div>
           <button onclick="openFeedbackModal()" class="sidebar-btn-secondary"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
           <button onclick="clearCache()" class="sidebar-btn-secondary"><i class="ti ti-refresh" aria-hidden="true"></i><span class="sidebar-btn-label">Rensa cache</span></button>
           <button class="sidebar-btn-secondary sidebar-logout" onclick="doLogout()"><i class="ti ti-logout" aria-hidden="true"></i><span class="sidebar-btn-label">Logga ut</span></button>
+        </div>
+        <div class="sidebar-footer">
+          <div class="sidebar-priv hidden" id="privilege-toggle"></div>
           <div id="sidebar-version" style="text-align:center;font-size:13px;font-weight:bold;color:#9fb2c0;margin-top:8px;"></div>
         </div>
       </div>
@@ -1421,7 +1422,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.14.2';
+    const APP_VERSION = 'v4.14.4';
 
     let appData = null;
     let currentUser = null;
@@ -5316,7 +5317,7 @@
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
               ${avg !== null ? `<span style="font-size:13px;color:#2e4a5f;font-weight:bold;">\u00d8\u00a0${avg}</span>` : ''}
             </div>
-            <div style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
+            <div style="width:100%;aspect-ratio:4/2;"><canvas id="${canvasId}"></canvas></div>
             ${descParts.length ? `<div style="margin-top:10px;font-size:11px;color:#8a97a0;line-height:1.6;">${descParts.map(p => esc(p)).join('&nbsp;&nbsp;&bull;&nbsp;&nbsp;')}</div>` : ''}
           </div>`;
 
