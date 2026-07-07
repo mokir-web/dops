@@ -80,6 +80,7 @@
     .sidebar-logo-text { font-family: Arial,sans-serif; font-size: 16px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; }
     .sidebar.collapsed .sidebar-logo-text { display: none; }
     .sidebar.collapsed .sidebar-logo { justify-content: center; padding: 16px 8px; }
+    .sidebar-logo #sidebar-collapse-icon { margin-left: auto; }
     .sidebar.collapsed .sidebar-logo #sidebar-collapse-icon { margin-left: 0; }
     .sidebar-nav { display: flex; flex-direction: column; padding: 8px 0; flex: 1; overflow-y: auto; }
     .sidebar-nav-bottom { display: flex; flex-direction: column; padding: 0 0 4px; border-top: 1px solid #2e4a5f; }
@@ -87,7 +88,7 @@
     .sidebar-btn i { font-size: 22px; flex-shrink: 0; width: 24px; text-align: center; }
     .sidebar-btn-label { white-space: nowrap; overflow: hidden; }
     .sidebar.collapsed .sidebar-btn-label, .sidebar.collapsed .sidebar-btn-badge { display: none; }
-    .sidebar.collapsed .sidebar-btn { justify-content: center; padding: 14px 10px; }
+    .sidebar.collapsed .sidebar-btn { justify-content: center; }
     .sidebar-btn:hover { background: #24384a; }
     .sidebar-btn.active { background: #2e4a5f; color: #fff; border-left-color: #5b9bd5; font-weight: bold; }
     .sidebar-btn.hidden { display: none; }
@@ -97,7 +98,7 @@
     .sidebar-btn-secondary { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 18px; font-size: 14px; background: none; border: none; border-left: 3px solid transparent; cursor: pointer; color: #9fb2c0; font-family: Arial,sans-serif; }
     .sidebar-btn-secondary i { font-size: 21px; flex-shrink: 0; width: 24px; text-align: center; }
     .sidebar.collapsed .sidebar-btn-secondary .sidebar-btn-label, .sidebar.collapsed .sidebar-btn-secondary .sidebar-btn-badge { display: none; }
-    .sidebar.collapsed .sidebar-btn-secondary { justify-content: center; padding: 10px; }
+    .sidebar.collapsed .sidebar-btn-secondary { justify-content: center; }
     .sidebar-btn-secondary:hover { background: #24384a; color: #fff; }
     .sidebar-btn-secondary.active { background: #2e4a5f; color: #fff; border-left-color: #5b9bd5; font-weight: bold; }
     .sidebar-btn-secondary.hidden { display: none; }
@@ -478,11 +479,11 @@
             <polyline points="30,35 33,38 40,31" fill="none" stroke="#eef1f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span class="sidebar-logo-text">MoraDOPS</span>
-          <span id="sidebar-collapse-icon" style="font-size:20px;color:#9fb2c0;margin-left:auto;">‹</span>
+          <span id="sidebar-collapse-icon" style="font-size:20px;color:#9fb2c0;">‹</span>
         </div>
         <div class="sidebar-nav">
           <button class="sidebar-btn"        id="nav-btn-inbox"          onclick="showPanel('inbox')">
-            <i class="ti ti-inbox" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningar</span> <span id="inbox-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
+            <i class="ti ti-question-mark" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningar</span> <span id="inbox-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
           </button>
           <button class="sidebar-btn active" id="nav-btn-assessment"      onclick="showPanel('assessment')"><i class="ti ti-edit" aria-hidden="true"></i><span class="sidebar-btn-label">Registrera bedömning</span></button>
           <button class="sidebar-btn"        id="nav-btn-overview"        onclick="showPanel('overview')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i><span class="sidebar-btn-label">Min översikt</span></button>
@@ -503,12 +504,6 @@
           <button class="sidebar-btn-secondary hidden" id="nav-btn-reminders"       onclick="showPanel('reminders')"><i class="ti ti-bell" aria-hidden="true"></i><span class="sidebar-btn-label">Påminnelser</span></button>
         </div>
         <div class="sidebar-nav-bottom">
-          <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')"><i class="ti ti-user" aria-hidden="true"></i><span class="sidebar-btn-label">Min profil</span></button>
-          <div style="height:1px;background:#2e4a5f;margin:4px 0;"></div>
-          <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens statistik</span></button>
-          <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
-        </div>
-        <div class="sidebar-footer">
           <div id="sidebar-user-btn" onclick="togglePrivilegeFromUserBtn()" style="width:100%;text-align:left;background:#24384a;border:1.5px solid #c7d1d7;border-radius:6px;padding:8px 12px;cursor:pointer;margin-bottom:4px;box-sizing:border-box;">
             <div id="nav-user" style="font-weight:bold;font-size:15px;color:#fff;"></div>
             <div id="nav-jobrole" style="font-size:12px;color:#9fb2c0;margin-top:1px;"></div>
@@ -519,6 +514,12 @@
           <!-- Rollval expanderas under knappen -->
           <div id="privilege-inline" class="hidden" style="background:#24384a;border:1.5px solid #c7d1d7;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
           </div>
+          <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')"><i class="ti ti-user" aria-hidden="true"></i><span class="sidebar-btn-label">Min profil</span></button>
+          <div style="height:1px;background:#2e4a5f;margin:4px 0;"></div>
+          <button class="sidebar-btn-secondary" id="nav-btn-statistics" onclick="showPanel('statistics')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens statistik</span></button>
+          <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
+        </div>
+        <div class="sidebar-footer">
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
           <button onclick="openFeedbackModal()" style="width:100%;background:transparent;border:1.5px solid #3d6a8a;border-radius:6px;padding:9px 4px;cursor:pointer;font-size:13px;color:#d4dde3;box-sizing:border-box;line-height:1.2;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
           <div style="display:flex;gap:6px;align-items:stretch;">
@@ -1421,7 +1422,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.13.9';
+    const APP_VERSION = 'v4.14.0';
 
     let appData = null;
     let currentUser = null;
@@ -4637,8 +4638,8 @@
     }
 
     const CHART_COLORS = [
-      '#2e4a5f','#e05c2a','#2670b5','#c4292a','#8b3a9e',
-      '#d4a017','#1a8fa0','#e87db3','#7a5230','#4a9e62'
+      '#00c2ff','#ff3d81','#00e0a4','#ffb800','#a742ff',
+      '#ff5c3d','#2e4a5f','#8b3a9e','#1a8fa0','#e87db3'
     ];
 
     function makeTotalLine(barDatasets, n) {
