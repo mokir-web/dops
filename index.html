@@ -1431,7 +1431,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.17.0';
+    const APP_VERSION = 'v4.18.0';
 
     let appData = null;
     let currentUser = null;
@@ -2764,12 +2764,9 @@
     }
 
     // ── My assessments ────────────────────────────────────────────
-    function toggleAssessmentFilter() {
-      const panel = document.getElementById('assessment-filter-panel');
-      const btn   = document.getElementById('filter-toggle-btn');
-      const open  = panel.classList.toggle('hidden') === false;
-      btn.textContent = open ? 'Stäng filter' : 'Filtrera';
-    }
+    // toggleAssessmentFilter/setAssessmentTab/applyFilters/resetFilters/
+    // updateFormTypeFilters/renderAssessments/toggleSelectAll/updateSelectedCount/
+    // exportSelected/updateAssessmentBadge/clearAssessmentBadge utbrutna till js/my-assessments.js.
 
     function toggleStatFilter() {
       const panel = document.getElementById('stat-filter-panel');
@@ -2778,191 +2775,12 @@
       btn.textContent = open ? 'Stäng filter' : 'Filtrera';
     }
 
-    function setAssessmentTab(role) {
-      currentAssessmentRole = role;
-      document.getElementById('tab-sent').className     = role === 'sent'     ? 'tab-btn active' : 'tab-btn';
-      document.getElementById('tab-received').className = role === 'received' ? 'tab-btn active' : 'tab-btn';
-      document.getElementById('my-assessments-list').innerHTML = '';
-      document.getElementById('filter-date-from').value = '';
-      document.getElementById('filter-date-to').value   = '';
-      _resetFormTypeFilterOnNextRender = true;
-      if (role === 'received') clearAssessmentBadge();
-      applyFilters();
-    }
 
-    async function applyFilters() {
-      const dateFrom     = document.getElementById('filter-date-from').value;
-      const dateTo       = document.getElementById('filter-date-to').value;
-      const checkedTypes = [...document.querySelectorAll('#filter-formtypes input:checked')].map(cb => cb.value);
-      const allTypesChecked = availableFormTypes.length > 0 && checkedTypes.length === availableFormTypes.length;
-      // "Alla ikryssade" motsvarar inget filter alls (samma resultat, samma snabba SWR-väg).
-      const effectiveTypes = allTypesChecked ? [] : checkedTypes;
-      const filters = { dateFrom: dateFrom || null, dateTo: dateTo || null, formTypes: effectiveTypes };
-      const noFilter = !dateFrom && !dateTo && effectiveTypes.length === 0;
-      const cacheKey = 'myAssessments_' + currentAssessmentRole;
-      const statusEl = document.getElementById('assessment-swr-status');
 
-      if (noFilter) {
-        await swr(
-          cacheKey,
-          () => api('getMyAssessments', { email: currentUser.email, role: currentAssessmentRole, filters }),
-          data => {
-            if (!data) return;
-            currentAssessments = data;
-            renderAssessments(data, currentAssessmentRole);
-            updateFormTypeFilters(data);
-          },
-          statusEl,
-          (fresh, old) => Math.max(0, fresh.length - old.length)
-        );
-        return;
-      }
-      if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#8a97a0;">Söker efter uppdateringar…</span>';
-      document.getElementById('select-all').checked = false;
-      show('assessment-actions', false);
-      try {
-        const assessments = await api('getMyAssessments', { email: currentUser.email, role: currentAssessmentRole, filters });
-        currentAssessments = assessments;
-        renderAssessments(assessments, currentAssessmentRole);
-        updateFormTypeFilters(assessments);
-      } catch(err) {
-        document.getElementById('my-assessments-list').innerHTML = `<p class="status-err">${err.message}</p>`;
-      } finally {
-        if (statusEl) statusEl.innerHTML = '';
-      }
-    }
-
-    function resetFilters() {
-      document.getElementById('filter-date-from').value = '';
-      document.getElementById('filter-date-to').value   = '';
-      document.querySelectorAll('#filter-formtypes input').forEach(cb => cb.checked = true);
-      applyFilters();
-    }
 
     let _resetFormTypeFilterOnNextRender = true;
-    function updateFormTypeFilters(assessments) {
-      const types = [...new Set(assessments.map(a => a.formType))].sort();
-      availableFormTypes = types;
-      const counts = {};
-      assessments.forEach(a => { counts[a.formType] = (counts[a.formType]||0)+1; });
-      const container = document.getElementById('filter-formtypes');
-      if (!container) return;
-      // Spara befintligt val innan rebuild så SWR-revalidering inte nollställer filter
-      const prevChecked = new Set([...container.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.value));
-      const forceAllChecked = _resetFormTypeFilterOnNextRender;
-      _resetFormTypeFilterOnNextRender = false;
-      container.innerHTML = '';
-      types.forEach(t => {
-        const lbl = document.createElement('label'); lbl.className = 'filter-chip';
-        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = t;
-        cb.checked = forceAllChecked ? true : prevChecked.has(t);
-        lbl.appendChild(cb);
-        lbl.appendChild(document.createTextNode(`${t} (${counts[t]})`));
-        container.appendChild(lbl);
-      });
-      // Tillämpa pending filter från navigateToAssessments (överskriver sparat val)
-      if (_pendingFormFilter) {
-        const pf = _pendingFormFilter; _pendingFormFilter = null;
-        container.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = cb.value === pf; });
-        applyFilters(); // kör om med filtret satt
-      }
-    }
-    function renderAssessments(assessments, role) {
-      const list = document.getElementById('my-assessments-list');
-      if (!assessments.length) {
-        const hasFilter = document.getElementById('filter-date-from')?.value || document.getElementById('filter-date-to')?.value
-          || document.querySelectorAll('#filter-formtypes input:checked').length > 0;
-        list.innerHTML = hasFilter
-          ? '<p style="color:#888">Inga bedömningar hittades för vald filtrering.</p>'
-          : '<p style="color:#888">Inga bedömningar hittades.</p>';
-        show('assessment-actions', false);
-        return;
-      }
-      list.innerHTML = `<p style="color:#666; font-size:13px;">${assessments.length} bedömning(ar) — ${role === 'sent' ? 'skickade' : 'mottagna'}</p>`;
-      show('assessment-actions', true);
-      updateSelectedCount();
-      assessments.forEach((a, idx) => {
-        const card = document.createElement('div');
-        card.className = 'assessment-card';
-        const topRow = document.createElement('div');
-        topRow.style.cssText = 'display:flex; align-items:center; gap:10px;';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox'; cb.className = 'assessment-checkbox'; cb.dataset.idx = idx;
-        cb.onchange = updateSelectedCount;
-        if (document.getElementById('select-all').checked) cb.checked = true;
-        topRow.appendChild(cb);
-        const title = document.createElement('h4');
-        title.textContent = a.formType; title.style.margin = '0';
-        topRow.appendChild(title);
-        card.appendChild(topRow);
-        const meta = document.createElement('div');
-        meta.className = 'meta';
-        meta.textContent = role === 'sent'
-          ? `${a.timestamp} — Mottagare: ${(a.recipient || '').split(' -- ')[0]}`
-          : `${a.timestamp} — Registrerare: ${a.registrar || ''}`;
-        card.appendChild(meta);
-        card.style.cursor = 'pointer';
-        const answersDiv = document.createElement('div');
-        answersDiv.className = 'assessment-answers hidden';
-        let lastSection = '';
-        a.answers.forEach(ans => {
-          if (ans.section !== lastSection) {
-            lastSection = ans.section;
-            const s = document.createElement('div');
-            s.className = 'ans-section'; s.textContent = ans.section;
-            answersDiv.appendChild(s);
-          }
-          const r = document.createElement('div');
-          r.className = 'ans-row';
-          const desc = appData?.formDescriptions?.[a.formType]?.[ans.question] || '';
-          const displayAnswer = formatScaleAnswer(a.formType, ans.question, ans.answer, desc);
-          // Separera "Fråga: värde (skala)" från eventuell lång beskrivningstext
-          const dashIdx = displayAnswer.indexOf(' — ');
-          if (dashIdx !== -1) {
-            r.textContent = `${ans.question || ''}: ${displayAnswer.slice(0, dashIdx)}`;
-            const dl = document.createElement('div');
-            dl.className = 'ans-desc';
-            dl.textContent = displayAnswer.slice(dashIdx + 3);
-            answersDiv.appendChild(r);
-            answersDiv.appendChild(dl);
-          } else {
-            r.textContent = `${ans.question || ''}: ${displayAnswer}`;
-            answersDiv.appendChild(r);
-          }
-        });
-        card.onclick = (e) => {
-          if (e.target === cb || e.target.tagName === 'BUTTON') return;
-          answersDiv.classList.toggle('hidden');
-        };
-        if (role === 'sent') {
-          const delBtn = document.createElement('button');
-          delBtn.className = 'btn-danger btn-small';
-          delBtn.textContent = 'Radera';
-          delBtn.style.marginLeft = '8px';
-          delBtn.onclick = async () => {
-            if (!await customConfirm('Radera denna bedömning? En eventuell tillhörande förfrågan återgår till öppen. Kan inte ångras.')) return;
-            try {
-              await api('deleteAssessment', { id: a.id });
-              bgMarkStale('myAssessments_sent');
-              applyFilters();
-            } catch (err) { await customAlert(err.message); }
-          };
-          card.appendChild(delBtn);
-        }
-        card.appendChild(answersDiv);
-        list.appendChild(card);
-      });
-    }
 
-    function toggleSelectAll(checked) {
-      document.querySelectorAll('.assessment-checkbox').forEach(cb => cb.checked = checked);
-      updateSelectedCount();
-    }
 
-    function updateSelectedCount() {
-      const count = document.querySelectorAll('.assessment-checkbox:checked').length;
-      document.getElementById('selected-count').textContent = count > 0 ? `${count} markerade` : '';
-    }
 
     function toggleCoFilter() {
       const panel = document.getElementById('co-filter-panel');
@@ -4613,34 +4431,6 @@
 
 
 
-    async function exportSelected() {
-      if (_isProcessing) return;
-      const btn = document.querySelector('#assessment-actions .btn-primary');
-      const origBtnText = btn?.textContent || 'Exportera';
-      if (btn) { btn.textContent = 'Exporterar\u2026'; btn.disabled = true; }
-      lockUI();
-      const selected = [...document.querySelectorAll('.assessment-checkbox:checked')]
-        .map(cb => currentAssessments[parseInt(cb.dataset.idx)]);
-      if (!selected.length) { await customAlert('Markera minst en bedömning.'); if (btn) { btn.textContent = origBtnText; btn.disabled = false; } unlockUI(); return; }
-      const dateFrom = document.getElementById('filter-date-from').value;
-      const dateTo   = document.getElementById('filter-date-to').value;
-      const period   = (dateFrom || dateTo)
-        ? `${dateFrom || '\u2026'} \u2013 ${dateTo || new Date().toISOString().slice(0,10)}`
-        : `Alla \u2014 ${new Date().toISOString().slice(0,10)}`;
-      const filterInfo = {
-        name:   `${currentUser.firstName} ${currentUser.lastName}`,
-        clinic:  currentUser.clinic,
-        period
-      };
-      try {
-        const result = await api('exportAssessmentsToDoc', { email: currentUser.email, assessments: selected, filterInfo });
-        // Bekräftelse på knappen, avmarkera alla
-        if (btn) { btn.textContent = '\u2713 Skickat!'; }
-        document.querySelectorAll('.assessment-checkbox:checked').forEach(cb => { cb.checked = false; });
-        document.getElementById('export-status').textContent = '';
-        setTimeout(() => { if (btn) { btn.textContent = origBtnText; btn.disabled = false; } unlockUI(); }, 2000);
-      } catch(err) { setStatus('export-status', err.message, true); if (btn) { btn.textContent = origBtnText; btn.disabled = false; } unlockUI(); }
-    }
 
     // ── Profile ───────────────────────────────────────────────────
     let _profileSnapshot = null;
@@ -4986,17 +4776,11 @@
     }
 
     // ── Inkorg ────────────────────────────────────────────────────
-    let currentInboxTab = 'inbox';
-    let inboxData = null;
+    // currentInboxTab/inboxData/setInboxTab/loadInboxBadge/updateInboxBadge/loadInbox/
+    // renderInbox/showRequestForm/hideRequestForm/sendRequest/startRequestedAssessment/
+    // startRequestedAssessmentDirect/showBulkRequestForm/hideBulkRequestForm/
+    // populateBulkRecipients/toggleBulkAll/sendBulkRequest utbrutna till js/inbox.js.
 
-    function setInboxTab(tab) {
-      currentInboxTab = tab;
-      const ib = document.getElementById('inbox-tab-inbox');
-      const ob = document.getElementById('inbox-tab-outbox');
-      if (ib) { ib.className = tab==='inbox'  ? 'tab-btn active' : 'tab-btn'; ib.disabled = false; }
-      if (ob) { ob.className = tab==='outbox' ? 'tab-btn active' : 'tab-btn'; ob.disabled = false; }
-      renderInbox();
-    }
 
 
     // Progress-funktionalitet (initProgress, loadProgressData, renderProgress, _progressCharts)
@@ -5015,290 +4799,16 @@
     }
 
 
-    function updateAssessmentBadge() {
-      const data = bgGet('myAssessments_received');
-      if (!data || !currentUser) return;
-      const lastReadAt = currentUser.lastReadAt
-        || localStorage.getItem('dops_last_read_' + currentUser.email)
-        || '';
-      const newCount = lastReadAt
-        ? data.filter(a => (a.timestamp || '') > lastReadAt).length
-        : data.length;
-      const badge = document.getElementById('my-assessments-badge');
-      if (!badge) return;
-      badge.textContent = newCount > 0 ? String(newCount) : '';
-      badge.classList.toggle('hidden', newCount === 0);
-      updateFaviconNotification();
-    }
 
-    function clearAssessmentBadge() {
-      if (!currentUser) return;
-      const pad = n => String(n).padStart(2, '0');
-      const now = new Date();
-      const lastReadAt = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-      localStorage.setItem('dops_last_read_' + currentUser.email, lastReadAt);
-      currentUser.lastReadAt = lastReadAt;
-      localStorage.setItem('dops_user', JSON.stringify(currentUser));
-      api('setLastReadAt', { email: currentUser.email, lastReadAt }).catch(() => {});
-      updateAssessmentBadge();
-    }
 
-    async function loadInboxBadge() {
-      try {
-        inboxData = await api('getAssessmentRequests', { email: currentUser.email });
-        updateInboxBadge();
-      } catch(err) { console.error('Förfrågningar:', err); }
-      return inboxData;
-    }
 
-    function updateInboxBadge() {
-      const total = (inboxData?.inbox || []).length;
-      // Visa/dölj bulk-knapp
-      const bulkWrap = document.getElementById('bulk-request-btn-wrap');
-      if (bulkWrap) bulkWrap.classList.toggle('hidden', !activePrivilege); // visa så länge det finns förfrågningar
-      const badge = document.getElementById('inbox-badge');
-      if (badge) {
-        badge.textContent = total;
-        badge.classList.toggle('hidden', total === 0);
-      }
-      updateFaviconNotification();
-    }
 
-    async function loadInbox() {
-      const notifyChk = document.getElementById('inbox-email-notify');
-      if (notifyChk) notifyChk.checked = currentUser.emailNotifyRequests !== false;
-      await swr(
-        'inbox_' + currentUser.email,
-        () => api('getAssessmentRequests', { email: currentUser.email, klinikId: currentUser.klinikId }),
-        data => {
-          if (!data) return;
-          inboxData = data;
-          renderInbox();
-          updateInboxBadge();
-        },
-        document.getElementById('inbox-swr-status'),
-        (fresh, old) => Math.max(0, (fresh.inbox?.length||0) - (old.inbox?.length||0))
-      );
-    }
 
-    function renderInbox() {
-      const el = document.getElementById('inbox-list');
-      const items = currentInboxTab === 'inbox' ? (inboxData?.inbox || []) : (inboxData?.outbox || []);
-      if (!items.length) { el.innerHTML = '<p style="color:#888;">Inga förfrågningar.</p>'; return; }
-      el.innerHTML = '';
-      items.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'assessment-card';
-        card.style.marginTop = '12px';
-        if (currentInboxTab === 'inbox' && !item.read) card.style.borderLeft = '4px solid #2e4a5f';
-        const isInbox = currentInboxTab === 'inbox';
-        const personName = isInbox ? item.fromName : item.toName;
-        card.innerHTML =
-          '<div style="font-weight:bold;font-size:16px;">' + esc(personName) + '</div>' +
-          (item.formType ? '<div style="font-size:13px;color:#2e4a5f;font-weight:bold;margin-top:2px;">📋 ' + esc(item.formType) + '</div>' : '') +
-          '<div style="font-size:13px;color:#5b6b75;margin-top:2px;">' + esc(item.timestamp) + '</div>' +
-          '<div style="margin-top:8px;font-size:15px;">' + esc(item.message) + '</div>';
-        if (isInbox) {
-          const btn = document.createElement('button');
-          btn.className = 'btn-primary btn-small';
-          btn.style.marginTop = '10px';
-          btn.textContent = 'Utför bedömning';
-          btn.onclick = () => startRequestedAssessment(item);
-          card.appendChild(btn);
-        } else if (!isInbox && item.status === 'Inaktuell') {
-          const tag = document.createElement('div');
-          tag.style.cssText = 'margin-top:8px;font-size:13px;color:#8a97a0;font-weight:bold;';
-          tag.textContent = '× Inaktuell — förfrågan har passerat tidsgränsen';
-          card.appendChild(tag);
-        } else if (!isInbox && item.status !== 'Utförd') {
-          const doneBtn = document.createElement('button');
-          doneBtn.className = 'btn-secondary btn-small';
-          doneBtn.style.marginTop = '10px';
-          doneBtn.textContent = '✓ Markera utförd';
-          doneBtn.onclick = () => {
-            api('markRequestDone', { id: item.id }).then(() => {
-              bgInvalidate('inbox_' + currentUser.email);
-              loadInbox();
-            }).catch(() => {});
-          };
-          card.appendChild(doneBtn);
-        } else if (!isInbox && item.status === 'Utförd') {
-          const tag = document.createElement('div');
-          tag.style.cssText = 'margin-top:8px;font-size:13px;color:#4a9e62;font-weight:bold;';
-          tag.textContent = '✓ Utförd';
-          card.appendChild(tag);
-        }
-        el.appendChild(card);
-        // Markera som läst
-        if (isInbox && !item.read) api('markRequestRead', { id: item.id }).catch(()=>{});
-      });
-    }
 
-    function showRequestForm() {
-      show('request-form', true);
-      // Fyll formulärtyper
-      const ftSel = document.getElementById('request-formtype');
-      if (ftSel && ftSel.options.length <= 1 && appData && appData.formTypes) {
-        const allForms = [...new Set(Object.values(appData.formTypes).flat())].sort((a, b) => a.localeCompare(b, 'sv'));
-        allForms.forEach(ft => {
-          const opt = document.createElement('option');
-          opt.value = ft; opt.textContent = ft; ftSel.appendChild(opt);
-        });
-      }
-      const sel = document.getElementById('request-to');
-      sel.innerHTML = '<option value="">-- Välj kollega --</option>';
-      if (appData && appData.lists) {
-        const clinic = currentUser.clinic;
-        const myName = (currentUser.firstName + ' ' + currentUser.lastName).trim();
-        const allNames = new Set();
-        // Hämta från alla kategorier och Registrerare/Mottagare
-        ['Registrerare','Mottagare','ST','Spec','AT','BT'].forEach(cat => {
-          const names = appData.lists[cat]?.[clinic] || [];
-          names.forEach(n => {
-            const shortName = n.split(' -- ')[0].trim();
-            if (shortName && shortName !== myName) allNames.add(n);
-          });
-        });
-        if (allNames.size === 0) {
-          // Fallback: försök utan klinikfilter
-          ['Registrerare','Mottagare','ST','Spec','AT','BT'].forEach(cat => {
-            const byClinic = appData.lists[cat] || {};
-            Object.values(byClinic).flat().forEach(n => {
-              const shortName = n.split(' -- ')[0].trim();
-              if (shortName && shortName !== myName) allNames.add(n);
-            });
-          });
-        }
-        sortByLastName([...allNames]).forEach(name => {
-          const opt = document.createElement('option');
-          opt.value = name;
-          opt.textContent = name.split(' -- ')[0].trim();
-          sel.appendChild(opt);
-        });
-      }
-    }
 
-    function hideRequestForm() {
-      show('request-form', false);
-      const ft = document.getElementById('request-formtype');
-      if (ft) ft.value = '';
-      const msg = document.getElementById('request-message');
-      if (msg) msg.value = '';
-    }
 
-    async function sendRequest() {
-      if (_isProcessing) return;
-      const btn = document.querySelector('#request-form .btn-primary');
-      const origBtnText = btn?.textContent || 'Skicka f\u00f6rfr\u00e5gan';
-      if (btn) btn.textContent = 'Skickar\u2026';
-      lockUI();
-      const toName   = document.getElementById('request-to').value;
-      const message  = document.getElementById('request-message').value.trim();
-      const formType = document.getElementById('request-formtype')?.value || '';
-      if (!toName)   { setStatus('request-status', 'Välj en kollega.', true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-      if (!message)  { setStatus('request-status', 'Skriv ett meddelande.', true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-      try {
-        const toEmail = await api('getRecipientEmail', { recipientFullName: toName });
-        if (!toEmail) { setStatus('request-status', 'Kunde inte hitta e-post för ' + esc(toName), true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-        await api('sendAssessmentRequest', { fromEmail: currentUser.email, toEmail, message, formType });
-        document.getElementById('request-message').value = '';
-        document.getElementById('request-to').value = '';
-        if (btn) btn.textContent = origBtnText;
-        unlockUI();
-        setTimeout(() => { hideRequestForm(); loadInbox(); }, 1500);
-      } catch(err) { setStatus('request-status', err.message, true); if (btn) btn.textContent = origBtnText; unlockUI(); }
-    }
 
-    function startRequestedAssessment(item) {
-      // Om formulärtyp är känd: hoppa direkt till formuläret
-      if (item.formType) {
-        startRequestedAssessmentDirect(item);
-        return;
-      }
 
-      // Annars: visa val-sidan med förifylld mottagare
-      showPanel('assessment');
-      resetAssessment();
-      // Sätt EFTER resetAssessment så de inte nollställs
-      pendingRequestId = item.id;
-      pendingRequestFrom = item.fromName;
-      pendingRequestFormType = item.formType || '';
-      setTimeout(() => {
-        const fromName = item.fromName;
-        const clinic = currentUser.clinic;
-        let senderCategory = null;
-        if (appData && appData.lists) {
-          ['Spec','ST','AT','BT'].forEach(cat => {
-            const names = appData.lists[cat]?.[clinic] || [];
-            if (names.some(n => n.startsWith(fromName.split(' -- ')[0]))) senderCategory = cat;
-          });
-        }
-        if (senderCategory) {
-          const catRadio = document.querySelector(`input[name="category"][value="${senderCategory}"]`);
-          if (catRadio) { catRadio.checked = true; catRadio.dispatchEvent(new Event('change')); }
-        }
-        setTimeout(() => {
-          const sel = document.getElementById('recipient');
-          let found = false;
-          for (let opt of sel.options) {
-            if (opt.value.startsWith(fromName.split(' -- ')[0])) { opt.selected = true; found = true; break; }
-          }
-          if (!found) {
-            const opt = document.createElement('option');
-            opt.value = fromName; opt.textContent = fromName.split(' -- ')[0]; opt.selected = true;
-            sel.appendChild(opt);
-          }
-          document.querySelectorAll('input[name="category"]').forEach(r => r.disabled = true);
-          sel.disabled = true;
-          updateFormTypes();
-          updateTillBedomningBtn();
-          show('f5', true); show('f-till-bedomning', true);
-        }, 400);
-      }, 300);
-    }
-
-    async function startRequestedAssessmentDirect(item) {
-      // Sätt pending-state DIREKT (resetAssessment anropas inte här)
-      pendingRequestId       = item.id;
-      pendingRequestFrom     = item.fromName;
-      pendingRequestFormType = item.formType || '';
-
-      // Hitta kategori för avsändaren
-      const fromName = item.fromName.split(' -- ')[0].trim();
-      const clinic = currentUser.clinic;
-      let senderCategory = 'ST';
-      if (appData && appData.lists) {
-        ['Spec','ST','AT','BT'].forEach(cat => {
-          const names = appData.lists[cat]?.[clinic] || [];
-          if (names.some(n => n.split(' -- ')[0].trim() === fromName)) senderCategory = cat;
-        });
-      }
-
-      // Sätt metadata INNAN resetAssessment
-      window._pendingAssessmentMeta = {
-        recipient: item.fromName,
-        formType:  item.formType,
-        category:  senderCategory
-      };
-
-      // Visa assessment-panelen och nollställ
-      showPanel('assessment');
-      // Dölj alla val-fält
-      ['f-intro','f1','f2','f3','f4','f5','f-till-bedomning'].forEach(id => show(id, false));
-      show('f6-container', true);
-      document.getElementById('form-questions').innerHTML = '<p style="color:#888">Laddar frågor...</p>';
-      window._formStartTime = new Date().toISOString();
-      _sectionHistory = [];
-
-      try {
-        const data = await api('getFormQuestions', { formName: item.formType });
-        if (!data || !data.length) {
-          await customAlert('Inga frågor hittades för: ' + item.formType);
-          showPanel('inbox'); return;
-        }
-        renderForm(data);
-      } catch(err) { await customAlert('Fel: ' + err.message); showPanel('inbox'); }
-    }
 
     function prefillPrivKlinik() {
       const input = document.getElementById('edit-priv-klinik');
@@ -5641,111 +5151,8 @@
     }
 
     // ── Bulk-förfrågan ────────────────────────────────────────────────────
-    function showBulkRequestForm() {
-      show('bulk-request-form', true);
-      // Fyll formulärtyper
-      const ftSel = document.getElementById('bulk-formtype');
-      ftSel.innerHTML = '<option value="">-- Välj formulärtyp --</option>';
-      if (appData && appData.formTypes) {
-        const allForms = [...new Set(Object.values(appData.formTypes).flat())].sort((a, b) => a.localeCompare(b, 'sv'));
-        allForms.forEach(ft => {
-          const opt = document.createElement('option');
-          opt.value = ft; opt.textContent = ft;
-          if (ft === 'Självskattning inför specialistkollegium') opt.selected = true;
-          ftSel.appendChild(opt);
-        });
-      }
-    }
 
-    function hideBulkRequestForm() { show('bulk-request-form', false); }
 
-    function populateBulkRecipients() {
-      const role = document.getElementById('bulk-role-filter').value;
-      const container = document.getElementById('bulk-recipients');
-      container.innerHTML = '';
-      if (!role || !appData || !appData.lists) return;
-      const clinic = currentUser.clinic;
-      const names = (appData.lists[role]?.[clinic] || []);
-      names.forEach(name => {
-        const shortName = name.split(' -- ')[0].trim();
-        const label = document.createElement('label');
-        label.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;background:#eef1f3;border:1px solid #c7d1d7;border-radius:4px;padding:4px 10px;';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox'; cb.value = name; cb.checked = true;
-        cb.className = 'bulk-recipient-cb';
-        label.appendChild(cb);
-        label.appendChild(document.createTextNode(shortName));
-        container.appendChild(label);
-      });
-    }
-
-    function toggleBulkAll(checked) {
-      document.querySelectorAll('.bulk-recipient-cb').forEach(cb => cb.checked = checked);
-    }
-
-    async function sendBulkRequest() {
-      if (_isProcessing) return;
-      const btn = document.querySelector('#bulk-request-form .btn-primary');
-      const origBtnText = btn?.textContent || 'Skicka till markerade';
-      if (btn) btn.textContent = 'Skickar\u2026';
-      lockUI();
-      const formType = document.getElementById('bulk-formtype').value;
-      const message  = document.getElementById('bulk-message').value.trim();
-      const selected = [...document.querySelectorAll('.bulk-recipient-cb:checked')].map(cb => cb.value);
-      if (!formType)       { setStatus('bulk-status', 'Välj formulärtyp.', true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-      if (!selected.length){ setStatus('bulk-status', 'Markera minst en mottagare.', true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-      if (!message)        { setStatus('bulk-status', 'Skriv ett meddelande.', true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-
-      try {
-        const toEmails = await Promise.all(
-          selected.map(name => api('getRecipientEmail', { recipientFullName: name }).catch(() => null))
-        ).then(emails => emails.filter(Boolean));
-
-        const result = await api('sendBulkRequest', {
-          fromEmail: currentUser.email,
-          toEmails,
-          message,
-          formType
-        });
-        if (btn) btn.textContent = origBtnText;
-        unlockUI();
-        setTimeout(() => { hideBulkRequestForm(); loadInbox(); }, 1500);
-      } catch(err) { setStatus('bulk-status', err.message, true); if (btn) btn.textContent = origBtnText; unlockUI(); }
-    }
-
-    function setTrendPeriod(period) {
-      // Uppdatera knapp-stil
-      ['7d','30d','90d','180d','365d','max'].forEach(p => {
-        const btn = document.getElementById('period-' + p);
-        if (!btn) return;
-        btn.style.background = p === period ? '#2e4a5f' : '#c7d1d7';
-        btn.style.color      = p === period ? '#eef1f3' : '#1c2b36';
-      });
-      const chartData = window._overviewChartData;
-      if (!chartData) return;
-      let months = chartData.months;
-      // Filtrera månader
-      if (period !== 'max') {
-        const days = parseInt(period);
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - days);
-        months = months.filter(m => {
-          // m.label = "Jun 2026" – konvertera
-          const d = new Date(m.label);
-          return isNaN(d) ? true : d >= cutoff;
-        });
-        if (!months.length) months = chartData.months.slice(-1);
-      }
-      const chart = window._overviewChart;
-      if (!chart) return;
-      chart.data.labels = months.map(m => m.label);
-      if (chartData.showReceived) chart.data.datasets[0].data = months.map(m => m.received);
-      if (chartData.showSent) {
-        const idx = chartData.showReceived ? 1 : 0;
-        chart.data.datasets[idx].data = months.map(m => m.sent);
-      }
-      chart.update();
-    }
 
 
 
@@ -6418,5 +5825,7 @@
   <script src="./js/statistics.js"></script>
   <script src="./js/progress.js"></script>
   <script src="./js/overview.js"></script>
+  <script src="./js/inbox.js"></script>
+  <script src="./js/my-assessments.js"></script>
 </body>
 </html>
