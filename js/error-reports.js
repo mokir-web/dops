@@ -30,7 +30,7 @@
         ]);
         renderErrorReportsList(globalList, global, true);
         document.getElementById('global-feedback-email').value = settings?.feedbackEmail || '';
-      } catch (err) { globalList.innerHTML = '<p class="status-err">' + err.message + '</p>'; }
+      } catch (err) { globalList.innerHTML = '<p class="status-err">' + esc(err.message) + '</p>'; }
     }
 
     async function saveGlobalFeedbackEmail() {

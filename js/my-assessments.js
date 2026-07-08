@@ -64,7 +64,7 @@
         renderAssessments(assessments, currentAssessmentRole);
         updateFormTypeFilters(assessments);
       } catch(err) {
-        document.getElementById('my-assessments-list').innerHTML = `<p class="status-err">${err.message}</p>`;
+        document.getElementById('my-assessments-list').innerHTML = `<p class="status-err">${esc(err.message)}</p>`;
       } finally {
         if (statusEl) statusEl.innerHTML = '';
       }

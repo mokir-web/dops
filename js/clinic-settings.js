@@ -44,7 +44,7 @@
         csGroupsCache = groups;
         renderGroupsList(klinikId);
         renderClinicSettings(settings, klinikId);
-      } catch (err) { list.innerHTML = `<p class="status-err">${err.message}</p>`; }
+      } catch (err) { list.innerHTML = `<p class="status-err">${esc(err.message)}</p>`; }
     }
 
     function renderGroupsList(klinikId) {

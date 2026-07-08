@@ -57,7 +57,7 @@
         renderStatistics(stats, checkedForms);
         if (statusEl) statusEl.innerHTML = '';
       } catch(err) {
-        el.innerHTML = '<p class="status-err">Fel: ' + err.message + '</p>';
+        el.innerHTML = '<p class="status-err">Fel: ' + esc(err.message) + '</p>';
       }
     }
 

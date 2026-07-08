@@ -77,7 +77,7 @@
           el.appendChild(card);
         });
       } catch(err) {
-        el.innerHTML = '<p class="status-err">' + err.message + '</p>';
+        el.innerHTML = '<p class="status-err">' + esc(err.message) + '</p>';
       }
     }
 
@@ -153,7 +153,7 @@
         allAdminUsers = data.users || [];
         filterAdminUsers();
       } catch(err) {
-        infoEl.innerHTML = '<p class="status-err">' + err.message + '</p>';
+        infoEl.innerHTML = '<p class="status-err">' + esc(err.message) + '</p>';
       }
     }
 

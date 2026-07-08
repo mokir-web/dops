@@ -10,9 +10,11 @@
       el.innerHTML = '<p style="color:#8a97a0;font-size:13px;">Hämtar innehåll…</p>';
       try {
         const klinikId = activeKlinikId || currentUser.klinikId || '*';
+        // Samma klinikId-uträkning som saveRequestExpiry (annars visas/sparas fel klinik i "alla kliniker"-vyn)
+        const settingsKlinikId = activeKlinikId && activeKlinikId !== '*' ? activeKlinikId : currentUser.klinikId;
         const [data, settings] = await Promise.all([
           api('getRequestStats', { klinikId }),
-          klinikId !== '*' ? api('getKlinikSettings', { klinikId }) : Promise.resolve({ requestExpiry: 0 })
+          api('getKlinikSettings', { klinikId: settingsKlinikId })
         ]);
         const sel = document.getElementById('expiry-select');
         if (sel) sel.value = String(settings.requestExpiry || 0);

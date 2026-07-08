@@ -50,7 +50,7 @@
         renderClinicAssessments(assessments);
         updateCoFormTypeFilters(assessments);
       } catch(err) {
-        list.innerHTML = `<p class="status-err">Fel: ${err.message}</p>`;
+        list.innerHTML = `<p class="status-err">Fel: ${esc(err.message)}</p>`;
       }
     }
 
