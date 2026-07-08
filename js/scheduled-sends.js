@@ -36,7 +36,7 @@
             <div style="margin-top:8px;display:flex;gap:8px;">
               <button class="btn-secondary btn-small" onclick='editSchedule(${JSON.stringify(s).replace(/'/g,"&#39;")})'>Redigera</button>
               <button class="btn-secondary btn-small" onclick="toggleSchedule('${s.id}')">${s.aktiv ? 'Pausa' : 'Aktivera'}</button>
-              <button class="btn-secondary btn-small" onclick="deleteScheduleById('${s.id}')">Ta bort</button>
+              <button class="btn-secondary btn-small" onclick="deleteSchedule('${s.id}')">Ta bort</button>
             </div>
           </div>`;
         }).join('');

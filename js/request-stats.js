@@ -88,3 +88,14 @@
 
       el.innerHTML = html;
     }
+    function saveRequestExpiry(weeks) {
+      const kid = activeKlinikId && activeKlinikId !== '*' ? activeKlinikId : currentUser.klinikId;
+      const statusEl = document.getElementById('expiry-save-status');
+      if (statusEl) { statusEl.textContent = 'Sparar…'; statusEl.style.color = '#5b6b75'; }
+      api('saveKlinikSettings', { klinikId: kid, settings: { requestExpiry: parseInt(weeks) || 0 } })
+        .then(() => {
+          bgInvalidate('inbox_' + currentUser.email); loadInbox();
+          if (statusEl) { statusEl.style.color = '#2e4a5f'; statusEl.textContent = '✓ Sparat'; setTimeout(() => statusEl.textContent = '', 2500); }
+        })
+        .catch(e => { console.error('saveRequestExpiry:', e); if (statusEl) { statusEl.style.color = '#9e2a18'; statusEl.textContent = 'Kunde inte spara: ' + e.message; } });
+    }
