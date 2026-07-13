@@ -25,15 +25,17 @@
         document.getElementById('overview-swr-status')
       );
     }
-    function renderFormGroup(title, forms, subGoals, periodCounts, allTimeCounts, role, periodMonths) {
+    function renderFormGroup(title, forms, subGoals, periodCounts, allTimeCounts, role, periodMonths, hiddenSet) {
       if (!Object.keys(forms).length) return '';
+      hiddenSet = hiddenSet || new Set();
       const nM = periodMonths || 0;
       const periodLabel = nM === -1 ? 'totalt' : nM === 0 ? 'senaste 6 mån' : (nM <= 1 ? 'senaste månaden' : 'senaste ' + nM + ' mån');
       const scaledGoal = (goal) => (nM === 0 || nM === -1) ? goal : Math.round(goal * nM / 6);
       let s = html`<div class="section-header" data-overview-goalgroup="1" style="margin-top:24px;">${title}</div>`;
       s += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px;margin-top:14px;max-width:600px;">';
-      const dopsForms  = Object.entries(forms).filter(([ft]) => ft.startsWith('DOPS:') || ft.startsWith('DOPS '));
-      const otherForms = Object.entries(forms).filter(([ft]) => !ft.startsWith('DOPS:') && !ft.startsWith('DOPS ') && ft !== 'Operationsspecifik DOPS');
+      const dopsForms  = Object.entries(forms).filter(([ft]) => (ft.startsWith('DOPS:') || ft.startsWith('DOPS ')) && !hiddenSet.has(ft));
+      const otherForms = Object.entries(forms).filter(([ft]) => !ft.startsWith('DOPS:') && !ft.startsWith('DOPS ') && ft !== 'Operationsspecifik DOPS' && !hiddenSet.has(ft));
+      const hiddenEntries = Object.entries(forms).filter(([ft]) => hiddenSet.has(ft));
       if (dopsForms.length) {
         s += '<div style="font-size:15px;font-weight:bold;color:#1c2b36;margin-bottom:4px;">DOPS</div>';
         dopsForms.sort((a,b) => a[0].localeCompare(b[0])).forEach(([ft, v]) => {
@@ -46,6 +48,7 @@
           s += html`<div style="font-size:14px;color:#5b6b75;flex:1;">${subName}</div>`;
           s += html`<div style="flex:2;max-width:160px;">${safe(goalBar(countP, countAll, g, periodLabel))}</div>`;
           s += html`<div style="font-size:16px;font-weight:bold;color:${safe(color)};min-width:28px;text-align:right;">${countP}</div>`;
+          if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${ft}',true)">Ej aktuellt</button>`;
           s += '</div>';
         });
         if (otherForms.length) s += '<div style="height:1px;background:#c7d1d7;margin:10px 0;"></div>';
@@ -59,10 +62,33 @@
         s += html`<div style="font-size:14px;font-weight:bold;color:#1c2b36;flex:1;">${ft}</div>`;
         s += html`<div style="flex:2;max-width:160px;">${safe(goalBar(countP, countAll, g, periodLabel))}</div>`;
         s += html`<div style="font-size:16px;font-weight:bold;color:${safe(color)};min-width:28px;text-align:right;">${countP}</div>`;
+        if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${ft}',true)">Ej aktuellt</button>`;
         s += '</div>';
       });
+      if (hiddenEntries.length) {
+        const groupId = 'hidden-forms-' + (role || 'received') + '-' + Math.random().toString(36).slice(2, 8);
+        s += `<div style="margin-top:10px;">
+          <button type="button" class="btn-secondary btn-small" onclick="const el=document.getElementById('${groupId}'); el.classList.toggle('hidden');" style="font-size:12px;color:#8a97a0;">Ej aktuella (${hiddenEntries.length}) ▾</button>
+          <div id="${groupId}" class="hidden" style="margin-top:6px;">`;
+        hiddenEntries.sort((a,b) => a[0].localeCompare(b[0])).forEach(([ft]) => {
+          s += html`<div style="display:flex;align-items:center;gap:10px;padding:3px 0;color:#8a97a0;">
+            <div style="font-size:13px;flex:1;">${ft}</div>
+            <button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="toggleFormTypeHidden('${ft}',false)">Återställ</button>
+          </div>`;
+        });
+        s += '</div></div>';
+      }
       s += '</div>';
       return s;
+    }
+
+    async function toggleFormTypeHidden(formType, hidden) {
+      try {
+        await api('toggleHiddenFormType', { formType, hidden });
+        await loadMyOverview();
+      } catch (err) {
+        await customAlert('Kunde inte uppdatera: ' + err.message);
+      }
     }
     function goalBar(countPeriod, countAll, goal, periodLabel) {
       if (!goal) return '';
@@ -130,15 +156,16 @@
       // Initial render med 6-månaders period (periodMonths=0 → label "senaste 6 mån")
       const isSentRegistrar = userRole === 'Registrerare';
       const sentForRender = (forms) => Object.fromEntries(Object.entries(forms).map(([ft, v]) => [ft, { ...v, goal: isSentRegistrar ? (v.sentGoal || 0) : 0 }]));
-      if (showReceived) out += renderFormGroup('Mottagna bedömningar',     data.received, data.subGoals, rec6m,  rec6m,  'received', 0);
-      if (showSent)     out += renderFormGroup('Registrerade bedömningar', sentForRender(data.sent), data.subGoals, sent6m, sent6m, 'sent', 0);
+      const hiddenSet = new Set(data.hiddenFormTypes || []);
+      if (showReceived) out += renderFormGroup('Mottagna bedömningar',     data.received, data.subGoals, rec6m,  rec6m,  'received', 0, hiddenSet);
+      if (showSent)     out += renderFormGroup('Registrerade bedömningar', sentForRender(data.sent), data.subGoals, sent6m, sent6m, 'sent', 0, hiddenSet);
 
       el.innerHTML = out;
       // Spara data globalt för filterTrend
       // Bygg all-time count maps för renderFormGroup
       const recAllTime = {};  Object.entries(data.received).forEach(([ft,v]) => { recAllTime[ft] = v.count; });
       const sentAllTime = {}; Object.entries(data.sent).forEach(([ft,v])     => { sentAllTime[ft] = v.count; });
-      window._overviewData = { data, showSent, showReceived, recAllTime, sentAllTime, rec6m, sent6m };
+      window._overviewData = { data, showSent, showReceived, recAllTime, sentAllTime, rec6m, sent6m, hiddenSet };
       window._overviewChartSpecs = {};
       chartSpecs.forEach(spec => { window._overviewChartSpecs[spec.key] = spec; });
       window._overviewCharts = {};
@@ -230,7 +257,7 @@
     function _reRenderFormGroups(nMonths, filteredKeysByDirection, resolution) {
       const od = window._overviewData;
       if (!od) return;
-      const { data, showSent, showReceived, recAllTime, sentAllTime } = od;
+      const { data, showSent, showReceived, recAllTime, sentAllTime, hiddenSet } = od;
       // Summera per-period counts från by(Day|Week|Month)SentFt / by(Day|Week|Month)RecFt — mottagna
       // och registrerade måste summeras med VARSIN periodfönster (de kan ha olika
       // aktiva perioder), annars blandas de ihop och siffrorna blir missvisande.
@@ -273,8 +300,8 @@
       const sent = nMonths === -1 || nMonths > 0
         ? Object.fromEntries(Object.entries(sentFRData).filter(([ft, v]) => (effSentP[ft] || 0) > 0 || v.goal))
         : sentFRData;
-      if (showReceived) frag.innerHTML += renderFormGroup('Mottagna bedömningar',     received, data.subGoals, effRecP,  recAllTime, 'received', nMonths);
-      if (showSent)     frag.innerHTML += renderFormGroup('Registrerade bedömningar', sent,     data.subGoals, effSentP, sentAllTime, 'sent',     nMonths);
+      if (showReceived) frag.innerHTML += renderFormGroup('Mottagna bedömningar',     received, data.subGoals, effRecP,  recAllTime, 'received', nMonths, hiddenSet);
+      if (showSent)     frag.innerHTML += renderFormGroup('Registrerade bedömningar', sent,     data.subGoals, effSentP, sentAllTime, 'sent',     nMonths, hiddenSet);
       el.appendChild(frag);
     }
     function navigateToAssessments(formType, role) {

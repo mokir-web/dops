@@ -1451,7 +1451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.33.0';
+    const APP_VERSION = 'v4.34.0';
 
     let appData = null;
     let currentUser = null;
@@ -1679,6 +1679,7 @@
       getRequestStats:        { method: 'GET',    path: () => '/requests/stats', query: p => ({ clinicId: p.klinikId }) },
 
       getMyOverview:          { method: 'GET',    path: () => '/overview' },
+      toggleHiddenFormType:   { method: 'PUT',    path: () => '/overview/hidden-form-types', body: p => ({ formType: p.formType, hidden: p.hidden }) },
       getDocuments:           { method: 'GET',    path: () => '/documents' },
 
       getScheduledEmails:     { method: 'GET',    path: () => '/scheduled-sends', query: p => ({ clinicId: p.klinikId }) },
