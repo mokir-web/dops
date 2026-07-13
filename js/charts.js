@@ -2,6 +2,30 @@
 // Används av js/statistics.js och js/overview.js (Chart.js-instanser).
 // Klassiskt script (ej type="module") — se js/progress.js för motivering.
 
+    // På mobil kan en legend med många formulärtyper ta nästan hela grafytan.
+    // Döljer legenden som standard på mobil och lägger till en liten knapp för
+    // att fälla ut/in den vid behov. containerEl = elementet direkt ovanför/
+    // runt <canvas> (knappen läggs efter det).
+    function addMobileLegendToggle(chart, containerEl) {
+      if (window.innerWidth > 600 || !containerEl) return;
+      containerEl.querySelectorAll('.mobile-legend-toggle-btn').forEach(b => b.remove());
+      chart.options.plugins = chart.options.plugins || {};
+      chart.options.plugins.legend = chart.options.plugins.legend || {};
+      chart.options.plugins.legend.display = false;
+      chart.update();
+      const btn = document.createElement('button');
+      btn.className = 'btn-secondary btn-small mobile-legend-toggle-btn';
+      btn.style.cssText = 'margin-top:8px;width:100%;';
+      btn.textContent = 'Visa etiketter';
+      btn.onclick = () => {
+        const showing = chart.options.plugins.legend.display === true;
+        chart.options.plugins.legend.display = !showing;
+        chart.update();
+        btn.textContent = showing ? 'Visa etiketter' : 'Dölj etiketter';
+      };
+      containerEl.appendChild(btn);
+    }
+
     function makeLegendClick(chart) {
       return function(e, legendItem) {
         const i = legendItem.datasetIndex;

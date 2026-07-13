@@ -692,12 +692,12 @@
       </div>
       <!-- Grafer -->
       <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:24px;width:100%;" id="stat-charts">
-        <div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
+        <div id="chart-line-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Bedömningar över tid</div>
           <div style="width:100%;aspect-ratio:4/3;"><canvas id="chart-line"></canvas></div>
           <p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p>
         </div>
-        <div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
+        <div id="chart-pie-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Fördelning per formulärtyp</div>
           <div style="width:100%;aspect-ratio:4/3;"><canvas id="chart-pie"></canvas></div>
           <p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p>
@@ -1433,7 +1433,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.29.0';
+    const APP_VERSION = 'v4.30.0';
 
     let appData = null;
     let currentUser = null;

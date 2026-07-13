@@ -47,25 +47,31 @@
           await swr(
             cacheKey,
             () => api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik }),
-            data => { if (data) { el.innerHTML = ''; renderStatistics(data, checkedForms); } },
+            data => { if (data) { el.innerHTML = ''; renderStatistics(data, checkedForms, false); } },
             statusEl
           );
           return;
         }
         if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#8a97a0;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Hämtar innehåll…</span>';
         stats = await api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik });
-        renderStatistics(stats, checkedForms);
+        // ≤3 månaders valt datumspann → veckovis upplösning, annars månadsvis (samma regel som Min översikt).
+        let useWeeks = false;
+        if (dateFrom) {
+          const spanDays = (new Date(dateTo || Date.now()) - new Date(dateFrom)) / 86400000;
+          useWeeks = spanDays <= 92;
+        }
+        renderStatistics(stats, checkedForms, useWeeks);
         if (statusEl) statusEl.innerHTML = '';
       } catch(err) {
         el.innerHTML = html`<p class="status-err">Fel: ${err.message}</p>`;
       }
     }
 
-    function renderStatistics(stats, checkedForms = []) {
+    function renderStatistics(stats, checkedForms = [], useWeeks = false) {
       const el = document.getElementById('statistics-content');
         // Uppdatera formulärfilter-chips (aggregerade typer)
         const aggByFormType = aggregateFormTypes(stats.byFormType);
-        const aggByMonth    = aggregateByMonth(stats.byFormTypeByMonth || {});
+        const aggByMonth    = aggregateByMonth(useWeeks ? (stats.byFormTypeByWeek || {}) : (stats.byFormTypeByMonth || {}));
         const filterContainer = document.getElementById('stat-formtype-filter');
         filterContainer.innerHTML = ''; // bygg alltid om med aggregerade typer
         Object.keys(aggByFormType).sort().forEach(ft => {
@@ -88,7 +94,7 @@
 
         // Använd icke-aggregerad data för alla subtyper
         const rawByFormType = stats.byFormType || {};
-        const rawByMonth    = stats.byFormTypeByMonth || {};
+        const rawByMonth    = useWeeks ? (stats.byFormTypeByWeek || {}) : (stats.byFormTypeByMonth || {});
         const allFormTypes  = activeFormFilter.length > 0 ? activeFormFilter
           : Object.keys(rawByFormType).sort((a,b) => rawByFormType[a] - rawByFormType[b]); // minst → mest
 
@@ -116,6 +122,7 @@
           }
         });
         attachLegendTouch(lineChart);
+        addMobileLegendToggle(lineChart, document.getElementById('chart-line-card'));
 
         // ── Pajdiagram (aggregerade) ─────────────────────────────
         const pieLabels = Object.keys(aggByFormType).filter(ft =>
@@ -129,6 +136,7 @@
           data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
           options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(pieChart)(e, li) } } }
         });
+        addMobileLegendToggle(pieChart, document.getElementById('chart-pie-card'));
 
         // ── Tabeller ──────────────────────────────────────────────
         let out = '';
