@@ -1431,7 +1431,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.26.0';
+    const APP_VERSION = 'v4.27.0';
 
     let appData = null;
     let currentUser = null;
@@ -1886,14 +1886,13 @@
       const container = document.getElementById('privilege-toggle');
       if (!container) return;
       if (privs.length === 0) { container.innerHTML = ''; return; }
-      let html = '<div style="margin-top:8px;"><select id="priv-select" onchange="setPrivilegeFromSelect(this.value)" style="width:100%;padding:6px 8px;font-size:13px;border:1.5px solid #c7d1d7;border-radius:5px;background:#eef1f3;color:#1c2b36;cursor:pointer;"><option value="">Mitt konto</option>';
+      let out = '<div style="margin-top:8px;"><select id="priv-select" onchange="setPrivilegeFromSelect(this.value)" style="width:100%;padding:6px 8px;font-size:13px;border:1.5px solid #c7d1d7;border-radius:5px;background:#eef1f3;color:#1c2b36;cursor:pointer;"><option value="">Mitt konto</option>';
       privs.forEach(p => {
         const val = p.privilege + '|' + p.klinikId;
-        const sel = activePrivilege === p.privilege ? 'selected' : '';
-        html += '<option value="' + val + '" ' + sel + '>' + p.privilege + '</option>';
+        out += html`<option value="${val}" ${safe(activePrivilege === p.privilege ? 'selected' : '')}>${p.privilege}</option>`;
       });
-      html += '</select></div>';
-      container.innerHTML = html;
+      out += '</select></div>';
+      container.innerHTML = out;
     }
 
     function setPrivilegeFromSelect(val) {

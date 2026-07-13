@@ -131,20 +131,20 @@
         });
 
         // ── Tabeller ──────────────────────────────────────────────
-        let html = '';
-        html += '<div class="section-header">Totalt antal bedömningar</div>';
-        html += '<p style="font-size:28px;font-weight:bold;color:#2e4a5f;margin:12px 0;">' + stats.total + '</p>';
-        html += '<div class="section-header">Mest aktiva registrerare</div>';
-        html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
+        let out = '';
+        out += '<div class="section-header">Totalt antal bedömningar</div>';
+        out += html`<p style="font-size:28px;font-weight:bold;color:#2e4a5f;margin:12px 0;">${stats.total}</p>`;
+        out += '<div class="section-header">Mest aktiva registrerare</div>';
+        out += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
         Object.entries(stats.byRegistrar).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
-          html += '<tr><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;text-align:right;font-weight:bold;">' + v + '</td></tr>';
+          out += html`<tr><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;">${k}</td><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;text-align:right;font-weight:bold;">${v}</td></tr>`;
         });
-        html += '</table>';
-        html += '<div class="section-header">Mest bedömda</div>';
-        html += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
+        out += '</table>';
+        out += '<div class="section-header">Mest bedömda</div>';
+        out += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
         Object.entries(stats.byRecipient).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
-          html += '<tr><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;">' + k + '</td><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;text-align:right;font-weight:bold;">' + v + '</td></tr>';
+          out += html`<tr><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;">${k}</td><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;text-align:right;font-weight:bold;">${v}</td></tr>`;
         });
-        html += '</table>';
-        el.innerHTML = html;
+        out += '</table>';
+        el.innerHTML = out;
     }

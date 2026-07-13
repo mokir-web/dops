@@ -77,24 +77,24 @@
     function renderOverview(data) {
       const el = document.getElementById('overview-content');
       const userRole = currentUser.userRole;
-      let html = '';
+      let out = '';
 
       // Tidsramsknappar längst upp — styr både graf och formulärgrupper
       const months = Object.values(data.byMonth || {});
       if (months.length > 0) {
-        html += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
+        out += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
         [['1 vecka',7],['1 månad',30],['3 månader',90],['6 månader',180],['1 år',365],['MAX',0]].forEach(([label, days], i) => {
           const active = i === 3 ? 'background:#2e4a5f;color:#eef1f3;' : 'background:#c7d1d7;color:#1c2b36;';
-          html += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
+          out += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
         });
-        html += '</div>';
+        out += '</div>';
       }
 
       // Totalt sparat-banner
       if (data.totalMinutesSaved > 0 && (userRole === 'Registrerare' || userRole === 'Blandbild')) {
         const h = Math.floor(data.totalMinutesSaved / 60), m = data.totalMinutesSaved % 60;
         const totStr = h > 0 ? `${h} tim ${m} min` : `${m} min`;
-        html += `<div style="background:#2e4a5f;color:#eef1f3;border-radius:8px;padding:16px 20px;margin-bottom:8px;display:inline-block;min-width:220px;">
+        out += `<div style="background:#2e4a5f;color:#eef1f3;border-radius:8px;padding:16px 20px;margin-bottom:8px;display:inline-block;min-width:220px;">
           <div style="font-size:12px;opacity:0.8;letter-spacing:1px;">TOTALT SPARAT MED MORADOPS</div>
           <div style="font-size:28px;font-weight:bold;margin-top:4px;">${totStr}</div>
         </div>`;
@@ -117,20 +117,20 @@
       if (showSent)     chartSpecs.push({ key: 'sent',     label: 'Registrerade bed\u00f6mningar', ftByMonth: data.byMonthSentFt || {} });
       if (months.length > 0) {
         chartSpecs.forEach(spec => {
-          html += `<div class="section-header">${spec.label}</div>`;
-          html += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;margin-top:14px;">';
-          html += '<div style="width:100%;aspect-ratio:4/3;"><canvas id="overview-chart-' + spec.key + '"></canvas></div>';
-          html += '<p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p></div>';
+          out += `<div class="section-header">${spec.label}</div>`;
+          out += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;margin-top:14px;">';
+          out += '<div style="width:100%;aspect-ratio:4/3;"><canvas id="overview-chart-' + spec.key + '"></canvas></div>';
+          out += '<p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p></div>';
         });
       }
 
       // Initial render med 6-månaders period (periodMonths=0 → label "senaste 6 mån")
       const isSentRegistrar = userRole === 'Registrerare';
       const sentForRender = (forms) => Object.fromEntries(Object.entries(forms).map(([ft, v]) => [ft, { ...v, goal: isSentRegistrar ? (v.sentGoal || 0) : 0 }]));
-      if (showReceived) html += renderFormGroup('Mottagna bedömningar',     data.received, data.subGoals, rec6m,  rec6m,  'received', 0);
-      if (showSent)     html += renderFormGroup('Registrerade bedömningar', sentForRender(data.sent), data.subGoals, sent6m, sent6m, 'sent', 0);
+      if (showReceived) out += renderFormGroup('Mottagna bedömningar',     data.received, data.subGoals, rec6m,  rec6m,  'received', 0);
+      if (showSent)     out += renderFormGroup('Registrerade bedömningar', sentForRender(data.sent), data.subGoals, sent6m, sent6m, 'sent', 0);
 
-      el.innerHTML = html;
+      el.innerHTML = out;
       // Spara data globalt för filterTrend
       // Bygg all-time count maps för renderFormGroup
       const recAllTime = {};  Object.entries(data.received).forEach(([ft,v]) => { recAllTime[ft] = v.count; });

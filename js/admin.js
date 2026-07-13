@@ -123,36 +123,36 @@
           api('getClinicInfo', { klinikId }),
           (klinikId !== '*' && klinikId !== '__none__') ? api('getKlinikSettings', { klinikId }) : Promise.resolve({ inaktiveringsMånader: 24 })
         ]);
-        let html = '';
+        let out = '';
         if (data.info) {
-          html += '<div class="assessment-card">';
-          html += '<div style="font-size:18px;font-weight:bold;">' + data.info.namn + '</div>';
-          html += '<div style="font-size:14px;margin-top:4px;">Kontakt: ' + data.info.kontakt + '</div>';
-          html += '<div style="font-size:14px;margin-top:4px;">Status: <strong>' + (data.info.aktiv ? '✓ Aktiv' : '✗ Inaktiv') + '</strong></div>';
+          out += '<div class="assessment-card">';
+          out += html`<div style="font-size:18px;font-weight:bold;">${data.info.namn}</div>`;
+          out += html`<div style="font-size:14px;margin-top:4px;">Kontakt: ${data.info.kontakt}</div>`;
+          out += html`<div style="font-size:14px;margin-top:4px;">Status: <strong>${safe(data.info.aktiv ? '✓ Aktiv' : '✗ Inaktiv')}</strong></div>`;
           const toggleLabel = data.info.aktiv ? 'Stäng tillgång' : 'Aktivera';
           const toggleActive = !data.info.aktiv;
-          html += '<div class="btn-row" style="margin-top:12px;"><button class="btn-' + (toggleActive ? 'primary' : 'danger') + ' btn-small" onclick="toggleClinicAccess(\'' + klinikId + '\',' + toggleActive + ')">' + toggleLabel + '</button>';
+          out += html`<div class="btn-row" style="margin-top:12px;"><button class="btn-${safe(toggleActive ? 'primary' : 'danger')} btn-small" onclick="toggleClinicAccess('${klinikId}',${toggleActive})">${toggleLabel}</button>`;
           if (activeKlinikId === '*') {
-            html += '<button class="btn-danger btn-small" onclick="deleteClinicAction(\'' + klinikId + '\',\'' + esc(data.info.namn) + '\')">Radera klinik</button>';
+            out += html`<button class="btn-danger btn-small" onclick="deleteClinicAction('${klinikId}','${data.info.namn}')">Radera klinik</button>`;
           }
-          html += '</div>';
+          out += '</div>';
           // Inaktiveringsgräns
           const månader = settings?.inaktiveringsMånader || 24;
-          html += '<div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
-          html += '<label style="font-size:14px;color:#5b6b75;">Inaktivera användare efter</label>';
-          html += '<input type="number" id="klinik-inaktiv-månader" value="' + månader + '" min="1" max="120" style="width:70px;padding:6px;border:1.5px solid #c7d1d7;border-radius:5px;font-size:14px;">';
-          html += '<label style="font-size:14px;color:#5b6b75;">månaders inaktivitet</label>';
-          html += '<button class="btn-secondary btn-small" onclick="saveInaktiveringsgräns(\'' + klinikId + '\')">Spara</button>';
-          html += '</div>';
-          html += '</div>';
+          out += '<div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
+          out += '<label style="font-size:14px;color:#5b6b75;">Inaktivera användare efter</label>';
+          out += html`<input type="number" id="klinik-inaktiv-månader" value="${månader}" min="1" max="120" style="width:70px;padding:6px;border:1.5px solid #c7d1d7;border-radius:5px;font-size:14px;">`;
+          out += '<label style="font-size:14px;color:#5b6b75;">månaders inaktivitet</label>';
+          out += html`<button class="btn-secondary btn-small" onclick="saveInaktiveringsgräns('${klinikId}')">Spara</button>`;
+          out += '</div>';
+          out += '</div>';
         } else {
-          html = '<div class="assessment-card"><strong>' + (klinikId === '*' ? 'Alla kliniker' : klinikId === '__none__' ? 'Ingen klinik' : klinikId) + '</strong></div>';
+          out = html`<div class="assessment-card"><strong>${safe(klinikId === '*' ? 'Alla kliniker' : klinikId === '__none__' ? 'Ingen klinik' : esc(klinikId))}</strong></div>`;
         }
-        infoEl.innerHTML = html;
+        infoEl.innerHTML = out;
         allAdminUsers = data.users || [];
         filterAdminUsers();
       } catch(err) {
-        infoEl.innerHTML = '<p class="status-err">' + esc(err.message) + '</p>';
+        infoEl.innerHTML = html`<p class="status-err">${err.message}</p>`;
       }
     }
 

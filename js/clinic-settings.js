@@ -131,41 +131,41 @@
       settings.forEach(s => {
         const card = document.createElement('div');
         card.className = 'assessment-card';
-        let html = `<div style="font-weight:bold;font-size:16px;margin-bottom:8px;">${s.formType}</div>`;
-        html += '<div style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:13px;">';
-        html += '<tr><td></td>' + ROLE_LIST.map(r => `<td style="padding:2px 8px;font-weight:bold;text-align:center;">${r}</td>`).join('') + '</tr>';
+        let out = html`<div style="font-weight:bold;font-size:16px;margin-bottom:8px;">${s.formType}</div>`;
+        out += '<div style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:13px;">';
+        out += '<tr><td></td>' + ROLE_LIST.map(r => `<td style="padding:2px 8px;font-weight:bold;text-align:center;">${r}</td>`).join('') + '</tr>';
         ['mottagen', 'registrerad'].forEach(metric => {
-          html += `<tr><td style="padding:2px 8px;color:#5b6b75;">${metric === 'mottagen' ? 'Mål mottagna' : 'Mål registrerade'}</td>`;
+          out += `<tr><td style="padding:2px 8px;color:#5b6b75;">${metric === 'mottagen' ? 'Mål mottagna' : 'Mål registrerade'}</td>`;
           ROLE_LIST.forEach(role => {
             const val = s.targets?.[role]?.[metric] || '';
-            html += `<td style="padding:2px 4px;"><input type="number" min="0" style="width:56px;padding:3px;" data-role="${role}" data-metric="${metric}" value="${val}"></td>`;
+            out += html`<td style="padding:2px 4px;"><input type="number" min="0" style="width:56px;padding:3px;" data-role="${role}" data-metric="${metric}" value="${val}"></td>`;
           });
-          html += '</tr>';
+          out += '</tr>';
         });
-        html += '</table></div>';
-        html += '<div style="margin-top:10px;font-size:13px;">';
-        html += '<label style="font-weight:bold;">Synlig för: </label>';
+        out += '</table></div>';
+        out += '<div style="margin-top:10px;font-size:13px;">';
+        out += '<label style="font-weight:bold;">Synlig för: </label>';
         const allSelected = s.categories === null;
-        html += `<label style="margin-left:8px;"><input type="checkbox" class="cs-cat-all" ${allSelected ? 'checked' : ''}> Alla (default)</label>`;
+        out += html`<label style="margin-left:8px;"><input type="checkbox" class="cs-cat-all" ${safe(allSelected ? 'checked' : '')}> Alla (default)</label>`;
         const selectedCats = s.categories ? s.categories.split(',').map(c => c.trim()) : [];
         ROLE_LIST.forEach(cat => {
-          html += `<label style="margin-left:10px;"><input type="checkbox" class="cs-cat" value="${cat}" ${selectedCats.includes(cat) ? 'checked' : ''} ${allSelected ? 'disabled' : ''}> ${cat}</label>`;
+          out += html`<label style="margin-left:10px;"><input type="checkbox" class="cs-cat" value="${cat}" ${safe(selectedCats.includes(cat) ? 'checked' : '')} ${safe(allSelected ? 'disabled' : '')}> ${cat}</label>`;
         });
-        html += '</div>';
-        html += '<div style="margin-top:10px;font-size:13px;display:flex;align-items:center;gap:8px;">';
-        html += '<label style="font-weight:bold;">Sektion:</label>';
-        html += '<select class="cs-group-select" style="font-size:13px;padding:3px;">';
-        html += `<option value="">Övrigt (ingen sektion)</option>`;
-        csGroupsCache.forEach(g => { html += `<option value="${esc(g.name)}" ${s.groupName === g.name ? 'selected' : ''}>${esc(g.name)}</option>`; });
-        html += '</select></div>';
-        html += '<div class="btn-row" style="margin-top:10px;align-items:center;">';
-        html += '<button class="btn-primary btn-small">Spara</button>';
+        out += '</div>';
+        out += '<div style="margin-top:10px;font-size:13px;display:flex;align-items:center;gap:8px;">';
+        out += '<label style="font-weight:bold;">Sektion:</label>';
+        out += '<select class="cs-group-select" style="font-size:13px;padding:3px;">';
+        out += `<option value="">Övrigt (ingen sektion)</option>`;
+        csGroupsCache.forEach(g => { out += html`<option value="${g.name}" ${safe(s.groupName === g.name ? 'selected' : '')}>${g.name}</option>`; });
+        out += '</select></div>';
+        out += '<div class="btn-row" style="margin-top:10px;align-items:center;">';
+        out += '<button class="btn-primary btn-small">Spara</button>';
         if (activeKlinikId === '*') {
-          html += '<label style="font-size:12px;color:#5b6b75;display:flex;align-items:center;gap:5px;margin-left:8px;"><input type="checkbox" class="cs-overwrite"> Skriv över kliniker med egna inställningar</label>';
-          html += '<button class="btn-secondary btn-small cs-apply-all">Applicera på alla kliniker</button>';
+          out += '<label style="font-size:12px;color:#5b6b75;display:flex;align-items:center;gap:5px;margin-left:8px;"><input type="checkbox" class="cs-overwrite"> Skriv över kliniker med egna inställningar</label>';
+          out += '<button class="btn-secondary btn-small cs-apply-all">Applicera på alla kliniker</button>';
         }
-        html += '<span class="cs-save-status" style="margin-left:4px;font-size:13px;"></span></div>';
-        card.innerHTML = html;
+        out += '<span class="cs-save-status" style="margin-left:4px;font-size:13px;"></span></div>';
+        card.innerHTML = out;
 
         const allCb = card.querySelector('.cs-cat-all');
         const catCbs = card.querySelectorAll('.cs-cat');

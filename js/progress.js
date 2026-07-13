@@ -133,7 +133,7 @@
 
       const sorted = [...submissions].sort((a, b) => new Date(a.ts) - new Date(b.ts));
       const pendingCharts = [];
-      let html = '';
+      let out = '';
 
       formDef.forEach((q, qi) => {
         if (q.typ === 'skala') {
@@ -158,7 +158,7 @@
             .filter(p => /^\d+:\s*.+/.test(p));
 
           const canvasId = `pgc_${qi}`;
-          html += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
+          out += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
             <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
               <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
@@ -183,7 +183,7 @@
           const valid = points.filter(p => p !== null);
 
           const canvasId = `pgc_${qi}`;
-          html += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
+          out += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
             <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
               <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
@@ -220,11 +220,11 @@
       // Fritextsvar
       const ftKeys = Object.keys(freeTextPool).filter(k => freeTextPool[k].length);
       if (ftKeys.length) {
-        html += `<div class="section-header" style="margin-top:4px;margin-bottom:14px;">Fritextsvar</div>`;
+        out += `<div class="section-header" style="margin-top:4px;margin-bottom:14px;">Fritextsvar</div>`;
         ftKeys.forEach(question => {
-          html += `<div style="font-weight:bold;font-size:14px;margin:12px 0 6px;">${esc(question)}</div>`;
+          out += `<div style="font-weight:bold;font-size:14px;margin:12px 0 6px;">${esc(question)}</div>`;
           freeTextPool[question].forEach(a => {
-            html += `<div style="background:#fff;border:1.5px solid #c7d1d7;border-radius:8px;padding:10px 14px;margin-bottom:8px;max-width:700px;">
+            out += `<div style="background:#fff;border:1.5px solid #c7d1d7;border-radius:8px;padding:10px 14px;margin-bottom:8px;max-width:700px;">
               <div style="font-size:11px;color:#8a97a0;margin-bottom:4px;">${esc(a.ts)} \u2014 ${esc(a.registrar)}</div>
               <div style="font-size:14px;">${esc(a.text)}</div>
             </div>`;
@@ -232,7 +232,7 @@
         });
       }
 
-      el.innerHTML = html;
+      el.innerHTML = out;
 
       requestAnimationFrame(() => {
         pendingCharts.forEach(({ canvasId, points, sorted, avg, minScale, maxScale, categorical, categories }) => {
