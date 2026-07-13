@@ -15,9 +15,14 @@
       currentInboxTab = tab;
       const ib = document.getElementById('inbox-tab-inbox');
       const ob = document.getElementById('inbox-tab-outbox');
+      const rb = document.getElementById('inbox-tab-request');
       if (ib) { ib.className = tab==='inbox'  ? 'tab-btn active' : 'tab-btn'; ib.disabled = false; }
       if (ob) { ob.className = tab==='outbox' ? 'tab-btn active' : 'tab-btn'; ob.disabled = false; }
-      renderInbox();
+      if (rb) { rb.className = tab==='request' ? 'tab-btn active' : 'tab-btn'; }
+      show('inbox-list', tab !== 'request');
+      show('request-form', tab === 'request');
+      if (tab === 'request') { showRequestForm(); }
+      else { renderInbox(); }
     }
     async function loadInboxBadge() {
       try {
@@ -146,11 +151,11 @@
       }
     }
     function hideRequestForm() {
-      show('request-form', false);
       const ft = document.getElementById('request-formtype');
       if (ft) ft.value = '';
       const msg = document.getElementById('request-message');
       if (msg) msg.value = '';
+      setInboxTab('inbox');
     }
     async function sendRequest() {
       if (_isProcessing) return;

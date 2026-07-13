@@ -705,12 +705,12 @@
       <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:24px;width:100%;" id="stat-charts">
         <div id="chart-line-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Bedömningar över tid</div>
-          <div style="width:100%;aspect-ratio:4/3;"><canvas id="chart-line"></canvas></div>
+          <div style="width:100%;height:320px;"><canvas id="chart-line"></canvas></div>
           <p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p>
         </div>
         <div id="chart-pie-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Fördelning per formulärtyp</div>
-          <div style="width:100%;aspect-ratio:4/3;"><canvas id="chart-pie"></canvas></div>
+          <div style="width:100%;height:320px;"><canvas id="chart-pie"></canvas></div>
           <p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p>
         </div>
       </div>
@@ -1229,8 +1229,8 @@
       <div class="tab-row" style="align-items:center;">
         <button class="tab-btn active" id="inbox-tab-inbox"  onclick="setInboxTab('inbox')">Mottagna</button>
         <button class="tab-btn" id="inbox-tab-outbox" onclick="setInboxTab('outbox')">Skickade</button>
-        <button id="inbox-request-btn" class="btn-secondary btn-small" onclick="showRequestForm()" style="margin-left:auto;">+ Begär bedömning</button>
-        <span id="bulk-request-btn-wrap" class="hidden">
+        <button class="tab-btn" id="inbox-tab-request" onclick="setInboxTab('request')">+ Begär bedömning</button>
+        <span id="bulk-request-btn-wrap" class="hidden" style="margin-left:auto;">
           <button class="btn-secondary btn-small" onclick="showBulkRequestForm()">+ Gruppförfrågan</button>
         </span>
       </div>
@@ -1451,7 +1451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.32.0';
+    const APP_VERSION = 'v4.33.0';
 
     let appData = null;
     let currentUser = null;
@@ -2002,9 +2002,9 @@
         const tabSent = document.getElementById('tab-sent');
         if (tabSent) tabSent.className = 'btn-primary';
       }
-      // Förfrågningar: dölj Skickade-fliken och Begär bedömning-knappen
+      // Förfrågningar: dölj Skickade-fliken och Begär bedömning-fliken
       const inboxOutboxTab = document.getElementById('inbox-tab-outbox');
-      const reqBtn = document.getElementById('inbox-request-btn');
+      const reqBtn = document.getElementById('inbox-tab-request');
       if (inboxOutboxTab) inboxOutboxTab.classList.toggle('hidden', isRegistrerare);
       if (reqBtn) reqBtn.classList.toggle('hidden', isRegistrerare);
 

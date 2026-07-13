@@ -122,7 +122,7 @@
         chartSpecs.forEach(spec => {
           out += `<div class="section-header">${spec.label}</div>`;
           out += `<div id="overview-chart-card-${spec.key}" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;margin-top:14px;">`;
-          out += '<div style="width:100%;aspect-ratio:4/3;"><canvas id="overview-chart-' + spec.key + '"></canvas></div>';
+          out += '<div style="width:100%;height:320px;"><canvas id="overview-chart-' + spec.key + '"></canvas></div>';
           out += '<p style="font-size:11px;color:#8a97a0;margin-top:6px;margin-bottom:0;">Klicka på en etikett för att isolera den, klicka igen för att visa alla.</p></div>';
         });
       }
