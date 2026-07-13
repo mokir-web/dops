@@ -113,8 +113,8 @@
 
       // Trendgrafer — en per riktning (mottagna/registrerade); Blandbild får båda
       const chartSpecs = [];
-      if (showReceived) chartSpecs.push({ key: 'received', label: 'Mottagna bed\u00f6mningar',    ftByMonth: data.byMonthRecFt  || {} });
-      if (showSent)     chartSpecs.push({ key: 'sent',     label: 'Registrerade bed\u00f6mningar', ftByMonth: data.byMonthSentFt || {} });
+      if (showReceived) chartSpecs.push({ key: 'received', label: 'Mottagna bed\u00f6mningar',    ftByMonth: data.byMonthRecFt  || {}, ftByWeek: data.byWeekRecFt  || {} });
+      if (showSent)     chartSpecs.push({ key: 'sent',     label: 'Registrerade bed\u00f6mningar', ftByMonth: data.byMonthSentFt || {}, ftByWeek: data.byWeekSentFt || {} });
       if (months.length > 0) {
         chartSpecs.forEach(spec => {
           out += `<div class="section-header">${spec.label}</div>`;
@@ -159,7 +159,7 @@
             backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
             tension: 0.3, fill: true, pointRadius: 2,
           }));
-          window._overviewChartDatas[spec.key] = { allMonthKeys, ftByMonth, allFtRaw };
+          window._overviewChartDatas[spec.key] = { allMonthKeys, ftByMonth, allFtRaw, ftByWeek: spec.ftByWeek };
           const ovBarDs = datasets.map(d => ({ ...d, fill: undefined, tension: undefined, pointRadius: undefined }));
           window._overviewCharts[spec.key] = new Chart(ctx, {
             type: 'bar',
@@ -179,13 +179,16 @@
         b.style.background = b === btn ? '#2e4a5f' : '#c7d1d7';
         b.style.color = b === btn ? '#eef1f3' : '#1c2b36';
       });
+      const useWeeks = days > 0 && days <= 90; // ≤3 månader → veckovis upplösning, annars månadsvis
       const keys = window._overviewChartKeys || [];
       const filteredKeysByDirection = {};
       keys.forEach(key => {
         const d = window._overviewChartDatas?.[key];
         if (!d || !d.allMonthKeys) return;
-        const nMonths = days === 0 ? d.allMonthKeys.length : Math.max(1, Math.ceil(days / 30));
-        const filteredKeys = days === 0 ? d.allMonthKeys.slice() : d.allMonthKeys.slice(-nMonths);
+        const allKeys  = useWeeks ? Object.keys(d.ftByWeek || {}).sort() : d.allMonthKeys;
+        const byBucket = useWeeks ? d.ftByWeek : d.ftByMonth;
+        const nBuckets = days === 0 ? allKeys.length : Math.max(1, Math.ceil(days / (useWeeks ? 7 : 30)));
+        const filteredKeys = days === 0 ? allKeys.slice() : allKeys.slice(-nBuckets);
         filteredKeysByDirection[key] = filteredKeys;
         const ctx = document.getElementById('overview-chart-' + key)?.getContext('2d');
         if (!ctx) return;
@@ -193,14 +196,14 @@
         const sortedFt = Object.keys(d.allFtRaw||{}).sort((a,b) => d.allFtRaw[a]-d.allFtRaw[b]);
         const datasets = sortedFt.map((ft, i) => ({
           label: ft,
-          data: filteredKeys.map(mk => d.ftByMonth?.[mk]?.[ft] || 0),
+          data: filteredKeys.map(mk => byBucket?.[mk]?.[ft] || 0),
           borderColor: CHART_COLORS[i % CHART_COLORS.length],
           backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
           tension: 0.3, fill: true, pointRadius: 2,
         }));
         window._overviewCharts[key] = new Chart(ctx, {
           type: 'bar',
-          data: { labels: filteredKeys.map(mk => d.ftByMonth?.[mk]?.label || mk), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
+          data: { labels: filteredKeys.map(mk => byBucket?.[mk]?.label || mk), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
           options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[key])(e, li) } },
@@ -210,22 +213,24 @@
         attachLegendTouch(window._overviewCharts[key]);
       });
       // Uppdatera formulärgrupper per valt tidsintervall
-      _reRenderFormGroups(days === 0 ? -1 : Math.max(1, Math.ceil(days / 30)), filteredKeysByDirection);
+      _reRenderFormGroups(days === 0 ? -1 : Math.max(1, Math.ceil(days / 30)), filteredKeysByDirection, useWeeks);
     }
-    function _reRenderFormGroups(nMonths, filteredKeysByDirection) {
+    function _reRenderFormGroups(nMonths, filteredKeysByDirection, useWeeks) {
       const od = window._overviewData;
       if (!od) return;
       const { data, showSent, showReceived, recAllTime, sentAllTime } = od;
-      // Summera per-period counts från byMonthSentFt / byMonthRecFt — mottagna och
+      // Summera per-period counts från by(Month|Week)SentFt / by(Month|Week)RecFt — mottagna och
       // registrerade måste summeras med VARSIN periodfönster (de kan ha olika
-      // aktiva månader), annars blandas de ihop och siffrorna blir missvisande.
+      // aktiva perioder), annars blandas de ihop och siffrorna blir missvisande.
+      const sentBucket = useWeeks ? data.byWeekSentFt : data.byMonthSentFt;
+      const recBucket  = useWeeks ? data.byWeekRecFt  : data.byMonthRecFt;
       const recP = {}, sentP = {};
       (filteredKeysByDirection.sent || []).forEach(mk => {
-        const sf = data.byMonthSentFt?.[mk] || {};
+        const sf = sentBucket?.[mk] || {};
         Object.entries(sf).forEach(([ft, n]) => { if (ft !== 'label') sentP[ft] = (sentP[ft] || 0) + n; });
       });
       (filteredKeysByDirection.received || []).forEach(mk => {
-        const rf = data.byMonthRecFt?.[mk] || {};
+        const rf = recBucket?.[mk] || {};
         Object.entries(rf).forEach(([ft, n]) => { if (ft !== 'label') recP[ft]  = (recP[ft]  || 0) + n; });
       });
       // Hitta container och ersätt formulärgrupperna
