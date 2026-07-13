@@ -134,7 +134,14 @@
       };
     }
     function attachLegendTouch(chart) {
-      chart.canvas.addEventListener('touchend', function(ev) {
+      const canvas = chart.canvas;
+      if (!canvas) return;
+      // Grafer byggs om vid varje period-/upplösningsbyte (samma canvas-element återanvänds).
+      // Utan att ta bort gamla lyssnare hopar de sig, och eftersom chart.destroy() sätter
+      // chart.canvas = null kraschar en kvarhängande gammal lyssnare vid nästa touch.
+      if (canvas._legendTouchHandler) canvas.removeEventListener('touchend', canvas._legendTouchHandler);
+      const handler = function(ev) {
+        if (!chart.canvas) return; // grafen är redan förstörd
         const touch = ev.changedTouches[0];
         const rect  = chart.canvas.getBoundingClientRect();
         const x = touch.clientX - rect.left;
@@ -150,7 +157,9 @@
             return;
           }
         }
-      }, { passive: true });
+      };
+      canvas._legendTouchHandler = handler;
+      canvas.addEventListener('touchend', handler, { passive: true });
     }
     const CHART_COLORS = [
       '#00e5ff','#ff1266','#00ff9d','#ffd500','#b026ff',

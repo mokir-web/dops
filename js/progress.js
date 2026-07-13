@@ -144,7 +144,7 @@
         const res = await api('getProgressAiSummary', { recipientEmail, formType });
         resultEl.textContent = res.summary || res.error || 'Inget svar.';
       } catch (err) {
-        resultEl.textContent = 'Kunde inte hämta AI-utvärdering: ' + err.message;
+        resultEl.textContent = 'Kunde inte hämta AI-sammanställning: ' + err.message;
       } finally {
         btn.disabled = false; btn.textContent = origText;
       }

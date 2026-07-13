@@ -747,8 +747,8 @@
       </div>
       <div id="progress-swr-status" style="min-height:20px;margin-bottom:4px;"></div>
       <div style="margin-bottom:16px;">
-        <button class="btn-secondary btn-small" onclick="runProgressAiSummary()" id="progress-ai-btn">✨ AI-utvärdering (test)</button>
-        <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Experimentell funktion — läser fritextsvaren ovan och ger en kort sammanfattning.</span>
+        <button class="btn-secondary btn-small" onclick="runProgressAiSummary()" id="progress-ai-btn">✨ AI-sammanställning (test)</button>
+        <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Experimentell funktion — ingen identifierande information (namn, klinik) skickas till AI-tjänsten.</span>
         <div id="progress-ai-result" class="hidden" style="margin-top:10px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px 16px;font-size:14px;white-space:pre-wrap;max-width:700px;"></div>
       </div>
       <div id="progress-content"></div>
@@ -1229,7 +1229,7 @@
       <div class="tab-row" style="align-items:center;">
         <button class="tab-btn active" id="inbox-tab-inbox"  onclick="setInboxTab('inbox')">Mottagna</button>
         <button class="tab-btn" id="inbox-tab-outbox" onclick="setInboxTab('outbox')">Skickade</button>
-        <button class="tab-btn" id="inbox-tab-request" onclick="setInboxTab('request')">+ Begär bedömning</button>
+        <button class="tab-btn" id="inbox-tab-request" onclick="setInboxTab('request')">Begär bedömning</button>
         <span id="bulk-request-btn-wrap" class="hidden" style="margin-left:auto;">
           <button class="btn-secondary btn-small" onclick="showBulkRequestForm()">+ Gruppförfrågan</button>
         </span>
@@ -1451,7 +1451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.34.0';
+    const APP_VERSION = 'v4.35.0';
 
     let appData = null;
     let currentUser = null;
