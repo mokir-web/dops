@@ -17,6 +17,7 @@
         userRole:            g('profile-userrole')?.value      || '',
         emailNotify:         !!(g('profile-email-notify')?.checked),
         emailNotifyRequests: !!(g('profile-email-notify-requests')?.checked),
+        soundNotify:         !!(g('profile-sound-notify')?.checked),
         startPage:           g('profile-startpage')?.value     || '',
       };
     }
@@ -35,6 +36,7 @@
         (g('profile-userrole')?.value    || '')                     !== p.userRole  ||
         !!(g('profile-email-notify')?.checked)                      !== p.emailNotify ||
         !!(g('profile-email-notify-requests')?.checked)             !== p.emailNotifyRequests ||
+        !!(g('profile-sound-notify')?.checked)                      !== p.soundNotify ||
         (g('profile-startpage')?.value   || '')                     !== p.startPage ||
         !!(g('profile-current-pin')?.value) ||
         !!(g('profile-new-pin')?.value);
@@ -98,7 +100,7 @@
       // Koppla dirty-kontroll (avregistrera först för att undvika dubletter)
       ['profile-firstname','profile-lastname','profile-email-input','profile-clinic-input',
        'profile-jobrole','profile-userrole','profile-email-notify','profile-email-notify-requests',
-       'profile-startpage','profile-current-pin','profile-new-pin'].forEach(id => {
+       'profile-sound-notify','profile-startpage','profile-current-pin','profile-new-pin'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.removeEventListener('input',  _checkProfileDirty);
@@ -122,6 +124,7 @@
       const userRole    = s('profile-userrole')?.value || '';
       const emailNotify         = s('profile-email-notify')?.checked ? 'Ja' : 'Nej';
       const emailNotifyRequests = s('profile-email-notify-requests')?.checked ? 'Ja' : 'Nej';
+      const soundNotify         = !!s('profile-sound-notify')?.checked;
       const startPage           = s('profile-startpage')?.value || '';
       const currentPin  = (s('profile-current-pin')?.value || '').trim();
       const newPin      = (s('profile-new-pin')?.value     || '').trim();
@@ -157,6 +160,7 @@
         currentUser.userRole           = userRole;
         currentUser.emailNotify        = emailNotify === 'Ja';
         currentUser.emailNotifyRequests = emailNotifyRequests === 'Ja';
+        toggleSoundNotify(soundNotify);
         localStorage.setItem('dops_user', JSON.stringify(currentUser));
         if (startPage !== undefined) {
           if (startPage) localStorage.setItem('dops_startpage_' + currentUser.email, startPage);

@@ -7,7 +7,7 @@
 // buildCsvCellTable() (delas med js/admin.js).
 
     // ══════════════ FORMULÄRBYGGARE (endast global Admin) ══════════════
-    const FB_CATEGORIES = ['Registrerare', 'Mottagare', 'ST', 'Spec', 'AT', 'BT'];
+    const FB_CATEGORIES = ['ST', 'Spec', 'AT', 'BT'];
     const FB_QTYPES = ['rubrik', 'radio', 'fritext', 'multi', 'skala'];
 
     let fbFormTypesCache = [];

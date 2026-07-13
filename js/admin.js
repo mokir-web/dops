@@ -262,12 +262,15 @@
       try {
         const privs = await api('getPrivilegesForUser', { targetId: id });
         if (!privs.length) { el.innerHTML = '<span style="color:#888;font-size:14px;">Inga privilegier</span>'; return; }
-        el.innerHTML = privs.map(p =>
-          `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            <span style="font-size:15px;">${esc(p.privilege)} <span style="color:#5b6b75;">(${esc(p.klinikId) || 'Global'})</span></span>
-            <button class="btn-danger btn-small" onclick="removePrivilege('${esc(id)}','${esc(p.privilege)}')">Ta bort</button>
-          </div>`
-        ).join('');
+        el.innerHTML = privs.map(p => {
+          const klinikNamn = p.klinikId
+            ? (Object.entries(appData?.klinikIdMap || {}).find(([, kid]) => kid === p.klinikId)?.[0] || p.klinikId)
+            : 'Global';
+          return html`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-size:15px;">${p.privilege} <span style="color:#5b6b75;">(${klinikNamn})</span></span>
+            <button class="btn-danger btn-small" onclick="removePrivilege('${id}','${p.privilege}')">Ta bort</button>
+          </div>`;
+        }).join('');
       } catch(err) { el.innerHTML = '<span style="color:#c00;font-size:14px;">' + esc(err.message) + '</span>'; }
     }
 

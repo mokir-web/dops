@@ -64,8 +64,8 @@
     }
     input[type=range].skala-slider.touched::-moz-range-thumb { background: #2e4a5f; }
     /* Siffrorna fällda in i linjen istället för på en egen rad under */
-    .slider-marks { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 16px; font-size: 11px; color: #5b6b75; font-weight: 600; pointer-events: none; }
-    .slider-marks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; background: #eef1f3; padding: 0 2px; }
+    .slider-marks { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 20px; font-size: 14px; font-weight: 700; color: #2e4a5f; pointer-events: none; }
+    .slider-marks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; background: #eef1f3; padding: 1px 6px; }
 
     .hidden { display: none !important; }
 
@@ -262,6 +262,7 @@
     /* ── Mobile overrides (max 600px = phone) ── */
     @media (max-width: 600px) {
       .app-layout { display: block; }
+      .progress-chart-wrap { aspect-ratio: unset !important; height: 50vh !important; }
       .sidebar {
         position: fixed; top: 0; left: -100%; width: 100%; height: 100vh;
         z-index: 160; transition: left 0.25s ease; overflow-y: auto;
@@ -527,9 +528,9 @@
               <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')"><i class="ti ti-user" aria-hidden="true"></i><span class="sidebar-btn-label">Min profil</span></button>
               <button onclick="openFeedbackModal()" class="sidebar-btn-secondary"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Feedback/felanmälan</span></button>
               <button onclick="clearCache()" class="sidebar-btn-secondary"><i class="ti ti-refresh" aria-hidden="true"></i><span class="sidebar-btn-label">Rensa cache</span></button>
+              <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
             </div>
           </div>
-          <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
         </div>
         <div class="sidebar-footer">
           <div class="sidebar-priv hidden" id="privilege-toggle"></div>
@@ -550,7 +551,7 @@
     <div id="panel-assessment">
       <h2>Bedömning</h2>
       <p id="f-intro" style="color:#666; font-size:13px;">Frågor som inte anses relevanta kan med fördel lämnas obesvarade.</p>
-      <p style="color:#8a97a0;font-size:12px;margin-top:-6px;">Formuläret kan navigeras med tangentbord: <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Tab</kbd> byter fält, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">↑ ↓</kbd> väljer svarsalternativ, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Enter</kbd> bekräftar och går vidare.</p>
+      <p style="color:#8a97a0;font-size:12px;margin-top:-6px;">Formuläret kan navigeras med tangentbord: <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Tab</kbd> byter fält, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Enter</kbd> bekräftar och går vidare.</p>
 
       <div class="field" id="f1" style="display:none;">
         <label class="field-label">1. Klinik</label>
@@ -675,6 +676,7 @@
         <button class="btn-secondary btn-small" id="stat-filter-toggle-btn" onclick="toggleStatFilter()">Filtrera</button>
       </div>
       <div id="stat-filter-panel" class="hidden filter-box" style="margin-bottom:20px;">
+        <div class="filter-box-heading">Filter</div>
         <div class="date-grid">
           <div><label class="field-label">Från datum</label><input type="date" id="stat-date-from"></div>
           <div><label class="field-label">Till datum</label><input type="date" id="stat-date-to"></div>
@@ -762,7 +764,6 @@
         <p><strong>Registrering av bed&#246;mning:</strong> Formulär navigeras smidigt med tangentbord som alternativ till musklick.</p>
         <ul style="line-height:1.9;margin:8px 0 0 0;padding-left:20px;">
           <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Tab</kbd> / <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">&#8679; Tab</kbd> — byter f&#228;lt fram och tillbaka</li>
-          <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">↑ ↓</kbd> — navigerar bland svarsalternativ i radioknappar</li>
           <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Space</kbd> — markerar valt alternativ</li>
           <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">0-9</kbd> — v&#228;ljer och g&#229;r vidare direkt p&#229; numrerade skalfr&#229;gor</li>
           <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Enter</kbd> — bekr&#228;ftar val och g&#229;r till n&#228;sta fr&#229;ga</li>
@@ -809,6 +810,7 @@
         <span id="co-selected-count" style="font-size:13px;color:#5b6b75;margin-left:auto;"></span>
       </div>
       <div id="co-filter-panel" class="hidden filter-box" style="margin-bottom:14px;">
+        <div class="filter-box-heading">Filter</div>
         <div class="date-grid">
           <div><label class="field-label">Från datum</label><input type="date" id="co-date-from"></div>
           <div><label class="field-label">Till datum</label><input type="date" id="co-date-to"></div>
@@ -1348,7 +1350,7 @@
         </div>
         <div class="field">
           <label style="display:flex;align-items:center;gap:12px;cursor:pointer;font-size:15px;">
-            <input type="checkbox" id="profile-sound-notify" onchange="toggleSoundNotify(this.checked)" style="width:20px;height:20px;flex-shrink:0;accent-color:#2e4a5f;">
+            <input type="checkbox" id="profile-sound-notify" style="width:20px;height:20px;flex-shrink:0;accent-color:#2e4a5f;">
             Ljud + systemnotis vid nya förfrågningar/bedömningar (den här enheten)
           </label>
         </div>
@@ -1431,7 +1433,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.27.0';
+    const APP_VERSION = 'v4.28.0';
 
     let appData = null;
     let currentUser = null;
@@ -2102,7 +2104,7 @@
     function buildFeedbackSystemInfo() {
       const data = {
         användare: currentUser?.email || '(ej inloggad)',
-        klinik: currentUser?.klinik || currentUser?.klinikId || '',
+        klinik: currentUser?.clinic || currentUser?.klinikId || '',
         roll: currentUser?.userRole || '',
         version: APP_VERSION,
         tidpunkt: new Date().toISOString(),
@@ -2506,6 +2508,20 @@
             const idx = _getFormFields().indexOf(input.closest('.field'));
             if (idx !== -1) _kbFocusIdx = idx;
             setTimeout(() => _advanceField(), 120);
+          });
+          input.addEventListener('click', () => {
+            // Om man klickar exakt där tummen redan ligger (t.ex. standardvärdet min)
+            // ändras inte värdet, så varken 'input' eller 'change' avfyras av webbläsaren.
+            // Utan detta går det inte att välja min-värdet utan att först välja något annat.
+            if (input.dataset.touched !== 'true') {
+              input.dataset.touched = 'true';
+              input.classList.add('touched');
+              label.classList.add('touched');
+              label.textContent = input.value;
+              const idx = _getFormFields().indexOf(input.closest('.field'));
+              if (idx !== -1) _kbFocusIdx = idx;
+              setTimeout(() => _advanceField(), 120);
+            }
           });
           valueRow.appendChild(input);
           valueRow.appendChild(label);
@@ -3139,6 +3155,7 @@
       return 'assessment';
     }
     function toggleSidebarCollapse() {
+      if (window.innerWidth <= 600) { toggleMenu(); return; } // Kompakt ikon-läge ger ingen nytta på mobil — öppna/stäng hela menyn istället.
       const sidebar = document.getElementById('sidebar');
       const collapsed = sidebar.classList.toggle('collapsed');
       localStorage.setItem('dops_sidebar_collapsed', collapsed ? '1' : '0');
@@ -3153,7 +3170,19 @@
     function toggleSidebarGroup(name) {
       const el = document.querySelector('.sidebar-group[data-group="' + name + '"]');
       if (!el || !el.classList.contains('sg-active')) return;
+      const wasCollapsed = el.classList.contains('sg-collapsed');
       el.classList.toggle('sg-collapsed');
+      if (wasCollapsed && sidebarNavOverflows()) {
+        // Gruppen fälldes just ut men får inte plats — fäll in nästa grupp i tur och ordning för att skapa plats.
+        const idx = SIDEBAR_GROUP_ORDER.indexOf(name);
+        for (let i = idx + 1; i < SIDEBAR_GROUP_ORDER.length; i++) {
+          const nextEl = document.querySelector('.sidebar-group[data-group="' + SIDEBAR_GROUP_ORDER[i] + '"]');
+          if (nextEl && nextEl.classList.contains('sg-active') && !nextEl.classList.contains('sg-collapsed')) {
+            nextEl.classList.add('sg-collapsed');
+            if (!sidebarNavOverflows()) break;
+          }
+        }
+      }
     }
 
     function sidebarNavOverflows() {
@@ -3179,7 +3208,7 @@
       clearTimeout(window._sidebarFitTimer);
       window._sidebarFitTimer = setTimeout(fitSidebarMenu, 120);
     });
-    if (localStorage.getItem('dops_sidebar_collapsed') === '1') {
+    if (localStorage.getItem('dops_sidebar_collapsed') === '1' && window.innerWidth > 600) {
       document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('sidebar').classList.add('collapsed');
         document.getElementById('sidebar-collapse-icon').textContent = '›';
@@ -3393,18 +3422,6 @@
             const nextBtn = (document.getElementById('continue-section-btn')?.classList.contains('hidden') === false ? document.getElementById('continue-section-btn') : null);
             if (nextBtn) { e.preventDefault(); nextBtn.click(); }
           }
-          return;
-        }
-
-        // ── Pil upp/ned → byt fråga ──
-        if (e.key === 'ArrowUp' && inForm) {
-          e.preventDefault();
-          if (_kbFocusIdx > 0) _setFieldFocus(_kbFocusIdx - 1);
-          return;
-        }
-        if (e.key === 'ArrowDown' && inForm) {
-          e.preventDefault();
-          _advanceField();
           return;
         }
 

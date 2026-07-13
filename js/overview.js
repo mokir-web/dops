@@ -13,7 +13,7 @@
 // förutsätter) — lämnad orörd i huvudfilen, flaggad separat, inte flyttad hit.
 
     function goalColor(count, goal) {
-      if (count >= goal) return '#00ff9d';
+      if (count >= goal) return '#4a9e62';
       if (count > 0)      return '#ffd500';
       return '#ff1266';
     }

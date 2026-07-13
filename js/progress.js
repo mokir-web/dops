@@ -164,7 +164,7 @@
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
               ${avg !== null ? `<span style="font-size:13px;color:#2e4a5f;font-weight:bold;">\u00d8\u00a0${avg}</span>` : ''}
             </div>
-            <div style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
+            <div class="progress-chart-wrap" style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
             ${descParts.length ? `<div style="margin-top:10px;font-size:11px;color:#8a97a0;line-height:1.6;">${descParts.map(p => esc(p)).join('&nbsp;&nbsp;&bull;&nbsp;&nbsp;')}</div>` : ''}
           </div>`;
 
@@ -188,7 +188,7 @@
               <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
             </div>
-            <div style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
+            <div class="progress-chart-wrap" style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
           </div>`;
 
           pendingCharts.push({ canvasId, points, sorted, avg: null, minScale: 0, maxScale: categories.length - 1, categorical: true, categories });
