@@ -12,10 +12,12 @@
         const klinikId = activeKlinikId || currentUser.klinikId || '*';
         // Samma klinikId-uträkning som saveRequestExpiry (annars visas/sparas fel klinik i "alla kliniker"-vyn)
         const settingsKlinikId = activeKlinikId && activeKlinikId !== '*' ? activeKlinikId : currentUser.klinikId;
+        console.log('[reqstat-debug] activeKlinikId=', activeKlinikId, 'currentUser.klinikId=', currentUser.klinikId, 'settingsKlinikId=', settingsKlinikId);
         const [data, settings] = await Promise.all([
           api('getRequestStats', { klinikId }),
           api('getKlinikSettings', { klinikId: settingsKlinikId })
         ]);
+        console.log('[reqstat-debug] getKlinikSettings-svar:', settings);
         const sel = document.getElementById('expiry-select');
         if (sel) sel.value = String(settings.requestExpiry || 0);
         renderRequestStats(data);
@@ -92,10 +94,12 @@
     }
     function saveRequestExpiry(weeks) {
       const kid = activeKlinikId && activeKlinikId !== '*' ? activeKlinikId : currentUser.klinikId;
+      console.log('[reqstat-debug] saveRequestExpiry: kid=', kid, 'weeks=', weeks);
       const statusEl = document.getElementById('expiry-save-status');
       if (statusEl) { statusEl.textContent = 'Sparar…'; statusEl.style.color = '#5b6b75'; }
       api('saveKlinikSettings', { klinikId: kid, settings: { requestExpiry: parseInt(weeks) || 0 } })
-        .then(() => {
+        .then((res) => {
+          console.log('[reqstat-debug] saveKlinikSettings-svar:', res);
           bgInvalidate('inbox_' + currentUser.email); loadInbox();
           if (statusEl) { statusEl.style.color = '#2e4a5f'; statusEl.textContent = '✓ Sparat'; setTimeout(() => statusEl.textContent = '', 2500); }
         })

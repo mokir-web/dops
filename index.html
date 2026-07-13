@@ -1431,7 +1431,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.22.0';
+    const APP_VERSION = 'v4.23.0';
 
     let appData = null;
     let currentUser = null;
@@ -2941,6 +2941,43 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+    }
+
+    // ── Fas 3: säker templating ──────────────────────────────────────────
+    // html`...`  – taggad mall som AUTO-ESCAPAR alla interpolerade värden (${...})
+    // precis som esc() gjorde manuellt, så man inte kan glömma det (den bugg-klassen
+    // stod för samtliga fynd i säkerhetsgenomgången: js/documents.js samt 9 identiska
+    // "err.message i innerHTML utan esc()"-ställen).
+    //
+    // safe(x) – markerar en sträng som REDAN är säker HTML (t.ex. resultatet av ett
+    // annat html`...`-anrop, eller en villkorlig HTML-snutt du själv escapat), så att
+    // html`...` inte escapar den en gång till.
+    //
+    // Användning (ersätter det gamla mönstret av `'<div>' + esc(x) + '</div>'`):
+    //   el.innerHTML = html`<div>${x}</div>`;                          // x escapas automatiskt
+    //   el.innerHTML = html`<div>${safe(otherHtml)}</div>`;            // otherHtml infogas orört
+    //   el.innerHTML = items.map(i => html`<li>${i.name}</li>`).join('');  // array av html`` fungerar med .join('')
+    //
+    // Detta är ren tillagd infrastruktur — inget befintligt kod-anrop använder den än.
+    // Nästa steg är att migrera enskilda render-funktioner en i taget, med visuell
+    // testning mellan varje, snarare än att skriva om allt blint i ett svep.
+    function safe(str) {
+      return { __safeHtml: str == null ? '' : String(str) };
+    }
+    function html(strings, ...values) {
+      let out = strings[0];
+      for (let i = 0; i < values.length; i++) {
+        const val = values[i];
+        let piece;
+        if (val === null || val === undefined) piece = '';
+        else if (typeof val === 'object' && val.__safeHtml !== undefined) piece = val.__safeHtml;
+        else if (Array.isArray(val)) {
+          piece = val.map(v => (v && typeof v === 'object' && v.__safeHtml !== undefined) ? v.__safeHtml : esc(v)).join('');
+        }
+        else piece = esc(val);
+        out += piece + strings[i + 1];
+      }
+      return out;
     }
 
     // Sorterar "Förnamn Efternamn"-strängar på efternamn först, sedan förnamn.
