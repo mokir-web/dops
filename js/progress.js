@@ -124,6 +124,32 @@
       }
     }
 
+    async function runProgressAiSummary() {
+      const isStudierektor = activePrivilege === 'Studierektor';
+      const recipientEmail = isStudierektor
+        ? (document.getElementById('progress-recipient')?.value || '')
+        : currentUser.email;
+      const formType = document.getElementById('progress-formtype')?.value || '';
+      const resultEl = document.getElementById('progress-ai-result');
+      const btn = document.getElementById('progress-ai-btn');
+      if (!formType || (isStudierektor && !recipientEmail)) {
+        await customAlert('Välj formulärtyp (och läkare) först.');
+        return;
+      }
+      const origText = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Analyserar…';
+      resultEl.classList.remove('hidden');
+      resultEl.textContent = 'Hämtar och analyserar fritextsvar…';
+      try {
+        const res = await api('getProgressAiSummary', { recipientEmail, formType });
+        resultEl.textContent = res.summary || res.error || 'Inget svar.';
+      } catch (err) {
+        resultEl.textContent = 'Kunde inte hämta AI-utvärdering: ' + err.message;
+      } finally {
+        btn.disabled = false; btn.textContent = origText;
+      }
+    }
+
     function renderProgress({ submissions, formDef }) {
       const el = document.getElementById('progress-content');
       if (!submissions || !submissions.length) {
@@ -133,7 +159,7 @@
 
       const sorted = [...submissions].sort((a, b) => new Date(a.ts) - new Date(b.ts));
       const pendingCharts = [];
-      let out = '';
+      let out = '<div class="progress-charts-grid">';
 
       formDef.forEach((q, qi) => {
         if (q.typ === 'skala') {
@@ -142,6 +168,7 @@
             return a ? (parseFloat(a.answer) || null) : null;
           });
           const valid = points.filter(p => p !== null);
+          if (!valid.length) return; // inget att visa
           const avg = valid.length
             ? (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(1)
             : null;
@@ -158,13 +185,13 @@
             .filter(p => /^\d+:\s*.+/.test(p));
 
           const canvasId = `pgc_${qi}`;
-          out += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
+          out += `<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
             <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
               <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
               ${avg !== null ? `<span style="font-size:13px;color:#2e4a5f;font-weight:bold;">\u00d8\u00a0${avg}</span>` : ''}
             </div>
-            <div class="progress-chart-wrap" style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
+            <div class="progress-chart-wrap" style="width:100%;"><canvas id="${canvasId}"></canvas></div>
             ${descParts.length ? `<div style="margin-top:10px;font-size:11px;color:#8a97a0;line-height:1.6;">${descParts.map(p => esc(p)).join('&nbsp;&nbsp;&bull;&nbsp;&nbsp;')}</div>` : ''}
           </div>`;
 
@@ -181,20 +208,22 @@
             return idx === -1 ? null : idx;
           });
           const valid = points.filter(p => p !== null);
+          if (!valid.length) return; // inget att visa
 
           const canvasId = `pgc_${qi}`;
-          out += `<div style="margin-bottom:24px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
+          out += `<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;">
             <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
               <span style="font-weight:bold;font-size:14px;">${esc(q.question)}</span>
               <span style="font-size:12px;color:#8a97a0;">n=${valid.length}</span>
             </div>
-            <div class="progress-chart-wrap" style="width:100%;aspect-ratio:4/3;"><canvas id="${canvasId}"></canvas></div>
+            <div class="progress-chart-wrap" style="width:100%;"><canvas id="${canvasId}"></canvas></div>
           </div>`;
 
           pendingCharts.push({ canvasId, points, sorted, avg: null, minScale: 0, maxScale: categories.length - 1, categorical: true, categories });
         }
         // fritext hanteras separat nedan (pool-metod)
       });
+      out += '</div>'; // .progress-charts-grid
 
       // Fritextpool: samla ALLA icke-numeriska textsvar oavsett frågenamn
       // (fångar även svar från äldre formulärversioner med andra frågenamn)

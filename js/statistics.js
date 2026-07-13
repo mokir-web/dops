@@ -18,13 +18,34 @@
       // Returnera alla formulärtyper individuellt (ingen DOPS-aggregering)
       return Object.fromEntries(Object.entries(byFormType));
     }
-    function aggregateByMonth(byFormTypeByMonth) {
-      // Returnera per-månad utan aggregering
-      const agg = {};
-      Object.entries(byFormTypeByMonth).forEach(([month, data]) => {
-        agg[month] = { ...data };
-      });
-      return agg;
+
+    // Räknar ut standarduppl\u00f6sningen f\u00f6r det valda datumspannet (eller hela historiken
+    // om inget filter \u00e4r satt, d\u00e5 anv\u00e4nds m\u00e5nadsvis precis som MAX i Min \u00f6versikt).
+    function setStatResolutionDefault(dateFrom, dateTo) {
+      let resolution;
+      if (dateFrom) {
+        const spanDays = (new Date(dateTo || Date.now()) - new Date(dateFrom)) / 86400000;
+        resolution = defaultResolutionForDays(Math.round(spanDays));
+      } else {
+        resolution = 'month';
+      }
+      const sel = document.getElementById('stat-resolution');
+      if (sel) sel.value = resolution;
+    }
+
+    // Manuell \u00e4ndring av uppl\u00f6snings-dropdownen \u2014 bygger om graferna med redan h\u00e4mtad data.
+    function onStatResolutionChange() {
+      const checkedForms = [...document.querySelectorAll('#stat-formtype-filter input:checked')].map(cb => cb.value);
+      if (window._statData) renderStatistics(window._statData, checkedForms);
+    }
+
+    // Hittar tidigaste/senaste faktiska dagspost i statistikdatan (för komplett
+    // tidslinje när inget datumfilter är satt).
+    function statDataDateRange(stats) {
+      const dayKeys = Object.keys(stats.byDay || {}).sort();
+      const today = new Date();
+      if (!dayKeys.length) return { start: today, end: today };
+      return { start: new Date(dayKeys[0] + 'T00:00:00'), end: today };
     }
     async function loadStatistics() {
       const dateFrom     = document.getElementById('stat-date-from')?.value || null;
@@ -47,31 +68,43 @@
           await swr(
             cacheKey,
             () => api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik }),
-            data => { if (data) { el.innerHTML = ''; renderStatistics(data, checkedForms, false); } },
+            data => { if (data) { el.innerHTML = ''; window._statData = data; setStatResolutionDefault(dateFrom, dateTo); renderStatistics(data, checkedForms); } },
             statusEl
           );
           return;
         }
         if (statusEl) statusEl.innerHTML = '<span style="font-size:12px;color:#8a97a0;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Hämtar innehåll…</span>';
         stats = await api('getStatistics', { filters: { dateFrom, dateTo }, klinikId: effectiveStatKlinik });
-        // ≤3 månaders valt datumspann → veckovis upplösning, annars månadsvis (samma regel som Min översikt).
-        let useWeeks = false;
-        if (dateFrom) {
-          const spanDays = (new Date(dateTo || Date.now()) - new Date(dateFrom)) / 86400000;
-          useWeeks = spanDays <= 92;
-        }
-        renderStatistics(stats, checkedForms, useWeeks);
+        window._statData = stats;
+        setStatResolutionDefault(dateFrom, dateTo);
+        renderStatistics(stats, checkedForms);
         if (statusEl) statusEl.innerHTML = '';
       } catch(err) {
         el.innerHTML = html`<p class="status-err">Fel: ${err.message}</p>`;
       }
     }
 
-    function renderStatistics(stats, checkedForms = [], useWeeks = false) {
+    function renderStatistics(stats, checkedForms = []) {
       const el = document.getElementById('statistics-content');
+        const resolution = document.getElementById('stat-resolution')?.value || 'month';
+        const byFormTypeByRes = resolution === 'day' ? (stats.byFormTypeByDay || {})
+          : resolution === 'week' ? (stats.byFormTypeByWeek || {}) : (stats.byFormTypeByMonth || {});
+
+        // Datumspann: valt filter om satt, annars tidigaste faktiska dagspost till idag.
+        const dateFromVal = document.getElementById('stat-date-from')?.value;
+        const dateToVal   = document.getElementById('stat-date-to')?.value;
+        let rangeStart, rangeEnd;
+        if (dateFromVal) {
+          rangeStart = new Date(dateFromVal + 'T00:00:00');
+          rangeEnd   = dateToVal ? new Date(dateToVal + 'T00:00:00') : new Date();
+        } else {
+          const r = statDataDateRange(stats);
+          rangeStart = r.start; rangeEnd = r.end;
+        }
+        const timelineKeys = generateTimelineKeys(resolution, rangeStart, rangeEnd).map(o => o.key);
+
         // Uppdatera formulärfilter-chips (aggregerade typer)
         const aggByFormType = aggregateFormTypes(stats.byFormType);
-        const aggByMonth    = aggregateByMonth(useWeeks ? (stats.byFormTypeByWeek || {}) : (stats.byFormTypeByMonth || {}));
         const filterContainer = document.getElementById('stat-formtype-filter');
         filterContainer.innerHTML = ''; // bygg alltid om med aggregerade typer
         Object.keys(aggByFormType).sort().forEach(ft => {
@@ -88,19 +121,14 @@
         // Filtrera data på valda formulär (aggregerade)
         const activeFormFilter = [...document.querySelectorAll('#stat-formtype-filter input:checked')].map(cb => cb.value);
 
-        // ── Areadiagram: alla formulärtyper, ej aggregerade, minst nederst ──
-        const months = Object.values(aggByMonth);
-        const monthLabels = months.map(m => m.label);
-
-        // Använd icke-aggregerad data för alla subtyper
+        // ── Areadiagram: alla formulärtyper, ej aggregerade, minst nederst, komplett tidslinje ──
         const rawByFormType = stats.byFormType || {};
-        const rawByMonth    = useWeeks ? (stats.byFormTypeByWeek || {}) : (stats.byFormTypeByMonth || {});
         const allFormTypes  = activeFormFilter.length > 0 ? activeFormFilter
           : Object.keys(rawByFormType).sort((a,b) => rawByFormType[a] - rawByFormType[b]); // minst → mest
 
         const areaDatasets = allFormTypes.map((ft, i) => ({
           label: ft,
-          data: Object.values(rawByMonth).map(m => m[ft] || 0),
+          data: timelineKeys.map(k => byFormTypeByRes[k]?.[ft] || 0),
           borderColor: CHART_COLORS[i % CHART_COLORS.length],
           backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
           tension: 0.3, fill: true, pointRadius: 2,
@@ -111,7 +139,7 @@
         const lineBarDs = areaDatasets.map(d => ({ ...d, fill: undefined, tension: undefined, pointRadius: undefined }));
         lineChart = new Chart(lineCtx, {
           type: 'bar',
-          data: { labels: Object.values(rawByMonth).map(m => m.label), datasets: [...lineBarDs, makeTotalLine(lineBarDs, lineBarDs[0]?.data.length || 0)] },
+          data: { labels: timelineKeys.map(k => byFormTypeByRes[k]?.label || k), datasets: [...lineBarDs, makeTotalLine(lineBarDs, lineBarDs[0]?.data.length || 0)] },
           options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(lineChart)(e, li) } },

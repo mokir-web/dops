@@ -82,11 +82,14 @@
       // Tidsramsknappar längst upp — styr både graf och formulärgrupper
       const months = Object.values(data.byMonth || {});
       if (months.length > 0) {
-        out += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">';
+        out += '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;">';
+        out += '<div id="trend-filter-btns" style="display:flex;gap:6px;flex-wrap:wrap;">';
         [['1 vecka',7],['1 månad',30],['3 månader',90],['6 månader',180],['1 år',365],['MAX',0]].forEach(([label, days], i) => {
           const active = i === 3 ? 'background:#2e4a5f;color:#eef1f3;' : 'background:#c7d1d7;color:#1c2b36;';
           out += `<button onclick="filterTrend(${days},this)" style="border:none;border-radius:4px;padding:4px 10px;font-size:13px;cursor:pointer;${active}">${label}</button>`;
         });
+        out += '</div>';
+        out += '<label style="font-size:13px;color:#5b6b75;display:flex;align-items:center;gap:6px;">Upplösning: <select id="overview-resolution" onchange="onOverviewResolutionChange()" style="font-size:13px;padding:3px 6px;border:1px solid #c7d1d7;border-radius:4px;background:#eef1f3;"><option value="day">Dag</option><option value="week">Vecka</option><option value="month" selected>Månad</option></select></label>';
         out += '</div>';
       }
 
@@ -113,8 +116,8 @@
 
       // Trendgrafer — en per riktning (mottagna/registrerade); Blandbild får båda
       const chartSpecs = [];
-      if (showReceived) chartSpecs.push({ key: 'received', label: 'Mottagna bed\u00f6mningar',    ftByMonth: data.byMonthRecFt  || {}, ftByWeek: data.byWeekRecFt  || {} });
-      if (showSent)     chartSpecs.push({ key: 'sent',     label: 'Registrerade bed\u00f6mningar', ftByMonth: data.byMonthSentFt || {}, ftByWeek: data.byWeekSentFt || {} });
+      if (showReceived) chartSpecs.push({ key: 'received', label: 'Mottagna bed\u00f6mningar',    ftByDay: data.byDayRecFt || {}, ftByWeek: data.byWeekRecFt  || {}, ftByMonth: data.byMonthRecFt  || {} });
+      if (showSent)     chartSpecs.push({ key: 'sent',     label: 'Registrerade bed\u00f6mningar', ftByDay: data.byDaySentFt || {}, ftByWeek: data.byWeekSentFt || {}, ftByMonth: data.byMonthSentFt || {} });
       if (months.length > 0) {
         chartSpecs.forEach(spec => {
           out += `<div class="section-header">${spec.label}</div>`;
@@ -136,96 +139,103 @@
       const recAllTime = {};  Object.entries(data.received).forEach(([ft,v]) => { recAllTime[ft] = v.count; });
       const sentAllTime = {}; Object.entries(data.sent).forEach(([ft,v])     => { sentAllTime[ft] = v.count; });
       window._overviewData = { data, showSent, showReceived, recAllTime, sentAllTime, rec6m, sent6m };
-
-      // Rita staplad area-graf per formulärtyp (som i Klinikens statistik) — en per riktning
+      window._overviewChartSpecs = {};
+      chartSpecs.forEach(spec => { window._overviewChartSpecs[spec.key] = spec; });
       window._overviewCharts = {};
-      window._overviewChartDatas = {};
       window._overviewChartKeys = chartSpecs.map(s => s.key);
+      window._overviewCurrentDays = 180;
+      window._overviewCurrentResolution = 'month';
       if (months.length > 0) {
-        chartSpecs.forEach(spec => {
-          const ctx = document.getElementById('overview-chart-' + spec.key)?.getContext('2d');
-          if (!ctx) return;
-          const ftByMonth = spec.ftByMonth;
-          const allMonthKeys = Object.keys(ftByMonth).sort();
-          const allFtRaw = {};
-          allMonthKeys.forEach(mk => {
-            Object.keys(ftByMonth[mk]).forEach(k => { if (k !== 'label') allFtRaw[k] = (allFtRaw[k]||0) + (ftByMonth[mk][k]||0); });
-          });
-          const sortedFt = Object.keys(allFtRaw).sort((a,b) => allFtRaw[a]-allFtRaw[b]);
-          const datasets = sortedFt.map((ft, i) => ({
-            label: ft,
-            data: allMonthKeys.map(mk => ftByMonth[mk]?.[ft] || 0),
-            borderColor: CHART_COLORS[i % CHART_COLORS.length],
-            backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
-            tension: 0.3, fill: true, pointRadius: 2,
-          }));
-          window._overviewChartDatas[spec.key] = { allMonthKeys, ftByMonth, allFtRaw, ftByWeek: spec.ftByWeek };
-          const ovBarDs = datasets.map(d => ({ ...d, fill: undefined, tension: undefined, pointRadius: undefined }));
-          window._overviewCharts[spec.key] = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: allMonthKeys.map(mk => ftByMonth[mk]?.label || mk), datasets: [...ovBarDs, makeTotalLine(ovBarDs, allMonthKeys.length)] },
-            options: {
-              responsive: true, maintainAspectRatio: false,
-              plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[spec.key])(e, li) } },
-              scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } }, x: { stacked: true, grid: { color: '#c7d1d7' } } }
-            }
-          });
-          attachLegendTouch(window._overviewCharts[spec.key]);
-          addMobileLegendToggle(window._overviewCharts[spec.key], document.getElementById('overview-chart-card-' + spec.key));
-        });
+        chartSpecs.forEach(spec => renderOverviewTrendChart(spec.key, 180, 'month'));
       }
     }
+
+    // Räknar ut den kompletta, obrutna nyckellistan (inkl. tomma perioder) för given
+    // period + upplösning. Används av både graferna och _reRenderFormGroups, så de
+    // alltid är samstämmiga.
+    function computeFilteredKeys(days, resolution) {
+      const out = {};
+      const today = new Date();
+      let start;
+      if (days === 0) {
+        // MAX: utgå från äldsta faktiska dagsposten om den finns, annars 1 år bak.
+        const allDayKeys = Object.keys(window._overviewData?.data?.byDay || {}).sort();
+        start = allDayKeys.length ? new Date(allDayKeys[0] + 'T00:00:00') : new Date(today.getFullYear()-1, today.getMonth(), today.getDate());
+      } else {
+        start = new Date(today); start.setDate(start.getDate() - days);
+      }
+      (window._overviewChartKeys || []).forEach(key => {
+        out[key] = generateTimelineKeys(resolution, start, today).map(o => o.key);
+      });
+      return out;
+    }
+
+    function renderOverviewTrendChart(key, days, resolution) {
+      const spec = window._overviewChartSpecs?.[key];
+      if (!spec) return;
+      const ctx = document.getElementById('overview-chart-' + key)?.getContext('2d');
+      if (!ctx) return;
+      const byBucket = resolution === 'day' ? spec.ftByDay : resolution === 'week' ? spec.ftByWeek : spec.ftByMonth;
+      const filteredKeys = computeFilteredKeys(days, resolution)[key] || [];
+      // Sortera formulärtyper efter totalsumma inom det valda intervallet (minst → mest, som tidigare).
+      const allFtRaw = {};
+      filteredKeys.forEach(k => {
+        Object.keys(byBucket?.[k] || {}).forEach(ft => { if (ft !== 'label') allFtRaw[ft] = (allFtRaw[ft]||0) + (byBucket[k][ft]||0); });
+      });
+      const sortedFt = Object.keys(allFtRaw).sort((a,b) => allFtRaw[a]-allFtRaw[b]);
+      const datasets = sortedFt.map((ft, i) => ({
+        label: ft,
+        data: filteredKeys.map(k => byBucket?.[k]?.[ft] || 0),
+        borderColor: CHART_COLORS[i % CHART_COLORS.length],
+        backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
+        tension: 0.3, fill: true, pointRadius: 2,
+      }));
+      window._overviewCharts[key]?.destroy();
+      window._overviewCharts[key] = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: filteredKeys.map(k => byBucket?.[k]?.label || k), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[key])(e, li) } },
+          scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } }, x: { stacked: true, grid: { color: '#c7d1d7' } } }
+        }
+      });
+      attachLegendTouch(window._overviewCharts[key]);
+      addMobileLegendToggle(window._overviewCharts[key], document.getElementById('overview-chart-card-' + key));
+    }
+
     function filterTrend(days, btn) {
       document.querySelectorAll('#trend-filter-btns button').forEach(b => {
         b.style.background = b === btn ? '#2e4a5f' : '#c7d1d7';
         b.style.color = b === btn ? '#eef1f3' : '#1c2b36';
       });
-      const useWeeks = days > 0 && days <= 90; // ≤3 månader → veckovis upplösning, annars månadsvis
-      const keys = window._overviewChartKeys || [];
-      const filteredKeysByDirection = {};
-      keys.forEach(key => {
-        const d = window._overviewChartDatas?.[key];
-        if (!d || !d.allMonthKeys) return;
-        const allKeys  = useWeeks ? Object.keys(d.ftByWeek || {}).sort() : d.allMonthKeys;
-        const byBucket = useWeeks ? d.ftByWeek : d.ftByMonth;
-        const nBuckets = days === 0 ? allKeys.length : Math.max(1, Math.ceil(days / (useWeeks ? 7 : 30)));
-        const filteredKeys = days === 0 ? allKeys.slice() : allKeys.slice(-nBuckets);
-        filteredKeysByDirection[key] = filteredKeys;
-        const ctx = document.getElementById('overview-chart-' + key)?.getContext('2d');
-        if (!ctx) return;
-        window._overviewCharts[key]?.destroy();
-        const sortedFt = Object.keys(d.allFtRaw||{}).sort((a,b) => d.allFtRaw[a]-d.allFtRaw[b]);
-        const datasets = sortedFt.map((ft, i) => ({
-          label: ft,
-          data: filteredKeys.map(mk => byBucket?.[mk]?.[ft] || 0),
-          borderColor: CHART_COLORS[i % CHART_COLORS.length],
-          backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + 'cc',
-          tension: 0.3, fill: true, pointRadius: 2,
-        }));
-        window._overviewCharts[key] = new Chart(ctx, {
-          type: 'bar',
-          data: { labels: filteredKeys.map(mk => byBucket?.[mk]?.label || mk), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
-          options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[key])(e, li) } },
-            scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } }, x: { stacked: true, grid: { color: '#c7d1d7' } } }
-          }
-        });
-        attachLegendTouch(window._overviewCharts[key]);
-        addMobileLegendToggle(window._overviewCharts[key], document.getElementById('overview-chart-card-' + key));
-      });
-      // Uppdatera formulärgrupper per valt tidsintervall
-      _reRenderFormGroups(days === 0 ? -1 : Math.max(1, Math.ceil(days / 30)), filteredKeysByDirection, useWeeks);
+      const resolution = defaultResolutionForDays(days);
+      window._overviewCurrentDays = days;
+      window._overviewCurrentResolution = resolution;
+      const resSel = document.getElementById('overview-resolution');
+      if (resSel) resSel.value = resolution;
+      (window._overviewChartKeys || []).forEach(key => renderOverviewTrendChart(key, days, resolution));
+      _reRenderFormGroups(days === 0 ? -1 : Math.max(1, Math.ceil(days / 30)), computeFilteredKeys(days, resolution), resolution);
     }
-    function _reRenderFormGroups(nMonths, filteredKeysByDirection, useWeeks) {
+
+    // Manuell ändring av upplösnings-dropdownen — behåller vald period, byter bara upplösning.
+    function onOverviewResolutionChange() {
+      const resolution = document.getElementById('overview-resolution')?.value || 'month';
+      const days = window._overviewCurrentDays ?? 180;
+      window._overviewCurrentResolution = resolution;
+      (window._overviewChartKeys || []).forEach(key => renderOverviewTrendChart(key, days, resolution));
+      _reRenderFormGroups(days === 0 ? -1 : Math.max(1, Math.ceil(days / 30)), computeFilteredKeys(days, resolution), resolution);
+    }
+
+    function _reRenderFormGroups(nMonths, filteredKeysByDirection, resolution) {
       const od = window._overviewData;
       if (!od) return;
       const { data, showSent, showReceived, recAllTime, sentAllTime } = od;
-      // Summera per-period counts från by(Month|Week)SentFt / by(Month|Week)RecFt — mottagna och
-      // registrerade måste summeras med VARSIN periodfönster (de kan ha olika
+      // Summera per-period counts från by(Day|Week|Month)SentFt / by(Day|Week|Month)RecFt — mottagna
+      // och registrerade måste summeras med VARSIN periodfönster (de kan ha olika
       // aktiva perioder), annars blandas de ihop och siffrorna blir missvisande.
-      const sentBucket = useWeeks ? data.byWeekSentFt : data.byMonthSentFt;
-      const recBucket  = useWeeks ? data.byWeekRecFt  : data.byMonthRecFt;
+      const sentBucket = resolution === 'day' ? data.byDaySentFt : resolution === 'week' ? data.byWeekSentFt : data.byMonthSentFt;
+      const recBucket  = resolution === 'day' ? data.byDayRecFt  : resolution === 'week' ? data.byWeekRecFt  : data.byMonthRecFt;
       const recP = {}, sentP = {};
       (filteredKeysByDirection.sent || []).forEach(mk => {
         const sf = sentBucket?.[mk] || {};

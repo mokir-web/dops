@@ -4,6 +4,9 @@
   <title>MoraDOPS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MoraDOPS">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'><circle cx='22' cy='22' r='17' fill='none' stroke='%232a1f18' stroke-width='2'/><text x='22' y='27' font-family='Arial' font-size='13' font-weight='700' fill='%232a1f18' text-anchor='middle'>MD</text><circle cx='35' cy='35' r='8' fill='%234a9e62'/></svg>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
@@ -66,6 +69,8 @@
     /* Siffrorna fällda in i linjen istället för på en egen rad under */
     .slider-marks { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 20px; font-size: 14px; font-weight: 700; color: #2e4a5f; pointer-events: none; }
     .slider-marks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; background: #eef1f3; padding: 1px 6px; }
+    .progress-charts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .progress-chart-wrap { height: 140px; }
 
     .hidden { display: none !important; }
 
@@ -262,7 +267,8 @@
     /* ── Mobile overrides (max 600px = phone) ── */
     @media (max-width: 600px) {
       .app-layout { display: block; }
-      .progress-chart-wrap { aspect-ratio: unset !important; height: 50vh !important; }
+      .kb-info-desktop-only { display: none; }
+      .progress-charts-grid { grid-template-columns: 1fr; }
       .sidebar {
         position: fixed; top: 0; left: -100%; width: 100%; height: 100vh;
         z-index: 160; transition: left 0.25s ease; overflow-y: auto;
@@ -338,6 +344,7 @@
     </div>
 
     <div id="login-view">
+      <form id="login-form" onsubmit="event.preventDefault(); doLogin(); return false;">
       <div class="field">
         <label class="field-label">E-postadress</label>
         <input type="email" id="login-email" placeholder="din@email.se" autocomplete="username">
@@ -350,13 +357,14 @@
         Inget giltigt lösenord finns för kontot. Ange nytt lösenord nedan.
       </div>
       <div class="btn-row" id="login-actions">
-        <button class="btn-primary" onclick="doLogin()">Logga in</button>
-        <button class="btn-secondary" onclick="showLoginView('register')">Skapa konto</button>
+        <button type="submit" class="btn-primary">Logga in</button>
+        <button type="button" class="btn-secondary" onclick="showLoginView('register')">Skapa konto</button>
       </div>
       <div style="margin-top:12px;">
         <a href="#" id="login-forgot-link" onclick="showLoginView('forgot'); return false;" style="font-size:13px; color:#1a73e8;">Glömt PIN?</a>
       </div>
       <div id="login-status"></div>
+      </form>
       <div style="margin-top:24px;text-align:center;font-size:12px;color:#8a97a0;" id="login-version"></div>
     </div>
 
@@ -551,7 +559,7 @@
     <div id="panel-assessment">
       <h2>Bedömning</h2>
       <p id="f-intro" style="color:#666; font-size:13px;">Frågor som inte anses relevanta kan med fördel lämnas obesvarade.</p>
-      <p style="color:#8a97a0;font-size:12px;margin-top:-6px;">Formuläret kan navigeras med tangentbord: <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Tab</kbd> byter fält, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Enter</kbd> bekräftar och går vidare.</p>
+      <p class="kb-info-desktop-only" style="color:#8a97a0;font-size:12px;margin-top:-6px;">Formuläret kan navigeras med tangentbord: <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Tab</kbd> byter fält, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Enter</kbd> bekräftar och går vidare.</p>
 
       <div class="field" id="f1" style="display:none;">
         <label class="field-label">1. Klinik</label>
@@ -691,6 +699,9 @@
         </div>
       </div>
       <!-- Grafer -->
+      <div style="margin-bottom:10px;">
+        <label style="font-size:13px;color:#5b6b75;display:flex;align-items:center;gap:6px;">Upplösning: <select id="stat-resolution" onchange="onStatResolutionChange()" style="font-size:13px;padding:3px 6px;border:1px solid #c7d1d7;border-radius:4px;background:#eef1f3;"><option value="day">Dag</option><option value="week">Vecka</option><option value="month" selected>Månad</option></select></label>
+      </div>
       <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:24px;width:100%;" id="stat-charts">
         <div id="chart-line-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div style="font-weight:bold;font-size:16px;color:#1c2b36;margin-bottom:12px;">Bedömningar över tid</div>
@@ -735,6 +746,11 @@
         </div>
       </div>
       <div id="progress-swr-status" style="min-height:20px;margin-bottom:4px;"></div>
+      <div style="margin-bottom:16px;">
+        <button class="btn-secondary btn-small" onclick="runProgressAiSummary()" id="progress-ai-btn">✨ AI-utvärdering (test)</button>
+        <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Experimentell funktion — läser fritextsvaren ovan och ger en kort sammanfattning.</span>
+        <div id="progress-ai-result" class="hidden" style="margin-top:10px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px 16px;font-size:14px;white-space:pre-wrap;max-width:700px;"></div>
+      </div>
       <div id="progress-content"></div>
     </div>
 
@@ -760,6 +776,7 @@
 
         <div class="section-header">Navigation och tangentbordsanv&#228;ndning</div>
         <p>MoraDOPS navigeras via sidopanelen till v&#228;nster. P&#229; mobil &#246;ppnas menyn via hamburgerikonen uppe till v&#228;nster.</p>
+        <div class="kb-info-desktop-only">
         <p><strong>Allm&#228;n navigering:</strong> Klicka i sidopanelen f&#246;r att byta sektion. Sidor laddar automatiskt och visar alltid aktuell data. Anv&#228;nd <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Tab</kbd> f&#246;r att navigera mellan interaktiva element med tangentbordet.</p>
         <p><strong>Registrering av bed&#246;mning:</strong> Formulär navigeras smidigt med tangentbord som alternativ till musklick.</p>
         <ul style="line-height:1.9;margin:8px 0 0 0;padding-left:20px;">
@@ -769,6 +786,7 @@
           <li><kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:12px;">Enter</kbd> — bekr&#228;ftar val och g&#229;r till n&#228;sta fr&#229;ga</li>
         </ul>
         <p style="color:#8a97a0;font-size:14px;">Tangentbordsanv&#228;ndning &#228;r ett alternativ f&#246;r snabbare navigering, s&#228;rskilt anv&#228;ndbart vid registrering av m&#229;nga bed&#246;mningar i f&#246;ljd.</p>
+        </div>
 
         <div class="section-header">Behörighetsnivåer</div>
         <p>Systemet använder en hierarki för vem som kan bedöma vem. Specialister (Spec) kan bedöma alla. ST-läkare kan bedöma AT- och BT-läkare. Rollen sätts vid registrering och kan ändras under Min profil. Det är vid registrering och under profil möjligt att välja om användaren ska både kunna registrera och ta emot bedömningar.</p>
@@ -1433,7 +1451,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.31.1';
+    const APP_VERSION = 'v4.32.0';
 
     let appData = null;
     let currentUser = null;
@@ -1611,6 +1629,7 @@
       getProgressFormTypes:   { method: 'GET',    path: () => '/progress/form-types', query: p => ({ recipientEmail: p.recipientEmail }) },
       getProgressData:        { method: 'GET',    path: () => '/progress', query: p => ({ recipientEmail: p.recipientEmail, formType: p.formType, dateFrom: p.dateFrom, dateTo: p.dateTo }) },
       getProgressUsers:       { method: 'GET',    path: () => '/progress/users', query: p => ({ clinicId: p.klinikId }) },
+      getProgressAiSummary:   { method: 'POST',   path: () => '/progress/ai-summary', body: p => ({ recipientEmail: p.recipientEmail, formType: p.formType }) },
 
       saveAnswers: {
         method: 'POST', path: () => '/assessments', body: p => ({
@@ -2089,6 +2108,7 @@
         }
         currentUser = normalizeUserPrivileges(result);
         localStorage.setItem('dops_user', JSON.stringify(result));
+        if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(() => {}); }
         unlockUI();
         if (result.mustChangePin) { showMustChangePinModal(); return; }
         bootApp();
