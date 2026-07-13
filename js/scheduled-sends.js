@@ -146,7 +146,11 @@
     }
 
     async function toggleSchedule(id) {
-      try { await api('toggleScheduleActive', { id }); loadSchedules(); } catch(e) {}
+      try {
+        const res = await api('toggleScheduleActive', { id });
+        if (res.error) { await customAlert(res.error); return; }
+        loadSchedules();
+      } catch(e) { await customAlert(e.message); }
     }
     async function deleteSchedule(id) {
       if (!await customConfirm('Ta bort detta schema?')) return;

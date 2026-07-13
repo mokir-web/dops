@@ -217,6 +217,12 @@
       };
       try {
         const result = await api('exportAssessmentsToDoc', { email: currentUser.email, assessments: selected, filterInfo });
+        if (result.error) {
+          setStatus('export-status', result.error, true);
+          if (btn) { btn.textContent = origBtnText; btn.disabled = false; }
+          unlockUI();
+          return;
+        }
         // Bekräftelse på knappen, avmarkera alla
         if (btn) { btn.textContent = '\u2713 Skickat!'; }
         document.querySelectorAll('.assessment-checkbox:checked').forEach(cb => { cb.checked = false; });

@@ -165,7 +165,8 @@
     async function toggleClinicAccess(klinikId, active) {
       if (!await customConfirm((active ? 'Aktivera' : 'Stäng') + ' tillgång för ' + klinikId + '?')) return;
       try {
-        await api('setClinicActive', { klinikId, active });
+        const res = await api('setClinicActive', { klinikId, active });
+        if (res.error) { await customAlert(res.error); return; }
         loadClinicDetail(klinikId);
       } catch(err) { await customAlert(err.message); }
     }
@@ -579,7 +580,8 @@
       const id = document.getElementById('edit-id').value;
       if (!await customConfirm('Radera ' + email + '? Detta kan inte ångras.')) return;
       try {
-        await api('deleteUser', { id });
+        const res = await api('deleteUser', { id });
+        if (res.error) { setStatus('edit-status', res.error, true); return; }
         closeUserEdit();
         loadClinicDetail(currentAdminKlinikId);
       } catch(err) { setStatus('edit-status', err.message, true); }

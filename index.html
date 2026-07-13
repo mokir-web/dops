@@ -1431,7 +1431,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.23.0';
+    const APP_VERSION = 'v4.24.0';
 
     let appData = null;
     let currentUser = null;
@@ -2674,6 +2674,12 @@
         const registrarName  = `${currentUser.firstName} ${currentUser.lastName}`;
         const elapsedSec = _assessmentStartTime > 0 ? Math.round((Date.now() - _assessmentStartTime) / 1000) : 0;
         const result = await api('saveAnswers', { answerList, recipientEmail, recipientName, registrarName, formType, registrarEmail: currentUser.email, elapsedSeconds: elapsedSec });
+        if (result.error) {
+          if (submitBtn) submitBtn.textContent = origSubmitText;
+          setStatus('assessment-status', 'Kunde inte spara: ' + result.error + ' Dina svar finns kvar, försök igen.', true);
+          unlockUI();
+          return;
+        }
         clearDraft();
         // Markera berörda cachar inaktuella: innehåll visas direkt, revalidering hämtar nya bedömningen
         bgMarkStale('myOverview');

@@ -122,8 +122,10 @@
       const a = fbFormTypesCache[idx], b = fbFormTypesCache[swapIdx];
       const aOrder = a.orderIndex ?? idx, bOrder = b.orderIndex ?? swapIdx;
       try {
-        await api('updateFormType', { id: a.id, name: a.name, categories: a.categories, orderIndex: bOrder, timeSavingsMinutes: a.timeSavingsMinutes });
-        await api('updateFormType', { id: b.id, name: b.name, categories: b.categories, orderIndex: aOrder, timeSavingsMinutes: b.timeSavingsMinutes });
+        const res1 = await api('updateFormType', { id: a.id, name: a.name, categories: a.categories, orderIndex: bOrder, timeSavingsMinutes: a.timeSavingsMinutes });
+        if (res1.error) { await customAlert(res1.error); return; }
+        const res2 = await api('updateFormType', { id: b.id, name: b.name, categories: b.categories, orderIndex: aOrder, timeSavingsMinutes: b.timeSavingsMinutes });
+        if (res2.error) { await customAlert(res2.error); return; }
         loadFormBuilder();
       } catch (err) { await customAlert(err.message); }
     }
@@ -271,8 +273,10 @@
       const a = fbQuestionsCache[idx], b = fbQuestionsCache[swapIdx];
       const aOrder = a.orderIndex ?? idx, bOrder = b.orderIndex ?? swapIdx;
       try {
-        await api('updateFormQuestion', { formTypeId: fbCurrentFormTypeId, id: a.id, question: { ...a, orderIndex: bOrder } });
-        await api('updateFormQuestion', { formTypeId: fbCurrentFormTypeId, id: b.id, question: { ...b, orderIndex: aOrder } });
+        const res1 = await api('updateFormQuestion', { formTypeId: fbCurrentFormTypeId, id: a.id, question: { ...a, orderIndex: bOrder } });
+        if (res1.error) { await customAlert(res1.error); return; }
+        const res2 = await api('updateFormQuestion', { formTypeId: fbCurrentFormTypeId, id: b.id, question: { ...b, orderIndex: aOrder } });
+        if (res2.error) { await customAlert(res2.error); return; }
         openFormQuestions(fbCurrentFormTypeId, fbCurrentFormTypeName);
       } catch (err) { await customAlert(err.message); }
     }
