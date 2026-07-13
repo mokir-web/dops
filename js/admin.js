@@ -71,13 +71,12 @@
           const card = document.createElement('div');
           card.className = 'assessment-card';
           card.style.cssText = 'cursor:pointer; margin-top:10px;';
-          card.innerHTML = '<strong style="font-size:17px;">' + esc(displayName) + '</strong>'
-            + '<div style="font-size:14px;color:#5b6b75;margin-top:3px;">' + users.length + ' användare</div>';
+          card.innerHTML = html`<strong style="font-size:17px;">${displayName}</strong><div style="font-size:14px;color:#5b6b75;margin-top:3px;">${users.length} användare</div>`;
           card.onclick = () => loadClinicDetail(kid);
           el.appendChild(card);
         });
       } catch(err) {
-        el.innerHTML = '<p class="status-err">' + esc(err.message) + '</p>';
+        el.innerHTML = html`<p class="status-err">${err.message}</p>`;
       }
     }
 
@@ -196,13 +195,7 @@
         const card = document.createElement('div');
         card.className = 'assessment-card';
         card.style.cssText = 'margin-top:10px; cursor:pointer;';
-        card.innerHTML = '<div style="font-weight:bold;font-size:16px;">' + esc(u.firstName) + ' ' + esc(u.lastName)
-          + (u.inaktiverad ? ' <span style="font-size:12px;background:#f0d8d0;color:#9e2a18;padding:2px 6px;border-radius:8px;">Inaktiverad</span>' : '')
-          + (u.pendingActivation ? ' <span style="font-size:12px;background:#f0e0b0;color:#7a5a10;padding:2px 6px;border-radius:8px;">Inväntar aktivering</span>' : '')
-          + (u.mustChangePin ? ' <span style="font-size:12px;background:#e0d8f0;color:#4a2a9e;padding:2px 6px;border-radius:8px;">Väntar på lösenordsbyte</span>' : '') + '</div>'
-          + '<div style="font-size:14px;color:#5b6b75;margin-top:3px;">' + esc(u.email) + '</div>'
-          + '<div style="font-size:14px;margin-top:4px;">' + esc(u.jobRole) + ' · ' + esc(u.clinic) + ' · ' + esc(u.userRole) + '</div>'
-          + (u.senastAktiv ? '<div style="font-size:12px;color:#8a97a0;margin-top:2px;">Senast aktiv: ' + esc(u.senastAktiv) + '</div>' : '');
+        card.innerHTML = html`<div style="font-weight:bold;font-size:16px;">${u.firstName} ${u.lastName}${safe(u.inaktiverad ? ' <span style="font-size:12px;background:#f0d8d0;color:#9e2a18;padding:2px 6px;border-radius:8px;">Inaktiverad</span>' : '')}${safe(u.pendingActivation ? ' <span style="font-size:12px;background:#f0e0b0;color:#7a5a10;padding:2px 6px;border-radius:8px;">Inväntar aktivering</span>' : '')}${safe(u.mustChangePin ? ' <span style="font-size:12px;background:#e0d8f0;color:#4a2a9e;padding:2px 6px;border-radius:8px;">Väntar på lösenordsbyte</span>' : '')}</div><div style="font-size:14px;color:#5b6b75;margin-top:3px;">${u.email}</div><div style="font-size:14px;margin-top:4px;">${u.jobRole} · ${u.clinic} · ${u.userRole}</div>${safe(u.senastAktiv ? '<div style="font-size:12px;color:#8a97a0;margin-top:2px;">Senast aktiv: ' + esc(u.senastAktiv) + '</div>' : '')}`;
         if (u.pendingActivation) {
           const approveBtn = document.createElement('button');
           approveBtn.className = 'btn-primary btn-small';
@@ -627,5 +620,5 @@
           card.appendChild(approveBtn);
           el.appendChild(card);
         });
-      } catch (err) { el.innerHTML = `<p class="status-err">${esc(err.message)}</p>`; }
+      } catch (err) { el.innerHTML = html`<p class="status-err">${err.message}</p>`; }
     }

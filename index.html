@@ -1431,7 +1431,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.25.0';
+    const APP_VERSION = 'v4.26.0';
 
     let appData = null;
     let currentUser = null;
@@ -2978,9 +2978,9 @@
         if (val === null || val === undefined) piece = '';
         else if (typeof val === 'object' && val.__safeHtml !== undefined) piece = val.__safeHtml;
         else if (Array.isArray(val)) {
-          piece = val.map(v => (v && typeof v === 'object' && v.__safeHtml !== undefined) ? v.__safeHtml : esc(v)).join('');
+          piece = val.map(v => (v && typeof v === 'object' && v.__safeHtml !== undefined) ? v.__safeHtml : esc(String(v))).join('');
         }
-        else piece = esc(val);
+        else piece = esc(String(val));
         out += piece + strings[i + 1];
       }
       return out;

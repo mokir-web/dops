@@ -20,7 +20,7 @@
         if (sel) sel.value = String(settings.requestExpiry || 0);
         renderRequestStats(data);
       } catch(err) {
-        el.innerHTML = '<p class="status-err">Fel: ' + esc(err.message) + '</p>';
+        el.innerHTML = html`<p class="status-err">Fel: ${err.message}</p>`;
       }
     }
 

@@ -30,7 +30,7 @@
       const nM = periodMonths || 0;
       const periodLabel = nM === -1 ? 'totalt' : nM === 0 ? 'senaste 6 mån' : (nM <= 1 ? 'senaste månaden' : 'senaste ' + nM + ' mån');
       const scaledGoal = (goal) => (nM === 0 || nM === -1) ? goal : Math.round(goal * nM / 6);
-      let s = `<div class="section-header" data-overview-goalgroup="1" style="margin-top:24px;">${title}</div>`;
+      let s = html`<div class="section-header" data-overview-goalgroup="1" style="margin-top:24px;">${title}</div>`;
       s += '<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px;margin-top:14px;max-width:600px;">';
       const dopsForms  = Object.entries(forms).filter(([ft]) => ft.startsWith('DOPS:') || ft.startsWith('DOPS '));
       const otherForms = Object.entries(forms).filter(([ft]) => !ft.startsWith('DOPS:') && !ft.startsWith('DOPS ') && ft !== 'Operationsspecifik DOPS');
@@ -42,10 +42,10 @@
           const countAll = allTimeCounts?.[ft] || v.count;
           const g        = scaledGoal(v.goal);
           const color    = g ? goalColor(countP, g) : '#5b6b75';
-          s += `<div style="display:flex;align-items:center;gap:10px;padding:3px 0 3px 14px;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}','${role||'received'}')">`;
-          s += `<div style="font-size:14px;color:#5b6b75;flex:1;">${esc(subName)}</div>`;
-          s += `<div style="flex:2;max-width:160px;">${goalBar(countP, countAll, g, periodLabel)}</div>`;
-          s += `<div style="font-size:16px;font-weight:bold;color:${color};min-width:28px;text-align:right;">${countP}</div>`;
+          s += html`<div style="display:flex;align-items:center;gap:10px;padding:3px 0 3px 14px;cursor:pointer;" onclick="navigateToAssessments('${ft}','${role||'received'}')">`;
+          s += html`<div style="font-size:14px;color:#5b6b75;flex:1;">${subName}</div>`;
+          s += html`<div style="flex:2;max-width:160px;">${safe(goalBar(countP, countAll, g, periodLabel))}</div>`;
+          s += html`<div style="font-size:16px;font-weight:bold;color:${safe(color)};min-width:28px;text-align:right;">${countP}</div>`;
           s += '</div>';
         });
         if (otherForms.length) s += '<div style="height:1px;background:#c7d1d7;margin:10px 0;"></div>';
@@ -55,10 +55,10 @@
         const countAll = allTimeCounts?.[ft] || v.count;
         const g        = scaledGoal(v.goal);
         const color    = g ? goalColor(countP, g) : '#5b6b75';
-        s += `<div style="display:flex;align-items:center;gap:10px;padding:4px 0;cursor:pointer;" onclick="navigateToAssessments('${esc(ft)}','${role||'received'}')">`;
-        s += `<div style="font-size:14px;font-weight:bold;color:#1c2b36;flex:1;">${esc(ft)}</div>`;
-        s += `<div style="flex:2;max-width:160px;">${goalBar(countP, countAll, g, periodLabel)}</div>`;
-        s += `<div style="font-size:16px;font-weight:bold;color:${color};min-width:28px;text-align:right;">${countP}</div>`;
+        s += html`<div style="display:flex;align-items:center;gap:10px;padding:4px 0;cursor:pointer;" onclick="navigateToAssessments('${ft}','${role||'received'}')">`;
+        s += html`<div style="font-size:14px;font-weight:bold;color:#1c2b36;flex:1;">${ft}</div>`;
+        s += html`<div style="flex:2;max-width:160px;">${safe(goalBar(countP, countAll, g, periodLabel))}</div>`;
+        s += html`<div style="font-size:16px;font-weight:bold;color:${safe(color)};min-width:28px;text-align:right;">${countP}</div>`;
         s += '</div>';
       });
       s += '</div>';

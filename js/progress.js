@@ -120,7 +120,7 @@
         renderProgress(data);
       } catch(e) {
         if (statusEl) statusEl.innerHTML = '';
-        if (!cachedData) el.innerHTML = `<p class="status-err">${esc(e.message)}</p>`;
+        if (!cachedData) el.innerHTML = html`<p class="status-err">${e.message}</p>`;
       }
     }
 

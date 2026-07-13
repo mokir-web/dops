@@ -44,21 +44,21 @@
         csGroupsCache = groups;
         renderGroupsList(klinikId);
         renderClinicSettings(settings, klinikId);
-      } catch (err) { list.innerHTML = `<p class="status-err">${esc(err.message)}</p>`; }
+      } catch (err) { list.innerHTML = html`<p class="status-err">${err.message}</p>`; }
     }
 
     function renderGroupsList(klinikId) {
       const el = document.getElementById('cs-groups-list');
-      if (!csGroupsCache.length) { el.innerHTML = '<p style="color:#888;font-size:13px;">Inga sektioner ännu — alla formulär visas ogrupperat.</p>'; return; }
-      el.innerHTML = csGroupsCache.map((g, idx) => `
+      if (!csGroupsCache.length) { el.innerHTML = html`<p style="color:#888;font-size:13px;">Inga sektioner ännu — alla formulär visas ogrupperat.</p>`; return; }
+      el.innerHTML = csGroupsCache.map((g, idx) => html`
         <div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
           <div style="display:flex;flex-direction:column;gap:1px;">
-            <button class="btn-secondary btn-small" style="padding:1px 7px;min-height:0;" ${idx === 0 ? 'disabled' : ''} onclick="moveClinicFormGroup('${klinikId}',${idx},-1)">▲</button>
-            <button class="btn-secondary btn-small" style="padding:1px 7px;min-height:0;" ${idx === csGroupsCache.length - 1 ? 'disabled' : ''} onclick="moveClinicFormGroup('${klinikId}',${idx},1)">▼</button>
+            <button class="btn-secondary btn-small" style="padding:1px 7px;min-height:0;" ${safe(idx === 0 ? 'disabled' : '')} onclick="moveClinicFormGroup('${klinikId}',${idx},-1)">▲</button>
+            <button class="btn-secondary btn-small" style="padding:1px 7px;min-height:0;" ${safe(idx === csGroupsCache.length - 1 ? 'disabled' : '')} onclick="moveClinicFormGroup('${klinikId}',${idx},1)">▼</button>
           </div>
-          <span style="flex:1;font-size:14px;">${esc(g.name)}</span>
+          <span style="flex:1;font-size:14px;">${g.name}</span>
           <label style="font-size:12px;color:#5b6b75;display:flex;align-items:center;gap:4px;cursor:pointer;">
-            <input type="checkbox" ${g.hidden ? 'checked' : ''} onchange="toggleClinicFormGroupHidden('${klinikId}',${idx})"> Dölj för klinikens användare
+            <input type="checkbox" ${safe(g.hidden ? 'checked' : '')} onchange="toggleClinicFormGroupHidden('${klinikId}',${idx})"> Dölj för klinikens användare
           </label>
           <button class="btn-danger btn-small" onclick="removeClinicFormGroup('${klinikId}',${idx})">Ta bort</button>
         </div>`).join('');

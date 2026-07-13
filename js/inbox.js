@@ -66,11 +66,7 @@
         if (currentInboxTab === 'inbox' && !item.read) card.style.borderLeft = '4px solid #2e4a5f';
         const isInbox = currentInboxTab === 'inbox';
         const personName = isInbox ? item.fromName : item.toName;
-        card.innerHTML =
-          '<div style="font-weight:bold;font-size:16px;">' + esc(personName) + '</div>' +
-          (item.formType ? '<div style="font-size:13px;color:#2e4a5f;font-weight:bold;margin-top:2px;">📋 ' + esc(item.formType) + '</div>' : '') +
-          '<div style="font-size:13px;color:#5b6b75;margin-top:2px;">' + esc(item.timestamp) + '</div>' +
-          '<div style="margin-top:8px;font-size:15px;">' + esc(item.message) + '</div>';
+        card.innerHTML = html`<div style="font-weight:bold;font-size:16px;">${personName}</div>${item.formType ? safe(html`<div style="font-size:13px;color:#2e4a5f;font-weight:bold;margin-top:2px;">📋 ${item.formType}</div>`) : ''}<div style="font-size:13px;color:#5b6b75;margin-top:2px;">${item.timestamp}</div><div style="margin-top:8px;font-size:15px;">${item.message}</div>`;
         if (isInbox) {
           const btn = document.createElement('button');
           btn.className = 'btn-primary btn-small';

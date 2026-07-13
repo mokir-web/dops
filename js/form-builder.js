@@ -37,7 +37,7 @@
       try {
         fbFormTypesCache = await api('getFormTypesAdmin');
         renderFormTypesList();
-      } catch (err) { list.innerHTML = `<p class="status-err">${esc(err.message)}</p>`; }
+      } catch (err) { list.innerHTML = html`<p class="status-err">${err.message}</p>`; }
     }
 
     function renderFormTypesList() {
@@ -182,7 +182,7 @@
       try {
         fbQuestionsCache = await api('getFormTypeQuestionsAdmin', { formTypeId });
         renderQuestionsList();
-      } catch (err) { list.innerHTML = `<p class="status-err">${esc(err.message)}</p>`; }
+      } catch (err) { list.innerHTML = html`<p class="status-err">${err.message}</p>`; }
     }
 
     function fbAvailableSections() {
