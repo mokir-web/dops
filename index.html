@@ -1453,7 +1453,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.37.0';
+    const APP_VERSION = 'v4.38.0';
 
     let appData = null;
     let currentUser = null;
@@ -1725,6 +1725,15 @@
         headers,
         body: cfg.body ? JSON.stringify(cfg.body(params) || {}) : undefined
       });
+
+      // Glidande sessionsförlängning: backend skickar en färsk token när den gamla
+      // börjar närma sig sitt slutdatum. Byt tyst ut den sparade — ingen synlig effekt
+      // för användaren, men sessionen förnyas så länge appen faktiskt används.
+      const refreshedToken = res.headers.get('X-Refreshed-Token');
+      if (refreshedToken && stored) {
+        stored.token = refreshedToken; // stored === currentUser (samma referens) när inloggad
+        localStorage.setItem('dops_user', JSON.stringify(stored));
+      }
 
       if (res.status === 401) {
         logSessionError({ type: 'api', action, status: 401 });
