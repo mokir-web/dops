@@ -129,6 +129,12 @@
         const title = document.createElement('h4');
         title.textContent = a.formType; title.style.margin = '0';
         topRow.appendChild(title);
+        if (a.isAiDemo) {
+          const badge = document.createElement('span');
+          badge.textContent = 'DEMO — exempel skapat av AI';
+          badge.style.cssText = 'background:#b026ff;color:#fff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:10px;';
+          topRow.appendChild(badge);
+        }
         card.appendChild(topRow);
         const meta = document.createElement('div');
         meta.className = 'meta';

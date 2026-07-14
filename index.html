@@ -81,6 +81,8 @@
     }
     /* Sidebar layout */
     .app-layout { display: flex; min-height: 100vh; align-items: flex-start; }
+    body.demo-mode .app-layout { margin-top: 30px; }
+    body.demo-mode #mobile-topbar { top: 30px; }
     .sidebar { width: 248px; min-width: 248px; background: #1c2b36; display: flex; flex-direction: column; padding: 0; border-right: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; transition: width 0.15s ease, min-width 0.15s ease; }
     .sidebar.collapsed { width: 84px; min-width: 84px; }
     .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 16px; border-bottom: 1px solid #2e4a5f; cursor: pointer; }
@@ -363,6 +365,9 @@
       <div style="margin-top:12px;">
         <a href="#" id="login-forgot-link" onclick="showLoginView('forgot'); return false;" style="font-size:13px; color:#1a73e8;">Glömt PIN?</a>
       </div>
+      <div style="margin-top:18px;text-align:center;">
+        <button type="button" class="btn-secondary" onclick="showLoginView('demo')">Prova DEMO</button>
+      </div>
       <div id="login-status"></div>
       </form>
       <div style="margin-top:24px;text-align:center;font-size:12px;color:#8a97a0;" id="login-version"></div>
@@ -446,11 +451,25 @@
       <div id="reg-status"></div>
     </div>
 
+    <div id="demo-view" class="hidden">
+      <h3 style="color:#1a73e8;">Prova DEMO</h3>
+      <p style="color:#5b6b75;font-size:14px;">Välj vilken DEMO-användare du vill logga in som. Ingen PIN behövs — det här är en isolerad testklinik med exempeldata.</p>
+      <div id="demo-user-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="showLoginView('login')">Tillbaka</button>
+      </div>
+      <div id="demo-status"></div>
+    </div>
+
   </div>
 
   <!-- ═══ APP ══════════════════════════════════════════════════════ -->
 
   <div id="app" class="hidden">
+    <div id="demo-banner" class="hidden" onclick="openDemoSwitchModal()" style="position:fixed;top:0;left:0;right:0;height:30px;background:#b026ff;color:#fff;z-index:600;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:bold;cursor:pointer;">
+      <span>DEMO — tryck för att byta roll</span>
+      <a href="#" onclick="event.stopPropagation(); openDemoLeadModal(); return false;" style="color:#fff;text-decoration:underline;font-weight:normal;">Intresserad? Lämna dina uppgifter</a>
+    </div>
     <div id="app-loading" style="position:fixed;inset:0;background:#e4e9ec;z-index:500;display:flex;align-items:center;justify-content:center;"><div style="color:#5b6b75;font-size:16px;">Laddar...</div></div>
 
     <!-- Mobil hamburger + logo -->
@@ -1452,8 +1471,33 @@
     </div>
   </div>
 
+  <div id="demo-switch-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:420px;width:100%;">
+      <h3 style="margin-top:0;">Byt DEMO-roll</h3>
+      <div id="demo-switch-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+      <div class="btn-row"><button class="btn-secondary" onclick="closeDemoSwitchModal()">Avbryt</button></div>
+    </div>
+  </div>
+
+  <div id="demo-lead-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;">
+      <h3 style="margin-top:0;">Intresserad av MoraDOPS?</h3>
+      <p style="color:#5b6b75;font-size:14px;">Lämna dina uppgifter så hör vi av oss.</p>
+      <div class="field"><label class="field-label">Namn *</label><input type="text" id="demo-lead-name"></div>
+      <div class="field"><label class="field-label">Email *</label><input type="email" id="demo-lead-email"></div>
+      <div class="field"><label class="field-label">Ort *</label><input type="text" id="demo-lead-city"></div>
+      <div class="field"><label class="field-label">Klinik *</label><input type="text" id="demo-lead-clinic"></div>
+      <div class="field"><label class="field-label">Telefon</label><input type="text" id="demo-lead-phone"></div>
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn-primary" onclick="submitDemoLead()">Skicka</button>
+        <button class="btn-secondary" onclick="closeDemoLeadModal()">Avbryt</button>
+      </div>
+      <div id="demo-lead-status" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
   <script>
-    const APP_VERSION = 'v4.38.1';
+    const APP_VERSION = 'v4.39.0';
 
     let appData = null;
     let currentUser = null;
@@ -1611,6 +1655,9 @@
       sendResetCode:          { method: 'POST',   path: () => '/auth/reset-code', body: p => ({ email: p.email }) },
       resetPin:               { method: 'POST',   path: () => '/auth/reset-pin', body: p => ({ email: p.email, code: p.code, newPin: p.newPin }) },
       loginWithToken:         { method: 'POST',   path: () => '/auth/login-token', body: p => ({ token: p.token }) },
+      getDemoUsers:           { method: 'GET',    path: () => '/demo/users' },
+      demoLogin:              { method: 'POST',   path: () => '/demo/login', body: p => ({ userId: p.userId }) },
+      submitDemoLead:         { method: 'POST',   path: () => '/demo/leads', body: p => ({ name: p.name, email: p.email, city: p.city, clinic: p.clinic, phone: p.phone }) },
       registerUser:           { method: 'POST',   path: () => '/users', body: p => ({ ...p.user, clinicId: p.user.klinikId || undefined }) },
       getAllUsers:            { method: 'GET',    path: () => '/users', query: p => ({ clinicId: p.klinikId, includeInactive: p.includeInaktiverade ? 'true' : undefined }) },
       deleteUser:             { method: 'DELETE', path: p => '/users/' + encodeURIComponent(p.id) },
@@ -1853,6 +1900,9 @@
       const hbtn = document.getElementById('hamburger-btn');
       if (hbtn) hbtn.onclick = toggleMenu;
 
+      document.body.classList.toggle('demo-mode', !!currentUser.isDemo);
+      document.getElementById('demo-banner').classList.toggle('hidden', !currentUser.isDemo);
+
       if (currentUser.pendingActivation) { bootPendingUser(); return; }
 
       // Auto-aktivera Administratör-roll om userRole=Administratör och privilege finns
@@ -2077,9 +2127,10 @@
     }
 
     function showLoginView(view) {
-      ['login-view','forgot-view','register-view'].forEach(v =>
+      ['login-view','forgot-view','register-view','demo-view'].forEach(v =>
         document.getElementById(v).classList.toggle('hidden', v !== `${view}-view`)
       );
+      if (view === 'demo') loadDemoUserList('demo-user-list', doDemoLogin);
       if (view === 'forgot') {
         const loginEmailVal = document.getElementById('login-email').value.trim();
         if (loginEmailVal) document.getElementById('forgot-email').value = loginEmailVal;
@@ -2209,6 +2260,96 @@
     function doLogout() {
       localStorage.removeItem('dops_user');
       location.reload();
+    }
+
+    // ── DEMO-läge ───────────────────────────────────────────────────
+    // Hämtar de fasta DEMO-användarna och renderar dem som klickbara rader i containerEl.
+    // onPick(userId) anropas vid klick — används både av inloggningssidans demo-view
+    // och av rollväxlaren i DEMO-bannern.
+    async function loadDemoUserList(containerId, onPick) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '<div style="color:#5b6b75;font-size:13px;">Laddar…</div>';
+      try {
+        const users = await api('getDemoUsers');
+        container.innerHTML = '';
+        users.forEach(u => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn-secondary';
+          btn.style.cssText = 'text-align:left;display:flex;justify-content:space-between;align-items:center;';
+          btn.innerHTML = `<span>${u.firstName} ${u.lastName}</span><span style="font-size:12px;color:#5b6b75;">${u.userRole}</span>`;
+          btn.onclick = () => onPick(u.id);
+          container.appendChild(btn);
+        });
+      } catch (err) {
+        container.innerHTML = `<div style="color:#9e2a18;font-size:13px;">${err.message}</div>`;
+      }
+    }
+
+    async function doDemoLogin(userId) {
+      if (_isProcessing) return;
+      lockUI();
+      try {
+        const result = await api('demoLogin', { userId });
+        if (!result || result.error) { setStatus('demo-status', result?.error || 'Kunde inte logga in.', true); unlockUI(); return; }
+        currentUser = normalizeUserPrivileges(result);
+        localStorage.setItem('dops_user', JSON.stringify(result));
+        unlockUI();
+        closeDemoSwitchModal();
+        bootApp();
+        try {
+          appData = await api('getData', { klinikId: currentUser.klinikId });
+          localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
+          populateLocationDropdown();
+        } catch (_e) { /* tyst */ }
+      } catch (err) { setStatus('demo-status', err.message, true); unlockUI(); }
+    }
+
+    // Byt DEMO-roll utan att logga ut helt — sparar nytt konto och laddar om sidan,
+    // precis som doLogout(), så all init (setInterval, event-listeners) startar rent.
+    async function switchDemoUser(userId) {
+      const result = await api('demoLogin', { userId });
+      if (!result || result.error) return;
+      localStorage.setItem('dops_user', JSON.stringify(result));
+      location.reload();
+    }
+
+    function openDemoSwitchModal() {
+      loadDemoUserList('demo-switch-list', id => switchDemoUser(id));
+      const el = document.getElementById('demo-switch-modal');
+      el.style.display = 'flex'; el.classList.remove('hidden');
+    }
+    function closeDemoSwitchModal() {
+      const el = document.getElementById('demo-switch-modal');
+      el.style.display = 'none'; el.classList.add('hidden');
+    }
+
+    function openDemoLeadModal() {
+      ['demo-lead-name','demo-lead-email','demo-lead-city','demo-lead-clinic','demo-lead-phone'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('demo-lead-status').textContent = '';
+      const el = document.getElementById('demo-lead-modal');
+      el.style.display = 'flex'; el.classList.remove('hidden');
+    }
+    function closeDemoLeadModal() {
+      const el = document.getElementById('demo-lead-modal');
+      el.style.display = 'none'; el.classList.add('hidden');
+    }
+    async function submitDemoLead() {
+      const name = document.getElementById('demo-lead-name').value.trim();
+      const email = document.getElementById('demo-lead-email').value.trim();
+      const city = document.getElementById('demo-lead-city').value.trim();
+      const clinic = document.getElementById('demo-lead-clinic').value.trim();
+      const phone = document.getElementById('demo-lead-phone').value.trim();
+      const statusEl = document.getElementById('demo-lead-status');
+      if (!name || !email || !city || !clinic) {
+        statusEl.textContent = 'Namn, email, ort och klinik krävs.'; statusEl.style.color = '#9e2a18'; return;
+      }
+      try {
+        const result = await api('submitDemoLead', { name, email, city, clinic, phone });
+        if (result.error) { statusEl.textContent = result.error; statusEl.style.color = '#9e2a18'; return; }
+        statusEl.textContent = 'Tack! Vi hör av oss.'; statusEl.style.color = '#2e4a5f';
+        setTimeout(closeDemoLeadModal, 1500);
+      } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
     }
 
     // ── Forgot PIN ────────────────────────────────────────────────
