@@ -10,6 +10,13 @@
     let allAdminUsers = [];
     let currentAdminKlinikId = null;
 
+    // Yrkesrollen lagras som koden 'Admin' i databasen (matchar reg-/redigera-formulärens
+    // <option value="Admin">Administratör</option>), men visades tidigare rakt av som "Admin"
+    // i användarlistorna — förvirrande bredvid Användarroll som redan kan heta "Administratör".
+    function jobRoleLabel(jobRole) {
+      return jobRole === 'Admin' ? 'Administratör' : (jobRole || '');
+    }
+
     async function loadAdminPanel() {
       showClinicList();
       const el = document.getElementById('admin-clinic-list');
@@ -60,11 +67,14 @@
             el.appendChild(noneBtn);
           }
         }
-        // Bygg klinikId → namn-mappning från appData
+        // Bygg klinikId → namn-mappning från appData, kompletterat med namnen som redan
+        // kom med i användarlistan ovan (alltid färska — appData kan vara cachad sedan
+        // innan en ny klinik skapades, t.ex. DEMO-kliniken, och sakna den annars).
         const kidToName = {};
         if (appData && appData.klinikIdMap) {
           Object.entries(appData.klinikIdMap).forEach(([namn, kid]) => { kidToName[kid] = namn; });
         }
+        allUsers.forEach(u => { if (u.klinikId && u.clinic && !kidToName[u.klinikId]) kidToName[u.klinikId] = u.clinic; });
         klinikIds.sort((a, b) => (kidToName[a] || a).localeCompare(kidToName[b] || b, 'sv')).forEach(kid => {
           const users = allAdminUsers.filter(u => u.klinikId === kid);
           const displayName = kidToName[kid] || kid || '(okänd)';
@@ -195,7 +205,7 @@
         const card = document.createElement('div');
         card.className = 'assessment-card';
         card.style.cssText = 'margin-top:10px; cursor:pointer;';
-        card.innerHTML = html`<div style="font-weight:bold;font-size:16px;">${u.firstName} ${u.lastName}${safe(u.inaktiverad ? ' <span style="font-size:12px;background:#f0d8d0;color:#9e2a18;padding:2px 6px;border-radius:8px;">Inaktiverad</span>' : '')}${safe(u.pendingActivation ? ' <span style="font-size:12px;background:#f0e0b0;color:#7a5a10;padding:2px 6px;border-radius:8px;">Inväntar aktivering</span>' : '')}${safe(u.mustChangePin ? ' <span style="font-size:12px;background:#e0d8f0;color:#4a2a9e;padding:2px 6px;border-radius:8px;">Väntar på lösenordsbyte</span>' : '')}</div><div style="font-size:14px;color:#5b6b75;margin-top:3px;">${u.email}</div><div style="font-size:14px;margin-top:4px;">${u.jobRole} · ${u.clinic} · ${u.userRole}</div>${safe(u.senastAktiv ? '<div style="font-size:12px;color:#8a97a0;margin-top:2px;">Senast aktiv: ' + esc(u.senastAktiv) + '</div>' : '')}`;
+        card.innerHTML = html`<div style="font-weight:bold;font-size:16px;">${u.firstName} ${u.lastName}${safe(u.inaktiverad ? ' <span style="font-size:12px;background:#f0d8d0;color:#9e2a18;padding:2px 6px;border-radius:8px;">Inaktiverad</span>' : '')}${safe(u.pendingActivation ? ' <span style="font-size:12px;background:#f0e0b0;color:#7a5a10;padding:2px 6px;border-radius:8px;">Inväntar aktivering</span>' : '')}${safe(u.mustChangePin ? ' <span style="font-size:12px;background:#e0d8f0;color:#4a2a9e;padding:2px 6px;border-radius:8px;">Väntar på lösenordsbyte</span>' : '')}</div><div style="font-size:14px;color:#5b6b75;margin-top:3px;">${u.email}</div><div style="font-size:14px;margin-top:4px;">${jobRoleLabel(u.jobRole)} · ${u.clinic} · ${u.userRole}</div>${safe(u.senastAktiv ? '<div style="font-size:12px;color:#8a97a0;margin-top:2px;">Senast aktiv: ' + esc(u.senastAktiv) + '</div>' : '')}`;
         if (u.pendingActivation) {
           const approveBtn = document.createElement('button');
           approveBtn.className = 'btn-primary btn-small';
@@ -616,7 +626,7 @@
           card.style.marginTop = '10px';
           card.innerHTML = `<div style="font-weight:bold;font-size:16px;">${esc(u.firstName)} ${esc(u.lastName)}</div>
             <div style="font-size:14px;color:#5b6b75;margin-top:3px;">${esc(u.email)}</div>
-            <div style="font-size:14px;margin-top:4px;">${esc(u.jobRole)} · ${esc(u.clinic)} · ${esc(u.userRole)}</div>`;
+            <div style="font-size:14px;margin-top:4px;">${esc(jobRoleLabel(u.jobRole))} · ${esc(u.clinic)} · ${esc(u.userRole)}</div>`;
           const approveBtn = document.createElement('button');
           approveBtn.className = 'btn-primary btn-small';
           approveBtn.textContent = 'Godkänn';
