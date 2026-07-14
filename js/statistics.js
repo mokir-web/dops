@@ -141,7 +141,7 @@
           type: 'bar',
           data: { labels: timelineKeys.map(k => byFormTypeByRes[k]?.label || k), datasets: [...lineBarDs, makeTotalLine(lineBarDs, lineBarDs[0]?.data.length || 0)] },
           options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false, resizeDelay: 100,
             plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(lineChart)(e, li) } },
             scales: {
               y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } },
@@ -162,7 +162,7 @@
         pieChart = new Chart(pieCtx, {
           type: 'pie',
           data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: CHART_COLORS.slice(0, pieLabels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
-          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(pieChart)(e, li) } } }
+          options: { responsive: true, maintainAspectRatio: false, resizeDelay: 100, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(pieChart)(e, li) } } }
         });
         addMobileLegendToggle(pieChart, document.getElementById('chart-pie-card'));
 

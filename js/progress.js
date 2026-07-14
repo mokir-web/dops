@@ -321,6 +321,7 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              resizeDelay: 100,
               animation: false,
               scales: {
                 x: {

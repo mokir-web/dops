@@ -226,7 +226,7 @@
         type: 'bar',
         data: { labels: filteredKeys.map(k => byBucket?.[k]?.label || k), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
         options: {
-          responsive: true, maintainAspectRatio: false,
+          responsive: true, maintainAspectRatio: false, resizeDelay: 100,
           plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[key])(e, li) } },
           scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } }, x: { stacked: true, grid: { color: '#c7d1d7' } } }
         }
