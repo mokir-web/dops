@@ -223,6 +223,7 @@
       document.getElementById('edit-pin').value       = '';
       document.getElementById('edit-reset-password').checked = false;
       document.getElementById('edit-email').value     = u.email     || '';
+      document.getElementById('edit-email-input').value = u.email  || '';
       document.getElementById('edit-id').value        = u.id        || '';
       document.getElementById('edit-status').textContent = '';
       // Populera klinikdropdown
@@ -312,6 +313,13 @@
       const pin = document.getElementById('edit-pin').value.trim();
       if (pin) { if (!/^\d{4,6}$/.test(pin)) { setStatus('edit-status', 'PIN måste vara 4–6 siffror.', true); return; } updates.newPin = pin; }
       if (document.getElementById('edit-reset-password')?.checked) updates.resetPassword = true;
+      const newEmail = document.getElementById('edit-email-input').value.trim().toLowerCase();
+      const origEmail = document.getElementById('edit-email').value.trim().toLowerCase();
+      if (newEmail && newEmail !== origEmail) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) { setStatus('edit-status', 'Ogiltig e-postadress.', true); return; }
+        if (!await customConfirm(`Byta e-postadress från ${origEmail} till ${newEmail}? Användaren loggar in med den nya adressen härnäst — historiska bedömningar och behörigheter påverkas inte.`)) return;
+        updates.email = newEmail;
+      }
       setStatus('edit-status', '⏳ Sparar...', false);
       try {
         const result = await api('updateUserByAdmin', { targetId: id, updates });

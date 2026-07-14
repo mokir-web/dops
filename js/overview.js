@@ -25,9 +25,10 @@
         document.getElementById('overview-swr-status')
       );
     }
-    function renderFormGroup(title, forms, subGoals, periodCounts, allTimeCounts, role, periodMonths, hiddenSet) {
+    function renderFormGroup(title, forms, subGoals, periodCounts, allTimeCounts, role, periodMonths, hiddenByDirection) {
       if (!Object.keys(forms).length) return '';
-      hiddenSet = hiddenSet || new Set();
+      const direction = role || 'received';
+      const hiddenSet = (hiddenByDirection && hiddenByDirection[direction]) || new Set();
       const nM = periodMonths || 0;
       const periodLabel = nM === -1 ? 'totalt' : nM === 0 ? 'senaste 6 mån' : (nM <= 1 ? 'senaste månaden' : 'senaste ' + nM + ' mån');
       const scaledGoal = (goal) => (nM === 0 || nM === -1) ? goal : Math.round(goal * nM / 6);
@@ -48,7 +49,7 @@
           s += html`<div style="font-size:14px;color:#5b6b75;flex:1;">${subName}</div>`;
           s += html`<div style="flex:2;max-width:160px;">${safe(goalBar(countP, countAll, g, periodLabel))}</div>`;
           s += html`<div style="font-size:16px;font-weight:bold;color:${safe(color)};min-width:28px;text-align:right;">${countP}</div>`;
-          if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${ft}',true)">Ej aktuellt</button>`;
+          if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${ft}',true,'${direction}')">Ej aktuellt</button>`;
           s += '</div>';
         });
         if (otherForms.length) s += '<div style="height:1px;background:#c7d1d7;margin:10px 0;"></div>';
@@ -62,7 +63,7 @@
         s += html`<div style="font-size:14px;font-weight:bold;color:#1c2b36;flex:1;">${ft}</div>`;
         s += html`<div style="flex:2;max-width:160px;">${safe(goalBar(countP, countAll, g, periodLabel))}</div>`;
         s += html`<div style="font-size:16px;font-weight:bold;color:${safe(color)};min-width:28px;text-align:right;">${countP}</div>`;
-        if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${ft}',true)">Ej aktuellt</button>`;
+        if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${ft}',true,'${direction}')">Ej aktuellt</button>`;
         s += '</div>';
       });
       if (hiddenEntries.length) {
@@ -73,7 +74,7 @@
         hiddenEntries.sort((a,b) => a[0].localeCompare(b[0])).forEach(([ft]) => {
           s += html`<div style="display:flex;align-items:center;gap:10px;padding:3px 0;color:#8a97a0;">
             <div style="font-size:13px;flex:1;">${ft}</div>
-            <button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="toggleFormTypeHidden('${ft}',false)">Återställ</button>
+            <button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="toggleFormTypeHidden('${ft}',false,'${direction}')">Återställ</button>
           </div>`;
         });
         s += '</div></div>';
@@ -82,9 +83,9 @@
       return s;
     }
 
-    async function toggleFormTypeHidden(formType, hidden) {
+    async function toggleFormTypeHidden(formType, hidden, direction) {
       try {
-        await api('toggleHiddenFormType', { formType, hidden });
+        await api('toggleHiddenFormType', { formType, hidden, direction });
         await loadMyOverview();
       } catch (err) {
         await customAlert('Kunde inte uppdatera: ' + err.message);
@@ -156,16 +157,19 @@
       // Initial render med 6-månaders period (periodMonths=0 → label "senaste 6 mån")
       const isSentRegistrar = userRole === 'Registrerare';
       const sentForRender = (forms) => Object.fromEntries(Object.entries(forms).map(([ft, v]) => [ft, { ...v, goal: isSentRegistrar ? (v.sentGoal || 0) : 0 }]));
-      const hiddenSet = new Set(data.hiddenFormTypes || []);
-      if (showReceived) out += renderFormGroup('Mottagna bedömningar',     data.received, data.subGoals, rec6m,  rec6m,  'received', 0, hiddenSet);
-      if (showSent)     out += renderFormGroup('Registrerade bedömningar', sentForRender(data.sent), data.subGoals, sent6m, sent6m, 'sent', 0, hiddenSet);
+      const hiddenByDirection = {
+        received: new Set(data.hiddenFormTypes?.received || []),
+        sent: new Set(data.hiddenFormTypes?.sent || [])
+      };
+      if (showReceived) out += renderFormGroup('Mottagna bedömningar',     data.received, data.subGoals, rec6m,  rec6m,  'received', 0, hiddenByDirection);
+      if (showSent)     out += renderFormGroup('Registrerade bedömningar', sentForRender(data.sent), data.subGoals, sent6m, sent6m, 'sent', 0, hiddenByDirection);
 
       el.innerHTML = out;
       // Spara data globalt för filterTrend
       // Bygg all-time count maps för renderFormGroup
       const recAllTime = {};  Object.entries(data.received).forEach(([ft,v]) => { recAllTime[ft] = v.count; });
       const sentAllTime = {}; Object.entries(data.sent).forEach(([ft,v])     => { sentAllTime[ft] = v.count; });
-      window._overviewData = { data, showSent, showReceived, recAllTime, sentAllTime, rec6m, sent6m, hiddenSet };
+      window._overviewData = { data, showSent, showReceived, recAllTime, sentAllTime, rec6m, sent6m, hiddenByDirection };
       window._overviewChartSpecs = {};
       chartSpecs.forEach(spec => { window._overviewChartSpecs[spec.key] = spec; });
       window._overviewCharts = {};
@@ -257,7 +261,7 @@
     function _reRenderFormGroups(nMonths, filteredKeysByDirection, resolution) {
       const od = window._overviewData;
       if (!od) return;
-      const { data, showSent, showReceived, recAllTime, sentAllTime, hiddenSet } = od;
+      const { data, showSent, showReceived, recAllTime, sentAllTime, hiddenByDirection } = od;
       // Summera per-period counts från by(Day|Week|Month)SentFt / by(Day|Week|Month)RecFt — mottagna
       // och registrerade måste summeras med VARSIN periodfönster (de kan ha olika
       // aktiva perioder), annars blandas de ihop och siffrorna blir missvisande.
@@ -300,8 +304,8 @@
       const sent = nMonths === -1 || nMonths > 0
         ? Object.fromEntries(Object.entries(sentFRData).filter(([ft, v]) => (effSentP[ft] || 0) > 0 || v.goal))
         : sentFRData;
-      if (showReceived) frag.innerHTML += renderFormGroup('Mottagna bedömningar',     received, data.subGoals, effRecP,  recAllTime, 'received', nMonths, hiddenSet);
-      if (showSent)     frag.innerHTML += renderFormGroup('Registrerade bedömningar', sent,     data.subGoals, effSentP, sentAllTime, 'sent',     nMonths, hiddenSet);
+      if (showReceived) frag.innerHTML += renderFormGroup('Mottagna bedömningar',     received, data.subGoals, effRecP,  recAllTime, 'received', nMonths, hiddenByDirection);
+      if (showSent)     frag.innerHTML += renderFormGroup('Registrerade bedömningar', sent,     data.subGoals, effSentP, sentAllTime, 'sent',     nMonths, hiddenByDirection);
       el.appendChild(frag);
     }
     function navigateToAssessments(formType, role) {

@@ -56,6 +56,10 @@
             <button class="btn-secondary btn-small" style="padding:1px 7px;min-height:0;" ${safe(idx === 0 ? 'disabled' : '')} onclick="moveClinicFormGroup('${klinikId}',${idx},-1)">▲</button>
             <button class="btn-secondary btn-small" style="padding:1px 7px;min-height:0;" ${safe(idx === csGroupsCache.length - 1 ? 'disabled' : '')} onclick="moveClinicFormGroup('${klinikId}',${idx},1)">▼</button>
           </div>
+          <input type="number" min="1" max="${csGroupsCache.length}" value="${idx + 1}" title="Skriv en position och tryck Enter för att flytta hit"
+            style="width:40px;padding:3px;font-size:12px;border:1.5px solid #c7d1d7;border-radius:5px;text-align:center;"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();setClinicFormGroupPosition('${klinikId}',${idx},this.value);}"
+            onblur="setClinicFormGroupPosition('${klinikId}',${idx},this.value)">
           <span style="flex:1;font-size:14px;">${g.name}</span>
           <label style="font-size:12px;color:#5b6b75;display:flex;align-items:center;gap:4px;cursor:pointer;">
             <input type="checkbox" ${safe(g.hidden ? 'checked' : '')} onchange="toggleClinicFormGroupHidden('${klinikId}',${idx})"> Dölj för klinikens användare
@@ -94,6 +98,15 @@
       const swapIdx = idx + dir;
       if (swapIdx < 0 || swapIdx >= csGroupsCache.length) return;
       [csGroupsCache[idx], csGroupsCache[swapIdx]] = [csGroupsCache[swapIdx], csGroupsCache[idx]];
+      saveClinicFormGroupsOrder(klinikId);
+    }
+
+    function setClinicFormGroupPosition(klinikId, idx, newPosStr) {
+      const newPos = parseInt(newPosStr) - 1; // fältet visar 1-indexerat, arrayen är 0-indexerad
+      if (Number.isNaN(newPos) || newPos === idx) { renderGroupsList(klinikId); return; }
+      const clamped = Math.max(0, Math.min(csGroupsCache.length - 1, newPos));
+      const [moved] = csGroupsCache.splice(idx, 1);
+      csGroupsCache.splice(clamped, 0, moved);
       saveClinicFormGroupsOrder(klinikId);
     }
 

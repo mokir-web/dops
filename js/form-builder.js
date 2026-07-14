@@ -56,6 +56,10 @@
             <button class="btn-secondary btn-small" style="padding:2px 8px;min-height:0;" ${idx === 0 ? 'disabled' : ''} onclick="moveFormType('${t.id}',-1)">▲</button>
             <button class="btn-secondary btn-small" style="padding:2px 8px;min-height:0;" ${idx === fbFormTypesCache.length - 1 ? 'disabled' : ''} onclick="moveFormType('${t.id}',1)">▼</button>
           </div>
+          <input type="number" min="1" max="${fbFormTypesCache.length}" value="${idx + 1}" title="Skriv en position och tryck Enter för att flytta hit"
+            style="width:44px;padding:4px;font-size:13px;border:1.5px solid #c7d1d7;border-radius:5px;text-align:center;"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();setFormTypePosition('${t.id}', this.value);}"
+            onblur="setFormTypePosition('${t.id}', this.value)">
           <div style="flex:1;cursor:pointer;" onclick="toggleFormTypeExpand('${t.id}')"><strong>${esc(t.name)}</strong> <span style="font-size:13px;color:#5b6b75;">— ${t.questionCount} fråga(or)</span></div>
         `;
         const btnRow = document.createElement('div');
@@ -115,19 +119,32 @@
       renderFormTypesList();
     }
 
+    async function applyFormTypeReorder(ids) {
+      try {
+        const res = await api('reorderFormTypes', { ids });
+        if (res.error) { await customAlert(res.error); return; }
+        loadFormBuilder();
+      } catch (err) { await customAlert(err.message); }
+    }
+
     async function moveFormType(id, dir) {
       const idx = fbFormTypesCache.findIndex(t => t.id === id);
       const swapIdx = idx + dir;
       if (swapIdx < 0 || swapIdx >= fbFormTypesCache.length) return;
-      const a = fbFormTypesCache[idx], b = fbFormTypesCache[swapIdx];
-      const aOrder = a.orderIndex ?? idx, bOrder = b.orderIndex ?? swapIdx;
-      try {
-        const res1 = await api('updateFormType', { id: a.id, name: a.name, categories: a.categories, orderIndex: bOrder, timeSavingsMinutes: a.timeSavingsMinutes });
-        if (res1.error) { await customAlert(res1.error); return; }
-        const res2 = await api('updateFormType', { id: b.id, name: b.name, categories: b.categories, orderIndex: aOrder, timeSavingsMinutes: b.timeSavingsMinutes });
-        if (res2.error) { await customAlert(res2.error); return; }
-        loadFormBuilder();
-      } catch (err) { await customAlert(err.message); }
+      const ids = fbFormTypesCache.map(t => t.id);
+      [ids[idx], ids[swapIdx]] = [ids[swapIdx], ids[idx]];
+      await applyFormTypeReorder(ids);
+    }
+
+    async function setFormTypePosition(id, newPosStr) {
+      const newPos = parseInt(newPosStr) - 1; // fältet visar 1-indexerat, arrayen är 0-indexerad
+      const idx = fbFormTypesCache.findIndex(t => t.id === id);
+      if (idx === -1 || Number.isNaN(newPos) || newPos === idx) { renderFormTypesList(); return; }
+      const clamped = Math.max(0, Math.min(fbFormTypesCache.length - 1, newPos));
+      const ids = fbFormTypesCache.map(t => t.id);
+      const [moved] = ids.splice(idx, 1);
+      ids.splice(clamped, 0, moved);
+      await applyFormTypeReorder(ids);
     }
 
     async function saveFormTypeEdit(t, body) {
@@ -279,6 +296,36 @@
         if (res2.error) { await customAlert(res2.error); return; }
         openFormQuestions(fbCurrentFormTypeId, fbCurrentFormTypeName);
       } catch (err) { await customAlert(err.message); }
+    }
+
+    function csvEscape(val) {
+      const s = (val ?? '').toString();
+      if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    function downloadFormTypeCsv() {
+      const qs = fbQuestionsCache || [];
+      const header = QUESTION_CSV_COLUMNS.map(c => c.key);
+      const lines = [header.join(',')];
+      qs.forEach(q => {
+        const row = [
+          q.id || '', q.section || '', q.nextSection || '', q.question || '',
+          q.type || '', q.description || '', q.options || '', q.jumpTo || '', q.autofill || ''
+        ];
+        lines.push(row.map(csvEscape).join(','));
+      });
+      const csvContent = lines.join('\r\n');
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM så Excel tolkar åäö rätt
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const safeName = (fbCurrentFormTypeName || 'formulär').replace(/[^a-zA-Z0-9åäöÅÄÖ]+/g, '_');
+      a.href = url;
+      a.download = `formular_${safeName}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // ── In-app CSV-redigerare: frågor (cellbaserad Excel-lik tabell) ─────

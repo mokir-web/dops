@@ -12,7 +12,13 @@
 
     let _progressCharts = [];
 
+    function clearProgressAiResult() {
+      const resultEl = document.getElementById('progress-ai-result');
+      if (resultEl) { resultEl.classList.add('hidden'); resultEl.textContent = ''; }
+    }
+
     async function initProgress() {
+      clearProgressAiResult();
       const isStudierektor = activePrivilege === 'Studierektor';
       const titleEl = document.getElementById('progress-title');
       if (titleEl) titleEl.textContent = isStudierektor ? 'Progress' : 'Min progress';
@@ -60,6 +66,7 @@
     }
 
     async function onProgressRecipientChange() {
+      clearProgressAiResult();
       const ftSel = document.getElementById('progress-formtype');
       ftSel.innerHTML = '<option value="">-- Välj formulärtyp --</option>';
       ftSel.disabled = true;
@@ -75,6 +82,7 @@
     }
 
     async function loadProgressData() {
+      clearProgressAiResult();
       const isStudierektor = activePrivilege === 'Studierektor';
       const recipientEmail = isStudierektor
         ? (document.getElementById('progress-recipient')?.value || '')
@@ -139,7 +147,7 @@
       const origText = btn.textContent;
       btn.disabled = true; btn.textContent = 'Analyserar…';
       resultEl.classList.remove('hidden');
-      resultEl.textContent = 'Hämtar och analyserar fritextsvar…';
+      resultEl.textContent = 'Hämtar och analyserar bedömningsdata…';
       try {
         const res = await api('getProgressAiSummary', { recipientEmail, formType });
         resultEl.textContent = res.summary || res.error || 'Inget svar.';

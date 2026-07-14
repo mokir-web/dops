@@ -1005,6 +1005,7 @@
               <span>Markera som inaktiverad</span>
             </label>
           </div>
+          <div class="field"><label class="field-label">E-postadress</label><input type="email" id="edit-email-input"></div>
           <input type="hidden" id="edit-email">
           <input type="hidden" id="edit-id">
           <hr style="margin:16px 0;">
@@ -1051,6 +1052,7 @@
         <div class="btn-row" style="margin-bottom:14px;">
           <button class="btn-primary btn-small" onclick="openNewQuestionModal()">+ Ny fråga</button>
           <button class="btn-secondary btn-small" onclick="toggleQuestionCsvEditor()">Redigera CSV</button>
+          <button class="btn-secondary btn-small" onclick="downloadFormTypeCsv()">Ladda ner CSV</button>
         </div>
         <div id="question-csv-editor" class="hidden assessment-card" style="margin-bottom:14px;">
           <p style="color:#5b6b75;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Lämna "Id" tom för nya frågor. Typ: rubrik/radio/fritext/multi/skala.</p>
@@ -1451,7 +1453,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.35.0';
+    const APP_VERSION = 'v4.36.0';
 
     let appData = null;
     let currentUser = null;
@@ -1663,6 +1665,7 @@
       getFormTypesAdmin:       { method: 'GET',    path: () => '/form-types' },
       createFormType:          { method: 'POST',   path: () => '/form-types', body: p => ({ name: p.name, categories: p.categories, orderIndex: p.orderIndex, timeSavingsMinutes: p.timeSavingsMinutes }) },
       updateFormType:          { method: 'PUT',    path: p => '/form-types/' + encodeURIComponent(p.id), body: p => ({ name: p.name, categories: p.categories, orderIndex: p.orderIndex, timeSavingsMinutes: p.timeSavingsMinutes }) },
+      reorderFormTypes:        { method: 'PUT',    path: () => '/form-types/reorder', body: p => ({ ids: p.ids }) },
       deleteFormType:          { method: 'DELETE', path: p => '/form-types/' + encodeURIComponent(p.id) },
       getFormTypeQuestionsAdmin: { method: 'GET',  path: p => '/form-types/' + encodeURIComponent(p.formTypeId) + '/admin-questions' },
       createFormQuestion:      { method: 'POST',   path: p => '/form-types/' + encodeURIComponent(p.formTypeId) + '/questions', body: p => p.question },
@@ -1679,7 +1682,7 @@
       getRequestStats:        { method: 'GET',    path: () => '/requests/stats', query: p => ({ clinicId: p.klinikId }) },
 
       getMyOverview:          { method: 'GET',    path: () => '/overview' },
-      toggleHiddenFormType:   { method: 'PUT',    path: () => '/overview/hidden-form-types', body: p => ({ formType: p.formType, hidden: p.hidden }) },
+      toggleHiddenFormType:   { method: 'PUT',    path: () => '/overview/hidden-form-types', body: p => ({ formType: p.formType, hidden: p.hidden, direction: p.direction }) },
       getDocuments:           { method: 'GET',    path: () => '/documents' },
 
       getScheduledEmails:     { method: 'GET',    path: () => '/scheduled-sends', query: p => ({ clinicId: p.klinikId }) },
