@@ -155,7 +155,7 @@
       }
 
       // Initial render med 6-månaders period (periodMonths=0 → label "senaste 6 mån")
-      const isSentRegistrar = userRole === 'Registrerare';
+      const isSentRegistrar = userRole === 'Registrerare' || userRole === 'Blandbild';
       const sentForRender = (forms) => Object.fromEntries(Object.entries(forms).map(([ft, v]) => [ft, { ...v, goal: isSentRegistrar ? (v.sentGoal || 0) : 0 }]));
       const hiddenByDirection = {
         received: new Set(data.hiddenFormTypes?.received || []),

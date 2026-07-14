@@ -1453,7 +1453,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.36.0';
+    const APP_VERSION = 'v4.37.0';
 
     let appData = null;
     let currentUser = null;
@@ -1785,9 +1785,11 @@
         msg.textContent = 'Systemet uppdateras till senaste version…';
         document.body.appendChild(msg);
         const _savedUser = localStorage.getItem('dops_user'); // bevaras genom uppdatering
+        const _savedSoundNotify = localStorage.getItem('dops_sound_notify');
         Object.keys(localStorage).forEach(k => { if (k.startsWith('dops_')) localStorage.removeItem(k); });
         localStorage.setItem('dops_deployed_version', APP_VERSION);
         if (_savedUser) localStorage.setItem('dops_user', _savedUser);
+        if (_savedSoundNotify !== null) localStorage.setItem('dops_sound_notify', _savedSoundNotify);
         setTimeout(() => location.reload(), 800);
         return;
       }

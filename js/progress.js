@@ -151,6 +151,7 @@
       try {
         const res = await api('getProgressAiSummary', { recipientEmail, formType });
         resultEl.textContent = res.summary || res.error || 'Inget svar.';
+        if (res.truncated) resultEl.textContent += '\n\n[Obs: svaret klipptes av — testa gärna igen, eller hör av dig om det upprepas.]';
       } catch (err) {
         resultEl.textContent = 'Kunde inte hämta AI-sammanställning: ' + err.message;
       } finally {
