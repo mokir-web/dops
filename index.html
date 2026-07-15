@@ -10,6 +10,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'><circle cx='22' cy='22' r='17' fill='none' stroke='%232a1f18' stroke-width='2'/><text x='22' y='27' font-family='Arial' font-size='13' font-weight='700' fill='%232a1f18' text-anchor='middle'>MD</text><circle cx='35' cy='35' r='8' fill='%234a9e62'/></svg>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
+    :root { --demo-banner-h: 30px; }
     * { box-sizing: border-box; }
     html { width: 100%; font-size: 16px; }
     body { min-width: 0 !important; }
@@ -81,8 +82,11 @@
     }
     /* Sidebar layout */
     .app-layout { display: flex; min-height: 100vh; align-items: flex-start; }
-    body.demo-mode .app-layout { margin-top: 30px; }
-    body.demo-mode #mobile-topbar { top: 30px; }
+    body.demo-mode .app-layout { margin-top: var(--demo-banner-h); }
+    body.demo-mode #mobile-topbar { top: var(--demo-banner-h); }
+    /* Krymp menyn med bannerns höjd i DEMO-läge, annars sticker sidomenyn ut under
+       viewporten och kräver scroll (gäller både skrivbords-sticky och mobilens fixed). */
+    body.demo-mode .sidebar { top: var(--demo-banner-h); height: calc(100vh - var(--demo-banner-h)); }
     .sidebar { width: 248px; min-width: 248px; background: #1c2b36; display: flex; flex-direction: column; padding: 0; border-right: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; transition: width 0.15s ease, min-width 0.15s ease; }
     .sidebar.collapsed { width: 84px; min-width: 84px; }
     .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 16px; border-bottom: 1px solid #2e4a5f; cursor: pointer; }
@@ -466,9 +470,10 @@
   <!-- ═══ APP ══════════════════════════════════════════════════════ -->
 
   <div id="app" class="hidden">
-    <div id="demo-banner" class="hidden" onclick="openDemoSwitchModal()" style="position:fixed;top:0;left:0;right:0;height:30px;background:#b026ff;color:#fff;z-index:600;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:bold;cursor:pointer;">
-      <span>DEMO — tryck för att byta roll</span>
-      <a href="#" onclick="event.stopPropagation(); openDemoLeadModal(); return false;" style="color:#fff;text-decoration:underline;font-weight:normal;">Intresserad? Lämna dina uppgifter</a>
+    <div id="demo-banner" class="hidden" style="position:fixed;top:0;left:0;right:0;height:var(--demo-banner-h);background:#4a9e62;color:#fff;z-index:600;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:bold;padding:0 8px;">
+      <span>DEMO-LÄGE</span>
+      <button type="button" onclick="openDemoSwitchModal()" style="background:rgba(255,255,255,0.92);color:#1c5c33;border:none;border-radius:4px;padding:3px 10px;font-size:12px;font-weight:bold;cursor:pointer;">Byt användarroll</button>
+      <button type="button" onclick="openDemoLeadModal()" style="background:rgba(255,255,255,0.92);color:#1c5c33;border:none;border-radius:4px;padding:3px 10px;font-size:12px;font-weight:bold;cursor:pointer;">Kontakta utvecklaren</button>
     </div>
     <div id="app-loading" style="position:fixed;inset:0;background:#e4e9ec;z-index:500;display:flex;align-items:center;justify-content:center;"><div style="color:#5b6b75;font-size:16px;">Laddar...</div></div>
 
@@ -1497,7 +1502,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.39.8';
+    const APP_VERSION = 'v4.39.9';
 
     let appData = null;
     let currentUser = null;
