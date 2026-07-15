@@ -336,6 +336,8 @@
   </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.js.iife.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@latest/dist/driver.css">
 </head>
 <body>
 
@@ -1506,8 +1508,20 @@
     </div>
   </div>
 
+  <div id="tour-prompt-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:450;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:380px;width:100%;">
+      <h3 style="margin-top:0;">Vill du ha en guidad visning?</h3>
+      <p style="color:#5b6b75;font-size:14px;">Vi visar snabbt var du hittar det viktigaste — tar under en minut.</p>
+      <div class="btn-row" style="flex-wrap:wrap;gap:8px;">
+        <button class="btn-primary" onclick="tourPromptRespond('yes')">Ja, visa mig</button>
+        <button class="btn-secondary" onclick="tourPromptRespond('later')">Inte nu</button>
+        <button class="btn-secondary" onclick="tourPromptRespond('never')">Nej, visa inte igen</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const APP_VERSION = 'v4.39.10';
+    const APP_VERSION = 'v4.40.0';
 
     let appData = null;
     let currentUser = null;
@@ -1950,6 +1964,7 @@
       });
       setTimeout(backgroundLoad, 100);
       setTimeout(fitSidebarMenu, 50);
+      setTimeout(maybeShowTourPrompt, 600);
     }
 
     // Väntande konton (självregistrerade, ej godkända) — bara Mottagna bedömningar synligt.
@@ -2216,21 +2231,23 @@
     function openFeedbackModal() {
       const info = buildFeedbackSystemInfo();
       window._feedbackSystemInfoObj = info.data;
-      document.getElementById('feedback-sysinfo').textContent = info.display;
+      // Visar INTE den faktiska dumpen för användaren som skickar in — serverfel-loggen
+      // (senaste 15 min) kan innehålla andra användares data (t.ex. e-post i URL:er).
+      // Den riktiga informationen skickas ändå med i rapporten, bara inte synlig här.
+      document.getElementById('feedback-sysinfo').textContent =
+        'Information om din enhet (webbläsare, skärmstorlek) samt eventuella felmeddelanden från appen och bakomliggande system bifogas automatiskt.';
       document.getElementById('feedback-message').value = '';
       document.getElementById('feedback-status').textContent = '';
       const el = document.getElementById('feedback-modal');
       el.style.display = 'flex'; el.classList.remove('hidden');
 
       // Hämtar senaste backend-felen (samma loggar som gcloud logging read) i bakgrunden
-      // och lägger till dem i rapporten — misslyckas tyst om det inte går, blockerar aldrig.
+      // och bifogar dem till rapporten — misslyckas tyst om det inte går, blockerar aldrig,
+      // och visas aldrig för den inloggade användaren (se ovan).
       api('getRecentServerErrors').then(res => {
         const errors = res?.errors || [];
         if (!errors.length || !window._feedbackSystemInfoObj) return;
         window._feedbackSystemInfoObj.serverfel = errors;
-        const display = Object.entries(window._feedbackSystemInfoObj)
-          .map(([k, v]) => k + ': ' + (typeof v === 'string' ? v : JSON.stringify(v))).join('\n');
-        document.getElementById('feedback-sysinfo').textContent = display;
       }).catch(() => { /* tyst — felanmälan ska alltid gå att skicka ändå */ });
     }
 
@@ -2372,6 +2389,73 @@
         statusEl.textContent = 'Tack! Vi hör av oss.'; statusEl.style.color = '#2e4a5f';
         setTimeout(closeDemoLeadModal, 1500);
       } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
+    }
+
+    // ── Guidad visning ──────────────────────────────────────────────
+    // Håller innehållet ytligt med flit — bara så nya användare kommer igång.
+    // Filtrerar bort steg vars sidomenyknapp är dold (t.ex. en Mottagare-användare
+    // saknar "Registrera bedömning"), annars kan driver.js inte positionera dem.
+    function buildTourSteps() {
+      const candidates = [
+        { id: 'nav-btn-assessment', title: 'Registrera bedömning', description: 'Här registrerar du en ny bedömning av en kollega — appens kärnfunktion.' },
+        { id: 'nav-btn-inbox', title: 'Förfrågningar', description: 'Skickade och mottagna förfrågningar om bedömningar samlas här.' },
+        { id: 'nav-btn-my-assessments', title: 'Mina bedömningar', description: 'En samlad lista över allt du registrerat och tagit emot.' },
+        { id: 'nav-btn-overview', title: 'Min översikt', description: 'Grafer över din egen utveckling över tid.' },
+        { id: 'nav-btn-statistics', title: 'Klinikens statistik', description: 'Aggregerad statistik för hela din klinik.' },
+        { id: 'nav-btn-profile', title: 'Min profil', description: 'Här ändrar du dina uppgifter och ditt lösenord.' }
+      ];
+      const steps = candidates
+        .map(c => ({ el: document.getElementById(c.id), c }))
+        .filter(({ el }) => el && !el.classList.contains('hidden') && el.offsetParent !== null)
+        .map(({ c }) => ({ element: '#' + c.id, popover: { title: c.title, description: c.description } }));
+
+      if (currentUser?.isDemo) {
+        // Visas FÖRST i DEMO-läge (inte sist) — besökaren behöver förstå kontexten direkt.
+        steps.unshift({
+          element: '#demo-banner',
+          popover: {
+            title: 'Du är i DEMO-läge',
+            description: 'Allt du ser är påhittad testdata i en egen testklinik — testa fritt, inget påverkar riktiga kliniker. Byt roll eller kontakta oss via knapparna här ovanför.'
+          }
+        });
+      }
+      return steps;
+    }
+
+    function startGuidedTour() {
+      const driverFactory = window.driver?.js?.driver;
+      const steps = buildTourSteps();
+      if (!driverFactory || !steps.length) return;
+      const tour = driverFactory({
+        showProgress: true,
+        nextBtnText: 'Nästa',
+        prevBtnText: 'Föregående',
+        doneBtnText: 'Klart',
+        onDestroyed: () => persistTourDismissed()
+      });
+      tour.setSteps(steps);
+      tour.drive();
+    }
+
+    async function persistTourDismissed() {
+      if (!currentUser || currentUser.tourDismissed) return;
+      currentUser.tourDismissed = true;
+      localStorage.setItem('dops_user', JSON.stringify(currentUser));
+      try { await api('updateProfile', { updates: { tourDismissed: true } }); } catch (e) { /* tyst, frågas igen nästa inloggning i värsta fall */ }
+    }
+
+    function maybeShowTourPrompt() {
+      if (!currentUser || currentUser.tourDismissed) return;
+      const el = document.getElementById('tour-prompt-modal');
+      el.style.display = 'flex'; el.classList.remove('hidden');
+    }
+
+    function tourPromptRespond(choice) {
+      const el = document.getElementById('tour-prompt-modal');
+      el.style.display = 'none'; el.classList.add('hidden');
+      if (choice === 'yes') startGuidedTour();
+      else if (choice === 'never') persistTourDismissed();
+      // 'later' — gör inget, frågas igen nästa inloggning.
     }
 
     // ── Forgot PIN ────────────────────────────────────────────────
