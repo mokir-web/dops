@@ -37,7 +37,9 @@
     .checkbox-group label:focus-within { box-shadow: 0 0 0 2px #2e4a5f; }
 
     .scale-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-    .kb-focused { outline: 2px solid #2e4a5f; outline-offset: 6px; border-radius: 6px; }
+    .kb-focused { outline: 3px solid #2e4a5f; outline-offset: 6px; border-radius: 6px; box-shadow: 0 0 0 5px rgba(46,74,95,0.15); }
+    @keyframes kb-focus-flash { 0%, 100% { background-color: transparent; } 35% { background-color: rgba(46,74,95,0.14); } }
+    .kb-focused-flash { animation: kb-focus-flash 0.5s ease-out; }
     .scale-group label {
       display: flex; flex-direction: column; align-items: center;
       cursor: pointer; font-size: 15px;
@@ -644,7 +646,7 @@
           <button class="btn-secondary hidden" id="back-section-btn" onclick="goBackSection()">← Tillbaka</button>
           <button class="btn-secondary" id="cancel-assessment-btn" onclick="cancelAssessment()">Avbryt</button>
           <button class="btn-primary hidden" id="continue-section-btn">Fortsätt →</button>
-          <button class="btn-primary hidden" id="submit-btn" onclick="submitAssessment()">Skicka bedömning</button>
+          <button class="btn-primary hidden" id="submit-btn" onclick="if (event.detail !== 0) submitAssessment();">Skicka bedömning</button>
         </div>
       </div>
 
@@ -1529,7 +1531,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.40.0';
+    const APP_VERSION = 'v4.40.1';
 
     let appData = null;
     let currentUser = null;
@@ -2727,6 +2729,15 @@
       showSection(first);
     }
 
+    // Avgör om en skalfrågas beskrivning har "verbala alternativ" (minst en rad med
+    // faktisk text, format "N: text") — då renderas frågan som radioknappar istället för
+    // en slider (t.ex. DOPS/Mini-CEX-svårighetsgrader). En ren numerisk skala utan sådan
+    // beskrivning (eller ingen beskrivning alls) förblir en slider som tidigare.
+    function _skalaHasVerbalAlternatives(description) {
+      if (!description) return false;
+      return description.split(' | ').some(part => /^\d+:\s*\S+/.test(part.trim()));
+    }
+
     function showSection(sectionName) {
       currentSection = sectionName;
       _kbFocusIdx = -1;
@@ -2752,7 +2763,10 @@
         lbl.className = 'question-label';
         lbl.textContent = q.question;
         div.appendChild(lbl);
-        if (q.description) {
+        // Skalfrågor med verbala alternativ (minst en "N: text"-rad) visar beskrivningen
+        // inline per radioknapp istället (se q.type === 'skala' nedan) — annars dubbleras
+        // texten. Rena numeriska skalfrågor (ingen/enkel beskrivning) visar den som vanligt.
+        if (q.description && !(q.type === 'skala' && _skalaHasVerbalAlternatives(q.description))) {
           const desc = document.createElement('div');
           desc.className = 'field-description';
           // Skaltexter har format "1: text | 3: text | 5: text" – rendera med radbrytning
@@ -2824,8 +2838,42 @@
             group.appendChild(lbl2);
           });
           div.appendChild(group);
+        } else if (q.type === 'skala' && _skalaHasVerbalAlternatives(q.description)) {
+          // Skalfråga med verbala alternativ (minst en "N: text"-rad, t.ex. DOPS/Mini-CEX-
+          // svårighetsgrader) — i praktiken kategoriska svar, inte ett kontinuerligt mått.
+          // Renderas som radioknappar (vertikalt staplade, tydlig markering vid val — samma
+          // .radio-group-mönster som vanliga radiofrågor) istället för slider. Siffran sparas
+          // fortfarande som svar (används i statistik/AI-sammanställning), bara UI:t ändras.
+          const optStr = (q.options && q.options[0]) ? q.options[0].toString().trim() : '1-5';
+          const parts = optStr.split('-').map(Number);
+          const min = isNaN(parts[0]) ? 1 : parts[0];
+          const max = isNaN(parts[1]) ? 5 : parts[1];
+          const descByNum = {};
+          q.description.split(' | ').forEach(part => {
+            const m = part.trim().match(/^(\d+):\s*(.+)/);
+            if (m) descByNum[m[1]] = m[2].trim();
+          });
+          const group = document.createElement('div');
+          group.className = 'radio-group';
+          for (let v = min; v <= max; v++) {
+            const lbl2 = document.createElement('label');
+            const input = document.createElement('input');
+            input.type = 'radio'; input.name = fieldId; input.value = String(v);
+            input.className = 'skala-radio';
+            input.dataset.question = q.question;
+            input.dataset.section  = q.section;
+            input.dataset.jumpTo   = q.jumpTo;
+            input.dataset.min = min; input.dataset.max = max;
+            if (savedVal === String(v)) input.checked = true;
+            lbl2.appendChild(input);
+            const sp = document.createElement('span');
+            sp.textContent = descByNum[v] ? `${v} — ${descByNum[v]}` : String(v);
+            lbl2.appendChild(sp);
+            group.appendChild(lbl2);
+          }
+          div.appendChild(group);
         } else if (q.type === 'skala') {
-          // Tolka alternativ: "1-5", "0-6", "1-3" – fallback 1-5
+          // Ren numerisk skala (ingen/enkel beskrivning) — oförändrad slider som tidigare.
           const optStr = (q.options && q.options[0]) ? q.options[0].toString().trim() : '1-5';
           const parts = optStr.split('-').map(Number);
           const min = isNaN(parts[0]) ? 1 : parts[0];
@@ -2921,12 +2969,15 @@
     }
 
     function saveCurrentSectionAnswers(sectionName) {
+      // Täcker både vanliga radiofrågor och skala-frågor med verbala alternativ (nu
+      // radioknappar, se showSection/_skalaHasVerbalAlternatives).
       document.querySelectorAll(`input[type=radio][data-section="${sectionName}"]:checked`).forEach(input => {
         savedAnswers[`${sectionName}__${input.dataset.question}`] = {
           section: sectionName, question: input.dataset.question,
           answer: input.value, jumpTo: input.dataset.jumpTo || ''
         };
       });
+      // Rena numeriska skalfrågor som fortfarande är sliders.
       document.querySelectorAll(`input[type=range][data-section="${sectionName}"]`).forEach(input => {
         if (input.dataset.touched === 'true') {
           savedAnswers[`${sectionName}__${input.dataset.question}`] = {
@@ -3691,12 +3742,23 @@
       return Array.from(document.querySelectorAll('#form-questions .field'));
     }
 
+    // Kort flash-animation på fältet som just fått fokus, så fokusbyten syns tydligt
+    // (inte bara den statiska ramen). Tar bort/lägger till klassen varje gång så
+    // animationen kan spelas igen även om samma fält råkar flasha två gånger i rad.
+    function _flashField(field) {
+      if (!field) return;
+      field.classList.remove('kb-focused-flash');
+      void field.offsetWidth; // tvinga reflow
+      field.classList.add('kb-focused-flash');
+    }
+
     function _setFieldFocus(idx) {
       const fields = _getFormFields();
       if (idx < 0 || idx >= fields.length) return;
       _kbFocusIdx = idx;
       fields.forEach((f, i) => f.classList.toggle('kb-focused', i === idx));
       const field = fields[idx];
+      _flashField(field);
       // Focus first focusable input in the field
       const inp = field.querySelector('input:not([type=hidden]), textarea, select');
       if (inp) { inp.focus(); }
@@ -3709,13 +3771,15 @@
       if (next < fields.length) {
         _setFieldFocus(next);
       } else {
-        // Sista fältet besvarat → klicka Nästa/Skicka direkt
+        // Sista fältet besvarat → gå vidare till nästa avsnitt automatiskt, men "Skicka in"
+        // ska ALDRIG aktiveras via tangentbord — bara fokusera knappen, inte klicka den
+        // (se submit-btn:s onclick-vakt längre ner som ändå skulle blockera ett sånt klick).
         fields.forEach(f => f.classList.remove('kb-focused'));
         const nextBtn = (document.getElementById('continue-section-btn')?.classList.contains('hidden') === false ? document.getElementById('continue-section-btn') : null);
         if (nextBtn) { nextBtn.click(); }
         else {
           const sub = document.getElementById('submit-btn');
-          if (sub && !sub.classList.contains('hidden')) sub.click();
+          if (sub && !sub.classList.contains('hidden')) sub.focus();
         }
       }
     }
@@ -3738,10 +3802,12 @@
             if (idx !== -1 && idx !== _kbFocusIdx) {
               _kbFocusIdx = idx;
               fields.forEach((f, i) => f.classList.toggle('kb-focused', i === idx));
+              _flashField(fd);
             }
           }
         }
 
+        const isSkalaRadio = active?.type === 'radio' && active.classList.contains('skala-radio');
         const isScale   = active?.type === 'range';
         const isRadio   = active?.type === 'radio';
         const isTA      = active?.tagName === 'TEXTAREA';
@@ -3756,7 +3822,7 @@
             if (_kbFocusIdx > 0) _setFieldFocus(_kbFocusIdx - 1);
           } else {
             if (isNextBtn) { (document.getElementById('continue-section-btn')?.classList.contains('hidden') === false ? document.getElementById('continue-section-btn') : null)?.click(); }
-            else if (isSubmit) { document.getElementById('submit-btn')?.click(); }
+            else if (isSubmit) { /* "Skicka in" aktiveras aldrig via tangentbord — gör inget */ }
             else _advanceField();
           }
           return;
@@ -3764,7 +3830,9 @@
 
         // ── Enter ──
         if (e.key === 'Enter') {
-          if (isTA) { e.preventDefault(); _advanceField(); return; }
+          // Fritext: Enter ska ge ny rad som vanligt, inte byta fokus — gör inget här,
+          // låt webbläsarens standardbeteende för textarea hantera det.
+          if (isTA) { return; }
           if (isScale) { e.preventDefault(); _advanceField(); return; }
           if (isRadio) { e.preventDefault(); if (!active.checked) active.checked = true; _advanceField(); return; }
           if (isNextBtn) { return; } // browser default click
@@ -3775,9 +3843,21 @@
           return;
         }
 
+        // ── Siffra → välj skalfrågans radioknapp och gå vidare ──
+        if (isSkalaRadio) {
+          const num = parseInt(e.key);
+          const min = parseInt(active.dataset.min), max = parseInt(active.dataset.max);
+          if (!isNaN(num) && num >= min && num <= max) {
+            e.preventDefault();
+            const target = [...document.getElementsByName(active.name)].find(r => r.value === String(num));
+            if (target) { target.checked = true; target.focus(); }
+            setTimeout(() => _advanceField(), 120);
+          }
+        }
+
         // Pil vänster/höger inom skalfrågan hanteras nativt av <input type=range>.
 
-        // ── Siffra → välj och gå vidare (skalfråga) ──
+        // ── Siffra → välj och gå vidare (ren numerisk skalfråga, slider) ──
         if (isScale) {
           const num = parseInt(e.key);
           if (!isNaN(num) && num >= parseInt(active.min) && num <= parseInt(active.max)) {
