@@ -87,6 +87,8 @@
     /* Krymp menyn med bannerns höjd i DEMO-läge, annars sticker sidomenyn ut under
        viewporten och kräver scroll (gäller både skrivbords-sticky och mobilens fixed). */
     body.demo-mode .sidebar { top: var(--demo-banner-h); height: calc(100vh - var(--demo-banner-h)); }
+    #panel-tour-offer-btn { top: 14px; }
+    body.demo-mode #panel-tour-offer-btn { top: calc(var(--demo-banner-h) + 14px); }
     .sidebar { width: 248px; min-width: 248px; background: #1c2b36; display: flex; flex-direction: column; padding: 0; border-right: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; transition: width 0.15s ease, min-width 0.15s ease; }
     .sidebar.collapsed { width: 84px; min-width: 84px; }
     .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 16px; border-bottom: 1px solid #2e4a5f; cursor: pointer; }
@@ -283,6 +285,8 @@
       .main-content { padding: 20px 16px 20px 16px; padding-top: 68px; }
       .hamburger { display: flex; }
       #mobile-topbar { display: flex !important; }
+      #panel-tour-offer-btn { top: 66px; }
+      body.demo-mode #panel-tour-offer-btn { top: calc(var(--demo-banner-h) + 66px); }
       body {
         padding: 10px;
         font-size: 17px;
@@ -483,6 +487,10 @@
       <button type="button" onclick="openDemoLeadModal()" style="background:rgba(255,255,255,0.92);color:#1c5c33;border:none;border-radius:4px;padding:3px 10px;font-size:12px;font-weight:bold;cursor:pointer;">Kontakta utvecklaren</button>
     </div>
     <div id="app-loading" style="position:fixed;inset:0;background:#e4e9ec;z-index:500;display:flex;align-items:center;justify-content:center;"><div style="color:#5b6b75;font-size:16px;">Laddar...</div></div>
+
+    <button id="panel-tour-offer-btn" class="hidden" onclick="startPanelTour()" style="position:fixed;right:20px;z-index:200;background:#2e4a5f;color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.25);display:flex;align-items:center;gap:6px;">
+      <i class="ti ti-info-circle" aria-hidden="true"></i> Visa snabbguide
+    </button>
 
     <!-- Mobil hamburger + logo -->
     <div id="mobile-topbar" style="display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#e4e9ec;z-index:140;align-items:center;padding:0 16px;">
@@ -1674,6 +1682,7 @@
       checkAuthStatus:        { method: 'GET',    path: () => '/auth/status', query: p => ({ email: p.email }) },
       submitErrorReport:      { method: 'POST',   path: () => '/error-reports', body: p => ({ message: p.message, systemInfo: p.systemInfo }) },
       getRecentServerErrors:  { method: 'GET',    path: () => '/error-reports/recent-server-errors' },
+      markTourSeen:           { method: 'PATCH',  path: () => '/users/me/seen-tours', body: p => ({ tourId: p.tourId }) },
       getErrorReports:        { method: 'GET',    path: () => '/error-reports' },
       getGlobalFeedbackSettings: { method: 'GET',  path: () => '/error-reports/global-settings' },
       saveGlobalFeedbackSettings: { method: 'PUT', path: () => '/error-reports/global-settings', body: p => ({ feedbackEmail: p.feedbackEmail }) },
@@ -2391,11 +2400,43 @@
       } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
     }
 
-    // ── Guidad visning ──────────────────────────────────────────────
-    // Håller innehållet ytligt med flit — bara så nya användare kommer igång.
-    // Filtrerar bort steg vars sidomenyknapp är dold (t.ex. en Mottagare-användare
-    // saknar "Registrera bedömning"), annars kan driver.js inte positionera dem.
-    function buildTourSteps() {
+    // ── Guidade visningar ─────────────────────────────────────────────
+    // Ett enda "sedda program"-system (seenTours) täcker både inloggnings-onboardingen
+    // ('onboarding') och kortare per-funktions-guider ('admin', 'statistics', ...) — ett
+    // program som redan setts erbjuds inte igen, nya program (t.ex. efter rollbyte i DEMO,
+    // som kan låsa upp Administration) erbjuds oavsett vad man svarat på onboardingen.
+    // DEMO-konton delas av många besökare (se demo.js: /demo/login returnerar alltid
+    // seenTours:[]), så databasfältet räcker inte ensamt för att komma ihåg sedda program
+    // mellan flera DEMO-körningar på samma maskin — kompletteras med en lokal cache.
+    const DEMO_SEEN_TOURS_CACHE_KEY = 'dops_demo_seen_tours';
+
+    function getDemoSeenToursCache() {
+      try { return JSON.parse(localStorage.getItem(DEMO_SEEN_TOURS_CACHE_KEY) || '[]'); } catch (e) { return []; }
+    }
+    function addDemoSeenTourCache(tourId) {
+      const cur = getDemoSeenToursCache();
+      if (!cur.includes(tourId)) { cur.push(tourId); localStorage.setItem(DEMO_SEEN_TOURS_CACHE_KEY, JSON.stringify(cur)); }
+    }
+    function hasSeenTour(tourId) {
+      if (!currentUser) return true;
+      if ((currentUser.seenTours || []).includes(tourId)) return true;
+      if (currentUser.isDemo && getDemoSeenToursCache().includes(tourId)) return true;
+      return false;
+    }
+    async function markTourSeen(tourId) {
+      if (!currentUser || hasSeenTour(tourId)) return;
+      currentUser.seenTours = [...(currentUser.seenTours || []), tourId];
+      localStorage.setItem('dops_user', JSON.stringify(currentUser));
+      if (currentUser.isDemo) addDemoSeenTourCache(tourId);
+      try { await api('markTourSeen', { tourId }); } catch (e) { /* tyst, erbjuds igen nästa inloggning i värsta fall */ }
+      maybeOfferPanelTour(window._currentPanel);
+    }
+
+    // ── Onboarding (visas som fråga direkt efter inloggning) ──────────
+    // Håller innehållet ytligt med flit — bara så nya användare kommer igång. Filtrerar
+    // bort steg vars sidomenyknapp är dold (t.ex. en Mottagare-användare saknar
+    // "Registrera bedömning"), annars kan driver.js inte positionera dem.
+    function buildOnboardingSteps() {
       const candidates = [
         { id: 'nav-btn-assessment', title: 'Registrera bedömning', description: 'Här registrerar du en ny bedömning av en kollega — appens kärnfunktion.' },
         { id: 'nav-btn-inbox', title: 'Förfrågningar', description: 'Skickade och mottagna förfrågningar om bedömningar samlas här.' },
@@ -2422,30 +2463,24 @@
       return steps;
     }
 
-    function startGuidedTour() {
+    function driveSteps(steps, tourId) {
       const driverFactory = window.driver?.js?.driver;
-      const steps = buildTourSteps();
       if (!driverFactory || !steps.length) return;
       const tour = driverFactory({
-        showProgress: true,
+        showProgress: steps.length > 1,
         nextBtnText: 'Nästa',
         prevBtnText: 'Föregående',
         doneBtnText: 'Klart',
-        onDestroyed: () => persistTourDismissed()
+        onDestroyed: () => markTourSeen(tourId)
       });
       tour.setSteps(steps);
       tour.drive();
     }
 
-    async function persistTourDismissed() {
-      if (!currentUser || currentUser.tourDismissed) return;
-      currentUser.tourDismissed = true;
-      localStorage.setItem('dops_user', JSON.stringify(currentUser));
-      try { await api('updateProfile', { updates: { tourDismissed: true } }); } catch (e) { /* tyst, frågas igen nästa inloggning i värsta fall */ }
-    }
+    function startGuidedTour() { driveSteps(buildOnboardingSteps(), 'onboarding'); }
 
     function maybeShowTourPrompt() {
-      if (!currentUser || currentUser.tourDismissed) return;
+      if (hasSeenTour('onboarding')) return;
       const el = document.getElementById('tour-prompt-modal');
       el.style.display = 'flex'; el.classList.remove('hidden');
     }
@@ -2454,8 +2489,41 @@
       const el = document.getElementById('tour-prompt-modal');
       el.style.display = 'none'; el.classList.add('hidden');
       if (choice === 'yes') startGuidedTour();
-      else if (choice === 'never') persistTourDismissed();
+      else if (choice === 'never') markTourSeen('onboarding');
       // 'later' — gör inget, frågas igen nästa inloggning.
+    }
+
+    // ── Per-funktions-guider (diskret knapp, inte en modal i ansiktet) ──
+    // Korta (1-2 steg) introduktioner till specifika paneler. Erbjuds via en liten
+    // flytande knapp när man besöker en panel med ett osett program — inte en fråga
+    // som stör vid varje panelbyte. Oberoende av onboardingens "visa inte igen".
+    const PANEL_TOURS = {
+      assessment: [{ popover: { title: 'Registrera bedömning', description: 'Välj mottagarens kategori, fyll i formuläret och skicka in — mottagaren notifieras automatiskt.' } }],
+      'my-assessments': [{ popover: { title: 'Mina bedömningar', description: 'Allt du registrerat och tagit emot. Filtrera på datum eller formulärtyp, och exportera som Word-dokument.' } }],
+      overview: [{ popover: { title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp. Byt period och upplösning i filtren.' } }],
+      statistics: [
+        { element: '#chart-line-card', popover: { title: 'Bedömningar över tid', description: 'Klinikens aktivitet, uppdelat per formulärtyp.' } },
+        { element: '#chart-pie-card', popover: { title: 'Fördelning per formulärtyp', description: 'Hur bedömningarna fördelar sig mellan formulärtyper.' } }
+      ],
+      'clinic-overview': [{ popover: { title: 'Klinikens bedömningar', description: 'Som Studierektor ser du alla bedömningar i kliniken här, med filter på kategori och mottagare.' } }],
+      admin: [{ popover: { title: 'Administration', description: 'Hantera användare, behörigheter och kliniker. Klicka på en klinik i listan för att se dess användare.' } }]
+    };
+
+    function maybeOfferPanelTour(panel) {
+      window._currentPanel = panel;
+      const btn = document.getElementById('panel-tour-offer-btn');
+      if (!btn) return;
+      const hasTour = PANEL_TOURS[panel] && !hasSeenTour(panel);
+      btn.classList.toggle('hidden', !hasTour);
+    }
+
+    function startPanelTour() {
+      const panel = window._currentPanel;
+      const allSteps = panel && PANEL_TOURS[panel];
+      if (!allSteps) return;
+      document.getElementById('panel-tour-offer-btn').classList.add('hidden');
+      const steps = allSteps.filter(s => !s.element || document.querySelector(s.element)?.offsetParent !== null);
+      driveSteps(steps, panel);
     }
 
     // ── Forgot PIN ────────────────────────────────────────────────
@@ -4027,6 +4095,7 @@
       });
       closeMenu();
       closeMenu();
+      maybeOfferPanelTour(panel);
       if (panel === 'assessment')       { if (!maybeResumeDraft()) { resetAssessment(); _assessmentStartTime = Date.now(); } }
       if (panel === 'my-assessments')   {
         clearAssessmentBadge();
