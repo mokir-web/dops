@@ -45,11 +45,11 @@
           const countAll = allTimeCounts?.[ft] || v.count;
           const g        = scaledGoal(v.goal);
           const color    = g ? goalColor(countP, g) : '#5b6b75';
-          s += html`<div style="display:flex;align-items:center;gap:10px;padding:3px 0 3px 14px;cursor:pointer;" onclick="navigateToAssessments('${ft}','${role||'received'}')">`;
+          s += html`<div style="display:flex;align-items:center;gap:10px;padding:3px 0 3px 14px;cursor:pointer;" onclick="navigateToAssessments('${safe(jsAttr(ft))}','${role||'received'}')">`;
           s += html`<div style="font-size:14px;color:#5b6b75;flex:1;">${subName}</div>`;
           s += html`<div style="flex:2;max-width:160px;">${safe(goalBar(countP, countAll, g, periodLabel))}</div>`;
           s += html`<div style="font-size:16px;font-weight:bold;color:${safe(color)};min-width:28px;text-align:right;">${countP}</div>`;
-          if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${ft}',true,'${direction}')">Ej aktuellt</button>`;
+          if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${safe(jsAttr(ft))}',true,'${direction}')">Ej aktuellt</button>`;
           s += '</div>';
         });
         if (otherForms.length) s += '<div style="height:1px;background:#c7d1d7;margin:10px 0;"></div>';
@@ -59,11 +59,11 @@
         const countAll = allTimeCounts?.[ft] || v.count;
         const g        = scaledGoal(v.goal);
         const color    = g ? goalColor(countP, g) : '#5b6b75';
-        s += html`<div style="display:flex;align-items:center;gap:10px;padding:4px 0;cursor:pointer;" onclick="navigateToAssessments('${ft}','${role||'received'}')">`;
+        s += html`<div style="display:flex;align-items:center;gap:10px;padding:4px 0;cursor:pointer;" onclick="navigateToAssessments('${safe(jsAttr(ft))}','${role||'received'}')">`;
         s += html`<div style="font-size:14px;font-weight:bold;color:#1c2b36;flex:1;">${ft}</div>`;
         s += html`<div style="flex:2;max-width:160px;">${safe(goalBar(countP, countAll, g, periodLabel))}</div>`;
         s += html`<div style="font-size:16px;font-weight:bold;color:${safe(color)};min-width:28px;text-align:right;">${countP}</div>`;
-        if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${ft}',true,'${direction}')">Ej aktuellt</button>`;
+        if (g) s += html`<button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="event.stopPropagation();toggleFormTypeHidden('${safe(jsAttr(ft))}',true,'${direction}')">Ej aktuellt</button>`;
         s += '</div>';
       });
       if (hiddenEntries.length) {
@@ -74,7 +74,7 @@
         hiddenEntries.sort((a,b) => a[0].localeCompare(b[0])).forEach(([ft]) => {
           s += html`<div style="display:flex;align-items:center;gap:10px;padding:3px 0;color:#8a97a0;">
             <div style="font-size:13px;flex:1;">${ft}</div>
-            <button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="toggleFormTypeHidden('${ft}',false,'${direction}')">Återställ</button>
+            <button class="btn-secondary btn-small" style="font-size:11px;padding:2px 8px;" onclick="toggleFormTypeHidden('${safe(jsAttr(ft))}',false,'${direction}')">Återställ</button>
           </div>`;
         });
         s += '</div></div>';

@@ -143,7 +143,7 @@
           const toggleActive = !data.info.aktiv;
           out += html`<div class="btn-row" style="margin-top:12px;"><button class="btn-${safe(toggleActive ? 'primary' : 'danger')} btn-small" onclick="toggleClinicAccess('${klinikId}',${toggleActive})">${toggleLabel}</button>`;
           if (activeKlinikId === '*') {
-            out += html`<button class="btn-danger btn-small" onclick="deleteClinicAction('${klinikId}','${data.info.namn}')">Radera klinik</button>`;
+            out += html`<button class="btn-danger btn-small" onclick="deleteClinicAction('${klinikId}','${safe(jsAttr(data.info.namn))}')">Radera klinik</button>`;
           }
           out += '</div>';
           // Inaktiveringsgräns

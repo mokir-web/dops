@@ -1537,7 +1537,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.41.0';
+    const APP_VERSION = 'v4.41.1';
 
     let appData = null;
     let currentUser = null;
@@ -3405,6 +3405,26 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+    }
+
+    // jsAttr(str) — säker för värden som interpoleras in i EN JS-strängliteral INUTI
+    // ett inline onclick-attribut, t.ex. onclick="func('${jsAttr(x)}')". esc()/html``
+    // räcker INTE här: webbläsaren HTML-avkodar attributvärdet innan det tolkas som JS,
+    // så esc()s '&#039; för ett enkelt citattecken avkodas tillbaka till ' innan JS-
+    // motorn läser koden — ett citattecken i x kan då bryta ut ur strängen och köra
+    // godtycklig JS. jsAttr() JS-strängescapar (\, ') FÖRST så webbläsarens avkodning
+    // inte återinför ett brytande citattecken, och HTML-attribut-escapar sedan (&,",<,>)
+    // som vanligt. Hittat vid säkerhetsgenomgång 2026-07-16 (t.ex. js/admin.js klicknamn,
+    // js/overview.js formulärtypnamn) — samma mönster som js/scheduled-sends.js redan
+    // löste manuellt (JSON.stringify + citattecken-ersättning) men inte tillämpat överallt.
+    function jsAttr(str) {
+      return (str == null ? '' : String(str))
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
     }
 
     // ── Fas 3: säker templating ──────────────────────────────────────────
