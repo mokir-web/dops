@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
   <title>MoraDOPS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <meta name="format-detection" content="telephone=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10,7 +10,16 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'><circle cx='22' cy='22' r='17' fill='none' stroke='%232a1f18' stroke-width='2'/><text x='22' y='27' font-family='Arial' font-size='13' font-weight='700' fill='%232a1f18' text-anchor='middle'>MD</text><circle cx='35' cy='35' r='8' fill='%234a9e62'/></svg>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
-    :root { --demo-banner-h: 30px; }
+    :root {
+      /* iPhone: statusbar/notch-området (bara icke-noll när viewport-fit=cover är satt,
+         se <meta name="viewport"> — annars 0px och calc() blir ren backup-kompatibel).
+         --demo-banner-h är TOTAL höjd att ge plats för (innehåll + notch), inte bara
+         bannerns egen 30px — annars syns sidans innehåll bakom notchen/statusbaren när
+         man skrollar, transparent genom den (rapporterad iPhone-bugg). */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --demo-banner-content-h: 30px;
+      --demo-banner-h: calc(var(--demo-banner-content-h) + var(--safe-top));
+    }
     * { box-sizing: border-box; }
     html { width: 100%; font-size: 16px; }
     body { min-width: 0 !important; }
@@ -85,7 +94,15 @@
     /* Sidebar layout */
     .app-layout { display: flex; min-height: 100vh; align-items: flex-start; }
     body.demo-mode .app-layout { margin-top: var(--demo-banner-h); }
-    body.demo-mode #mobile-topbar { top: var(--demo-banner-h); }
+    /* top/padding-top ligger HÄR (inte inline på elementet) med flit — annars kan
+       body.demo-mode-overridet nedan aldrig vinna, eftersom inline styles alltid slår
+       stylesheet-regler oavsett selektor-specificitet (samma bugklass som tidigare
+       bytt ut för #panel-tour-offer-btn). Utan DEMO: topbaren är själv topmost och
+       fyller notchen/statusbaren med sin egen bakgrund. */
+    #mobile-topbar { top: 0; padding-top: var(--safe-top); }
+    /* Med DEMO: bannern är redan topmost och fyller notchen själv (se dess egen
+       padding-top) — topbaren ska bara positioneras under den, inte ge dubbel padding. */
+    body.demo-mode #mobile-topbar { top: var(--demo-banner-h); padding-top: 0; }
     /* Krymp menyn med bannerns höjd i DEMO-läge, annars sticker sidomenyn ut under
        viewporten och kräver scroll (gäller både skrivbords-sticky och mobilens fixed). */
     body.demo-mode .sidebar { top: var(--demo-banner-h); height: calc(100vh - var(--demo-banner-h)); }
@@ -284,10 +301,10 @@
         z-index: 160; transition: left 0.25s ease; overflow-y: auto;
       }
       .sidebar.open { left: 0; }
-      .main-content { padding: 20px 16px 20px 16px; padding-top: 68px; }
+      .main-content { padding: 20px 16px 20px 16px; padding-top: calc(68px + var(--safe-top)); }
       .hamburger { display: flex; }
       #mobile-topbar { display: flex !important; }
-      #panel-tour-offer-btn { top: 66px; }
+      #panel-tour-offer-btn { top: calc(66px + var(--safe-top)); }
       body.demo-mode #panel-tour-offer-btn { top: calc(var(--demo-banner-h) + 66px); }
       body {
         padding: 10px;
@@ -483,7 +500,7 @@
   <!-- ═══ APP ══════════════════════════════════════════════════════ -->
 
   <div id="app" class="hidden">
-    <div id="demo-banner" class="hidden" style="position:fixed;top:0;left:0;right:0;height:var(--demo-banner-h);background:#4a9e62;color:#fff;z-index:600;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:bold;padding:0 8px;">
+    <div id="demo-banner" class="hidden" style="position:fixed;top:0;left:0;right:0;height:var(--demo-banner-h);background:#4a9e62;color:#fff;z-index:600;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:bold;padding:var(--safe-top) 8px 0;box-sizing:border-box;">
       <span>DEMO-LÄGE</span>
       <button type="button" onclick="openDemoSwitchModal()" style="background:rgba(255,255,255,0.92);color:#1c5c33;border:none;border-radius:4px;padding:3px 10px;font-size:12px;font-weight:bold;cursor:pointer;">Byt användarroll</button>
       <button type="button" onclick="openDemoLeadModal()" style="background:rgba(255,255,255,0.92);color:#1c5c33;border:none;border-radius:4px;padding:3px 10px;font-size:12px;font-weight:bold;cursor:pointer;">Kontakta utvecklaren</button>
@@ -495,7 +512,7 @@
     </button>
 
     <!-- Mobil hamburger + logo -->
-    <div id="mobile-topbar" style="display:none;position:fixed;top:0;left:0;right:0;height:56px;background:#e4e9ec;z-index:140;align-items:center;padding:0 16px;">
+    <div id="mobile-topbar" style="display:none;position:fixed;left:0;right:0;min-height:56px;background:#e4e9ec;z-index:140;align-items:center;padding-left:16px;padding-right:16px;box-sizing:border-box;">
       <button class="hamburger" id="hamburger-btn" aria-label="Meny" style="position:static;min-height:44px;">☰</button>
       <!-- Logga centrerad i topbar -->
       <div onclick="showPanel('overview')" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -1537,7 +1554,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.41.1';
+    const APP_VERSION = 'v4.41.3';
 
     let appData = null;
     let currentUser = null;
@@ -2441,17 +2458,27 @@
     }
 
     // ── Onboarding (visas som fråga direkt efter inloggning) ──────────
-    // Håller innehållet ytligt med flit — bara så nya användare kommer igång. Filtrerar
-    // bort steg vars sidomenyknapp är dold (t.ex. en Mottagare-användare saknar
+    // Täcker ALLA sidomenyfunktioner (inte bara ett urval) — filtrerar sedan bort steg
+    // vars knapp är dold för den inloggade rollen (t.ex. en Mottagare-användare saknar
     // "Registrera bedömning"), annars kan driver.js inte positionera dem.
     function buildOnboardingSteps() {
       const candidates = [
-        { id: 'nav-btn-assessment', title: 'Registrera bedömning', description: 'Här registrerar du en ny bedömning av en kollega — appens kärnfunktion.' },
-        { id: 'nav-btn-inbox', title: 'Förfrågningar', description: 'Skickade och mottagna förfrågningar om bedömningar samlas här.' },
-        { id: 'nav-btn-my-assessments', title: 'Mina bedömningar', description: 'En samlad lista över allt du registrerat och tagit emot.' },
-        { id: 'nav-btn-overview', title: 'Min översikt', description: 'Grafer över din egen utveckling över tid.' },
-        { id: 'nav-btn-statistics', title: 'Klinikens statistik', description: 'Aggregerad statistik för hela din klinik.' },
-        { id: 'nav-btn-profile', title: 'Min profil', description: 'Här ändrar du dina uppgifter och ditt lösenord.' }
+        { id: 'nav-btn-assessment', title: 'Registrera bedömning', description: 'Här registrerar du en ny bedömning av en kollega — appens kärnfunktion. Välj mottagarens kategori, fyll i formuläret (kan navigeras helt med tangentbordet) och skicka in, så notifieras mottagaren automatiskt via e-post.' },
+        { id: 'nav-btn-inbox', title: 'Förfrågningar', description: 'Här ser du inkommande förfrågningar om att bli bedömd och de du själv skickat. Du kan också be en specifik kollega (eller flera på en gång) om en bedömning genom att ange formulärtyp och ett meddelande.' },
+        { id: 'nav-btn-my-assessments', title: 'Mina bedömningar', description: 'En samlad, filtrerbar lista över allt du registrerat och tagit emot. Markera enskilda bedömningar och exportera dem som ett Word-dokument som mejlas till dig.' },
+        { id: 'nav-btn-overview', title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp, med målvärden satta av kliniken. Byt tidsperiod och upplösning (dag/vecka/månad) i filtren för att se detaljer eller helhetsbild.' },
+        { id: 'nav-btn-progress', title: 'Progress', description: 'Detaljerad progress per formulärtyp med grafer över enskilda delmoment över tid. Lämna formulärtyp tom och klicka "AI-sammanställning" för en övergripande, anonymiserad AI-genererad sammanfattning istället.' },
+        { id: 'nav-btn-statistics', title: 'Klinikens statistik', description: 'Aggregerad statistik för hela din klinik — antal bedömningar över tid och fördelning per formulärtyp. Filtrera på datum eller specifika formulärtyper via "Filtrera"-knappen.' },
+        { id: 'nav-btn-clinic-overview', title: 'Klinikens bedömningar', description: 'Som Studierektor ser du här ALLA bedömningar som registrerats i kliniken, inte bara dina egna. Filtrera på datum, kategori, formulärtyp eller ett specifikt namn, och exportera flera bedömningar samtidigt.' },
+        { id: 'nav-btn-clinic-settings', title: 'Klinikens inställningar', description: 'Gruppera formulärtyper i sektioner så formulärväljaren blir mer överskådlig vid registrering, och sätt målvärden (antal per 6 månader) samt vilka yrkesroller som ska se respektive formulärtyp.' },
+        { id: 'nav-btn-request-stats', title: 'Förfrågningsöversikt', description: 'Statistik över klinikens förfrågningar om bedömning — hur stor andel som utförts, uppdelat per formulärtyp och yrkesroll. Sätt även hur många veckor en obesvarad förfrågan ska räknas som inaktuell.' },
+        { id: 'nav-btn-admin', title: 'Administration', description: 'Hantera användare, deras roller/privilegier och kliniker. Klicka på en klinik i listan för att se och redigera dess användare, eller skapa/inaktivera hela kliniker.' },
+        { id: 'nav-btn-error-reports', title: 'Felanmälningar', description: 'Här samlas feedback och buggrapporter som skickats in via "Felanmälan" i sidomenyn, med teknisk systeminformation automatiskt bifogad. Ställ in vilken e-postadress nya felanmälningar ska mejlas till.' },
+        { id: 'nav-btn-form-builder', title: 'Formulärbyggare', description: 'Skapa nya formulärtyper eller redigera frågorna i befintliga (rubriker, skala, flerval, fritext). Du kan klistra in hela rader/kolumner direkt från Excel via CSV-redigeraren för snabb massredigering.' },
+        { id: 'nav-btn-pending-users', title: 'Användargodkännande', description: 'Nya konton som registrerat sig själva väntar här tills en admin godkänner dem — innan dess kan de bara se mottagna bedömningar. Godkänn direkt i listan eller via länken i mejlet som skickades vid registreringen.' },
+        { id: 'nav-btn-documents', title: 'Dokument', description: 'Nedladdningsbara mallar och avtal för kliniker som vill ansluta till eller redan använder MoraDOPS.' },
+        { id: 'nav-btn-reminders', title: 'Påminnelser', description: 'Ställ in automatiska återkommande e-postpåminnelser med personlig statistik till valda användare, t.ex. varje vecka eller varannan. Du väljer själv vilket innehåll (registrerat/mottaget/per formulärtyp) som ska ingå.' },
+        { id: 'nav-btn-profile', title: 'Min profil', description: 'Här ändrar du dina uppgifter, klinik, aviseringsinställningar och PIN. Du kan även byta startsida och radera ditt konto härifrån.' }
       ];
       const steps = candidates
         .map(c => ({ el: document.getElementById(c.id), c }))
@@ -2493,6 +2520,17 @@
       tour.drive();
     }
 
+    // Enter avancerar en pågående guidad visning (nästa steg, eller "Klart" på sista
+    // steget) — samma tangentbordsvänlighet som resten av appen. driver.js saknar detta
+    // inbyggt (bara Escape/piltangenter). Gör ingenting om ingen rundtur är öppen.
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const nextBtn = document.querySelector('.driver-popover-next-btn');
+      if (!nextBtn) return;
+      e.preventDefault();
+      nextBtn.click();
+    });
+
     function startGuidedTour() { driveSteps(buildOnboardingSteps(), 'onboarding'); }
 
     // "Visa användarguide" på Min profil — glömmer 'onboarding' igen (lokalt + backend) och
@@ -2515,41 +2553,75 @@
       el.style.display = 'flex'; el.classList.remove('hidden');
     }
 
+    // Sant om användaren AKTIVT avvisat den inledande "Vill du ha en guidad visning?"-
+    // frågan (Inte nu ELLER Visa inte) — till skillnad från att bara ha fullföljt/stängt
+    // själva rundturen. Sessions-scopat (nollställs vid omladdning), precis som "Inte nu"
+    // redan frågar igen nästa inloggning — panel-hjälpen ska följa samma rytm.
+    let _onboardingDeclined = false;
+
     function tourPromptRespond(choice) {
       const el = document.getElementById('tour-prompt-modal');
       el.style.display = 'none'; el.classList.add('hidden');
       if (choice === 'yes') startGuidedTour();
-      else if (choice === 'never') markTourSeen('onboarding');
-      // 'later' — gör inget, frågas igen nästa inloggning.
+      else if (choice === 'never') { markTourSeen('onboarding'); _onboardingDeclined = true; }
+      else { _onboardingDeclined = true; } // 'later' — frågas igen nästa inloggning.
     }
 
     // ── Per-funktions-guider (diskret knapp, inte en modal i ansiktet) ──
-    // Korta (1-2 steg) introduktioner till specifika paneler. Erbjuds via en liten
-    // flytande knapp när man besöker en panel med ett osett program — inte en fråga
-    // som stör vid varje panelbyte. Oberoende av onboardingens "visa inte igen".
+    // Korta introduktioner till specifika paneler. Erbjuds via en liten flytande knapp
+    // när man besöker en panel med ett osett program — inte en fråga som stör vid varje
+    // panelbyte. Om användaren tackat nej till onboardingen (Inte nu/Visa inte) erbjuds
+    // panel-hjälpen inte heller — se _onboardingDeclined ovan.
     const PANEL_TOURS = {
-      assessment: [{ popover: { title: 'Registrera bedömning', description: 'Välj mottagarens kategori, fyll i formuläret och skicka in — mottagaren notifieras automatiskt.' } }],
+      assessment: [{ popover: { title: 'Registrera bedömning', description: 'Välj mottagarens kategori, fyll i formuläret (varje DOPS bör representera ett eget ingrepp) och skicka in — mottagaren notifieras automatiskt via e-post. Formuläret går att fylla i helt med tangentbordet: Tab byter fält, Enter bekräftar och går vidare.' } }],
+      inbox: [
+        { popover: { title: 'Förfrågningar', description: 'Här hamnar förfrågningar om att bli bedömd som du fått, och de du själv skickat till kollegor. En obesvarad förfrågan markeras automatiskt "Inaktuell" efter det antal veckor kliniken satt (se Förfrågningsöversikt).' } },
+        { element: '#inbox-tab-request', popover: { title: 'Begär bedömning', description: 'Be en specifik kollega om en bedömning genom att ange formulärtyp och ett meddelande — de får ett mejl med en direktlänk. Finns även en gruppförfrågan-knapp för att fråga flera samtidigt.' } }
+      ],
       'my-assessments': [
-        { popover: { title: 'Mina bedömningar', description: 'Allt du registrerat och tagit emot. Filtrera på datum eller formulärtyp, och exportera som Word-dokument.' } },
-        { element: '#filter-toggle-btn', popover: { title: 'Filtrera', description: 'Öppna filtret för att avgränsa på datumintervall eller specifika formulärtyper.' } }
+        { popover: { title: 'Mina bedömningar', description: 'Allt du registrerat och tagit emot, uppdelat på flikarna "Mottagna"/"Skickade". Klicka på ett kort för att se alla svar i den bedömningen.' } },
+        { element: '#filter-toggle-btn', popover: { title: 'Filtrera & exportera', description: 'Avgränsa på datumintervall eller specifika formulärtyper. Markera en eller flera bedömningar och klicka "Exportera" för att få dem som ett Word-dokument mejlat till dig.' } }
       ],
       overview: [
-        { popover: { title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp.' } },
-        { element: '#overview-resolution', popover: { title: 'Upplösning', description: 'Byt mellan dag/vecka/månad för att se utvecklingen på olika detaljnivå.' } }
+        { popover: { title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp. Grönt = mål uppnått, gult = delvis uppfyllt, rött = inga registreringar ännu — målet skalas automatiskt om du byter tidsintervall.' } },
+        { element: '#overview-resolution', popover: { title: 'Upplösning', description: 'Byt mellan dag/vecka/månad för att se utvecklingen på olika detaljnivå. Klicka direkt på en stapel för att hoppa till motsvarande filtrerade lista i Mina bedömningar.' } }
       ],
       statistics: [
-        { element: '#chart-line-card', popover: { title: 'Bedömningar över tid', description: 'Klinikens aktivitet, uppdelat per formulärtyp.' } },
-        { element: '#chart-pie-card', popover: { title: 'Fördelning per formulärtyp', description: 'Hur bedömningarna fördelar sig mellan formulärtyper.' } },
-        { element: '#stat-filter-toggle-btn', popover: { title: 'Filtrera', description: 'Avgränsa på datum eller formulärtyp, och byt upplösning (dag/vecka/månad) längre ner på sidan.' } }
+        { element: '#chart-line-card', popover: { title: 'Bedömningar över tid', description: 'Klinikens samlade aktivitet, uppdelat per formulärtyp. Klicka på en etikett i förklaringen under grafen för att isolera/dölja just den formulärtypen.' } },
+        { element: '#chart-pie-card', popover: { title: 'Fördelning per formulärtyp', description: 'Hur klinikens bedömningar fördelar sig mellan formulärtyper totalt sett, för samma valda period.' } },
+        { element: '#stat-filter-toggle-btn', popover: { title: 'Filtrera', description: 'Avgränsa på datum eller formulärtyp, och byt upplösning (dag/vecka/månad) längre ner på sidan. Tabellerna under graferna visar mest aktiva registrerare och mest bedömda kollegor.' } }
       ],
       'clinic-overview': [
-        { popover: { title: 'Klinikens bedömningar', description: 'Som Studierektor ser du alla bedömningar i kliniken här.' } },
-        { element: '#co-filter-toggle-btn', popover: { title: 'Filtrera', description: 'Avgränsa på datum, kategori, formulärtyp eller mottagarens namn.' } }
+        { popover: { title: 'Klinikens bedömningar', description: 'Som Studierektor ser du ALLA bedömningar som registrerats i kliniken här — inte bara dina egna. Klicka på ett kort för att expandera och se alla svar.' } },
+        { element: '#co-filter-toggle-btn', popover: { title: 'Filtrera & exportera', description: 'Avgränsa på datum, kategori, formulärtyp eller sök på ett specifikt namn. Markera flera bedömningar för att exportera dem som ett samlat Word-dokument.' } }
       ],
-      admin: [{ popover: { title: 'Administration', description: 'Hantera användare, behörigheter och kliniker. Klicka på en klinik i listan för att se dess användare.' } }],
+      'clinic-settings': [
+        { element: '#cs-new-group', popover: { title: 'Sektioner', description: 'Gruppera formulärtyper i egna sektioner (t.ex. "Ingrepp", "Icke-tekniska färdigheter") så formulärväljaren blir mer överskådlig vid registrering. Formulär utan tilldelad sektion hamnar sist under "Övrigt".' } },
+        { element: '#cs-list', popover: { title: 'Målvärden och synlighet', description: 'Sätt hur många bedömningar (per 6 månader) varje yrkesroll förväntas nå för respektive formulärtyp, och begränsa vilka roller som ska se en viss formulärtyp alls. Ingen begränsning satt = synlig för alla.' } }
+      ],
+      'request-stats': [
+        { popover: { title: 'Förfrågningsöversikt', description: 'Statistik över klinikens förfrågningar om bedömning — totalt, utförda, väntande och inaktuella, samt hur stor andel som slutförts per formulärtyp och yrkesroll.' } },
+        { element: '#expiry-select', popover: { title: 'Inaktuella efter', description: 'Ställ in hur många veckor en obesvarad förfrågan ska få stå kvar innan den automatiskt räknas som "Inaktuell" istället för väntande. "Ingen gräns" stänger av det helt.' } }
+      ],
+      admin: [
+        { popover: { title: 'Administration', description: 'Hantera användare, deras roller/privilegier och kliniker. Klicka på en klinik i listan till vänster för att se och redigera dess användare.' } },
+        { popover: { title: 'Klinikhantering', description: 'Som global Administratör kan du skapa nya kliniker eller stänga tillgången för en befintlig (utan att radera data). En klinik måste vara tom på användare innan den går att radera helt.' } }
+      ],
+      'error-reports': [{ popover: { title: 'Felanmälningar', description: 'Feedback och buggrapporter som skickats in via "Felanmälan" i sidomenyn, med teknisk systeminformation (t.ex. nyliga serverfel) automatiskt bifogad för att underlätta felsökning. Ställ in vilken adress nya felanmälningar ska mejlas till här ovanför.' } }],
+      'form-builder': [
+        { popover: { title: 'Formulärbyggare', description: 'Skapa nya formulärtyper eller klicka på en befintlig för att redigera dess frågor (rubriker, skala, flerval, fritext). Nya formulärtyper är osynliga för alla roller tills du valt vilka som ska se dem.' } },
+        { element: '#fb-questions-view', popover: { title: 'CSV-redigering', description: 'Klistra in en hel rad eller kolumn direkt från Excel via "Redigera CSV" för snabb massredigering av frågor — praktiskt när du bygger om ett helt formulär på en gång.' } }
+      ],
+      'pending-users': [{ popover: { title: 'Användargodkännande', description: 'Konton som registrerat sig själva via inloggningssidan hamnar här och kan bara se mottagna bedömningar tills en admin godkänner dem. Godkänn direkt i listan, eller via länken i mejlet som redan skickats till dig vid registreringen.' } }],
+      documents: [{ popover: { title: 'Dokument', description: 'Nedladdningsbara mallar och avtal för kliniker som vill ansluta till eller redan använder MoraDOPS — t.ex. informationsblad att dela med kollegor.' } }],
+      reminders: [
+        { popover: { title: 'Påminnelser', description: 'Automatiska återkommande e-postpåminnelser med personlig statistik (t.ex. "5 registrerade denna vecka") till valda användare. Praktiskt för att hålla registreringstakten uppe utan att behöva be om det manuellt.' } },
+        { element: '#schedule-list', popover: { title: 'Skapa en påminnelse', description: 'Välj mottagare, veckodag/frekvens och vilket innehåll (registrerat/mottaget/per formulärtyp) som ska ingå. Mottagaren kan när som helst avregistrera sig via en länk längst ner i mejlet.' } }
+      ],
+      profile: [{ popover: { title: 'Min profil', description: 'Här ändrar du dina uppgifter, klinik, aviseringsinställningar och PIN. Du kan även byta startsida (vilken panel som visas direkt vid inloggning) och radera ditt konto längst ner på sidan.' } }],
       progress: [
-        { element: '#progress-formtype', popover: { title: 'Formulärtyp', description: 'Välj en formulärtyp för grafer och detaljerad progress, eller lämna tomt för en övergripande AI-sammanställning över alla dina formulärtyper.' } },
-        { element: '#progress-ai-btn', popover: { title: 'AI-sammanställning', description: 'Ger en AI-genererad sammanställning av dina bedömningar — anonymiserad, inga namn eller kliniker skickas.' } }
+        { element: '#progress-formtype', popover: { title: 'Formulärtyp', description: 'Välj en formulärtyp för grafer och detaljerad progress per delmoment över tid, eller lämna tomt för en övergripande AI-sammanställning över alla dina formulärtyper.' } },
+        { element: '#progress-ai-btn', popover: { title: 'AI-sammanställning', description: 'Ger en AI-genererad sammanställning av dina bedömningar — anonymiserad, inga namn eller kliniker skickas till AI-tjänsten. Djupare per formulärtyp om en är vald, annars en lättare översikt baserad på fritextkommentarer.' } }
       ]
     };
 
@@ -2557,7 +2629,7 @@
       window._currentPanel = panel;
       const btn = document.getElementById('panel-tour-offer-btn');
       if (!btn) return;
-      const hasTour = PANEL_TOURS[panel] && !hasSeenTour(panel);
+      const hasTour = PANEL_TOURS[panel] && !hasSeenTour(panel) && !_onboardingDeclined;
       btn.classList.toggle('hidden', !hasTour);
     }
 
@@ -3850,6 +3922,10 @@
       document.addEventListener('keydown', e => {
         const panel = document.getElementById('panel-assessment');
         if (!panel || panel.classList.contains('hidden')) return;
+        // En guidad visning (driver.js) kan vara öppen ovanpå formuläret (t.ex. onboardingens
+        // första steg, som pekar på "Registrera bedömning") — låt då Enter styra rundturen
+        // istället för formulärfälten, se den separata tour-Enter-lyssnaren.
+        if (document.querySelector('.driver-popover')) return;
 
         const active = document.activeElement;
         const formEl = document.getElementById('form-questions');
