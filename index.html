@@ -4,6 +4,7 @@
   <title>MoraDOPS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <meta name="format-detection" content="telephone=no">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MoraDOPS">
@@ -569,6 +570,7 @@
           <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningsöversikt</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')"><i class="ti ti-users" aria-hidden="true"></i><span class="sidebar-btn-label">Administration</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-error-reports"   onclick="showPanel('error-reports')"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Felanmälningar</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-usage-stats"   onclick="showPanel('usage-stats')"><i class="ti ti-chart-dots" aria-hidden="true"></i><span class="sidebar-btn-label">Användningsstatistik</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-form-builder"   onclick="showPanel('form-builder')"><i class="ti ti-forms" aria-hidden="true"></i><span class="sidebar-btn-label">Formulärbyggare</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-pending-users" onclick="showPanel('pending-users')">
             <i class="ti ti-user-check" aria-hidden="true"></i><span class="sidebar-btn-label">Användargodkännande</span> <span id="pending-users-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
@@ -1143,6 +1145,66 @@
       <div id="error-reports-global-list"><p style="color:#888;">Läser in...</p></div>
     </div>
 
+    <!-- ── ANVÄNDNINGSSTATISTIK ──────────────────────────────────────── -->
+    <div id="panel-usage-stats" class="hidden">
+      <h2>Användningsstatistik</h2>
+      <p style="color:#5b6b75;font-size:13px;">Aggregerat per användare och klinik. DEMO-aktivitet exkluderas som standard.</p>
+
+      <div style="margin-bottom:10px;">
+        <button class="btn-secondary btn-small" id="us-filter-toggle-btn" onclick="toggleUsageStatsFilter()">Filtrera</button>
+      </div>
+      <div id="us-filter-panel" class="hidden filter-box" style="margin-bottom:20px;">
+        <div class="date-grid">
+          <div><label class="field-label">Från datum</label><input type="date" id="us-date-from"></div>
+          <div><label class="field-label">Till datum</label><input type="date" id="us-date-to"></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:160px;"><label class="field-label">Klinik</label>
+            <select id="us-clinic-filter" style="width:100%;"><option value="">Alla kliniker</option></select>
+          </div>
+          <div style="flex:1;min-width:140px;"><label class="field-label">Yrkesroll</label>
+            <select id="us-jobrole-filter" style="width:100%;">
+              <option value="">Alla</option><option value="ST">ST</option><option value="Spec">Spec</option>
+              <option value="AT">AT</option><option value="BT">BT</option><option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:180px;"><label class="field-label">Aktivt privilegium</label>
+            <select id="us-privilege-filter" style="width:100%;">
+              <option value="">Alla</option><option value="none">Inget (vanlig vy)</option>
+              <option value="Studierektor">Studierektor</option><option value="Administratör">Administratör</option>
+            </select>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;">
+          <input type="checkbox" id="us-include-demo"> Inkludera DEMO-aktivitet
+        </label>
+        <div class="btn-row" style="margin-top:14px;">
+          <button class="btn-primary" onclick="loadUsageStats()">Visa</button>
+          <button class="btn-secondary" onclick="resetUsageStatsFilters()">Återställ</button>
+        </div>
+      </div>
+
+      <div id="us-summary-status" style="min-height:18px;"></div>
+      <div id="us-summary-list"></div>
+
+      <div id="us-sessions-view" class="hidden" style="margin-top:24px;">
+        <div class="btn-row" style="margin-bottom:10px;align-items:center;">
+          <button class="btn-secondary btn-small" onclick="closeUsageSessionsView()">← Tillbaka till sammanfattning</button>
+          <h3 id="us-sessions-title" style="margin:0;"></h3>
+        </div>
+        <div id="us-sessions-list"></div>
+      </div>
+    </div>
+
+    <!-- Modal: enskild sessions händelselogg -->
+    <div id="usage-session-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;">
+        <h3 style="margin-top:0;">Sessionslogg</h3>
+        <div id="usage-session-events"></div>
+        <div class="btn-row" style="margin-top:16px;"><button class="btn-secondary" onclick="closeUsageSessionModal()">Stäng</button></div>
+      </div>
+    </div>
+
     <!-- Modal: ny formulärtyp -->
     <div id="fb-newtype-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;">
       <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;">
@@ -1571,7 +1633,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.41.4';
+    const APP_VERSION = 'v4.42.0';
 
     let appData = null;
     let currentUser = null;
@@ -1593,6 +1655,19 @@
     };
     window.addEventListener('error', e => logSessionError({ type: 'window', message: e.message, source: (e.filename || '') + ':' + e.lineno }));
     window.addEventListener('unhandledrejection', e => logSessionError({ type: 'promise', message: String(e.reason) }));
+
+    // ── Användningsstatistik (global admin ser aggregerat i adminpanelen) ──
+    // sessions-id: ett nytt slumpvärde per appstart/flik, INTE kopplat till hur länge
+    // inloggningstoken är giltig — bara en grupperingsnyckel för "en öppen flik".
+    const _usageSessionId = crypto.randomUUID();
+    function logUsageEvent(eventType, eventDetail) {
+      if (!currentUser) return;
+      api('logUsageEvent', { sessionId: _usageSessionId, eventType, eventDetail, activePrivilege: activePrivilege || null })
+        .catch(() => { /* tyst — får aldrig störa appens faktiska funktion */ });
+    }
+    // Heartbeat var 30:e sekund, men BARA medan fliken faktiskt är synlig — en bakgrundsflik
+    // som bara pollar (t.ex. väntande-godkännande-kollen) ska inte räknas som aktiv tid.
+    setInterval(() => { if (document.visibilityState === 'visible') logUsageEvent('heartbeat'); }, 30000);
     let _assessmentStartTime  = 0; // sätts när bedömningspanelen öppnas, används för tidsbesparing
     let currentAssessments = [];
     let _sectionHistory = []; // för Tillbaka-knappen i formuläret
@@ -1725,6 +1800,10 @@
       submitErrorReport:      { method: 'POST',   path: () => '/error-reports', body: p => ({ message: p.message, systemInfo: p.systemInfo }) },
       getRecentServerErrors:  { method: 'GET',    path: () => '/error-reports/recent-server-errors' },
       markTourSeen:           { method: 'PATCH',  path: () => '/users/me/seen-tours', body: p => ({ tourId: p.tourId, remove: !!p.remove }) },
+      logUsageEvent:          { method: 'POST',   path: () => '/usage-events', body: p => ({ sessionId: p.sessionId, eventType: p.eventType, eventDetail: p.eventDetail, activePrivilege: p.activePrivilege }) },
+      getUsageSummary:        { method: 'GET',    path: () => '/usage-events/summary', query: p => p.filters || {} },
+      getUsageSessions:       { method: 'GET',    path: () => '/usage-events/sessions', query: p => p.filters || {} },
+      getUsageSessionEvents:  { method: 'GET',    path: p => '/usage-events/sessions/' + encodeURIComponent(p.sessionId) },
       getErrorReports:        { method: 'GET',    path: () => '/error-reports' },
       getGlobalFeedbackSettings: { method: 'GET',  path: () => '/error-reports/global-settings' },
       saveGlobalFeedbackSettings: { method: 'PUT', path: () => '/error-reports/global-settings', body: p => ({ feedbackEmail: p.feedbackEmail }) },
@@ -1967,6 +2046,7 @@
     function bootApp() {
       // Email-nycklad cache – rensa inte andras data, bara säkerställ att vi använder rätt nycklar
 
+      logUsageEvent('session_start');
       activePrivilege = null;
       document.getElementById('login-panel').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
@@ -2068,6 +2148,7 @@
       activePrivilege = privilege;
       // null = Mitt konto, '*' = global admin, 'mora-kirurgi' = specifik klinik
       activeKlinikId = privilege ? (klinikId || currentUser.klinikId || null) : null;
+      logUsageEvent('privilege_switch', privilege || 'Mitt konto');
       renderPrivilegeToggle();
       closeMenu();
       updateSidebarPrivButtons(privilege);
@@ -2104,6 +2185,9 @@
       if (docsBtn)   docsBtn.classList.toggle('hidden', !isAdmin);
       const errorReportsBtn = document.getElementById('nav-btn-error-reports');
       if (errorReportsBtn) errorReportsBtn.classList.toggle('hidden', !(isAdmin && activeKlinikId === '*'));
+      // Användningsstatistik: bara global Administratör (klinik '*')
+      const usageStatsBtn = document.getElementById('nav-btn-usage-stats');
+      if (usageStatsBtn) usageStatsBtn.classList.toggle('hidden', !(isAdmin && activeKlinikId === '*'));
       // Progresssida: Mottagare, Blandbild samt Studierektor
       const progressBtn = document.getElementById('nav-btn-progress');
       const _role = currentUser?.userRole || '';
@@ -2279,6 +2363,8 @@
       return { data, display };
     }
 
+    let _feedbackErrorsPromise = null;
+
     function openFeedbackModal() {
       const info = buildFeedbackSystemInfo();
       window._feedbackSystemInfoObj = info.data;
@@ -2293,9 +2379,13 @@
       el.style.display = 'flex'; el.classList.remove('hidden');
 
       // Hämtar senaste backend-felen (samma loggar som gcloud logging read) i bakgrunden
-      // och bifogar dem till rapporten — misslyckas tyst om det inte går, blockerar aldrig,
-      // och visas aldrig för den inloggade användaren (se ovan).
-      api('getRecentServerErrors').then(res => {
+      // och bifogar dem till rapporten — misslyckas tyst om det inte går, blockerar aldrig
+      // att MODALEN öppnas, och visas aldrig för den inloggade användaren (se ovan). Löftet
+      // sparas (_feedbackErrorsPromise) så submitFeedback() kan vänta in det innan den
+      // faktiskt skickar — annars kunde en snabb användare skicka in rapporten INNAN detta
+      // async-anrop hunnit svara, och serverfelen bifogades då aldrig (kapplöpning, hittad
+      // 2026-07-16 när "serverfel bifogas inte" rapporterades).
+      _feedbackErrorsPromise = api('getRecentServerErrors').then(res => {
         const errors = res?.errors || [];
         if (!errors.length || !window._feedbackSystemInfoObj) return;
         window._feedbackSystemInfoObj.serverfel = errors;
@@ -2312,6 +2402,7 @@
       const statusEl = document.getElementById('feedback-status');
       if (!message) { statusEl.textContent = 'Skriv en beskrivning innan du skickar.'; statusEl.style.color = '#9e2a18'; return; }
       try {
+        if (_feedbackErrorsPromise) { statusEl.textContent = 'Skickar…'; statusEl.style.color = '#5b6b75'; await _feedbackErrorsPromise; }
         await api('submitErrorReport', { message, systemInfo: window._feedbackSystemInfoObj || {} });
         statusEl.textContent = 'Tack! Din feedback har skickats.';
         statusEl.style.color = '#2e4a5f';
@@ -2491,6 +2582,7 @@
         { id: 'nav-btn-request-stats', title: 'Förfrågningsöversikt', description: 'Statistik över klinikens förfrågningar om bedömning — hur stor andel som utförts, uppdelat per formulärtyp och yrkesroll. Sätt även hur många veckor en obesvarad förfrågan ska räknas som inaktuell.' },
         { id: 'nav-btn-admin', title: 'Administration', description: 'Hantera användare, deras roller/privilegier och kliniker. Klicka på en klinik i listan för att se och redigera dess användare, eller skapa/inaktivera hela kliniker.' },
         { id: 'nav-btn-error-reports', title: 'Felanmälningar', description: 'Här samlas feedback och buggrapporter som skickats in via "Felanmälan" i sidomenyn, med teknisk systeminformation automatiskt bifogad. Ställ in vilken e-postadress nya felanmälningar ska mejlas till.' },
+        { id: 'nav-btn-usage-stats', title: 'Användningsstatistik', description: 'Aggregerad statistik per användare och klinik — antal sessioner, aktiv tid, mest besökta paneler. Klicka på en rad för att se den personens enskilda sessioner, och på en session för att se hela händelseloggen.' },
         { id: 'nav-btn-form-builder', title: 'Formulärbyggare', description: 'Skapa nya formulärtyper eller redigera frågorna i befintliga (rubriker, skala, flerval, fritext). Du kan klistra in hela rader/kolumner direkt från Excel via CSV-redigeraren för snabb massredigering.' },
         { id: 'nav-btn-pending-users', title: 'Användargodkännande', description: 'Nya konton som registrerat sig själva väntar här tills en admin godkänner dem — innan dess kan de bara se mottagna bedömningar. Godkänn direkt i listan eller via länken i mejlet som skickades vid registreringen.' },
         { id: 'nav-btn-documents', title: 'Dokument', description: 'Nedladdningsbara mallar och avtal för kliniker som vill ansluta till eller redan använder MoraDOPS.' },
@@ -2660,6 +2752,10 @@
         { popover: { title: 'Klinikhantering', description: 'Som global Administratör kan du skapa nya kliniker eller stänga tillgången för en befintlig (utan att radera data). En klinik måste vara tom på användare innan den går att radera helt.' } }
       ],
       'error-reports': [{ popover: { title: 'Felanmälningar', description: 'Feedback och buggrapporter som skickats in via "Felanmälan" i sidomenyn, med teknisk systeminformation (t.ex. nyliga serverfel) automatiskt bifogad för att underlätta felsökning. Ställ in vilken adress nya felanmälningar ska mejlas till här ovanför.' } }],
+      'usage-stats': [
+        { element: '#us-filter-toggle-btn', popover: { title: 'Filtrera', description: 'Avgränsa på datum, klinik, yrkesroll eller aktivt privilegium. DEMO-aktivitet är exkluderad som standard.' } },
+        { popover: { title: 'Klicka för att drilla ner', description: 'Klicka på en rad för att se den personens enskilda sessioner, och på en session för hela händelseloggen (tidsstämplad panelnavigering).' } }
+      ],
       'form-builder': [
         { popover: { title: 'Formulärbyggare', description: 'Skapa nya formulärtyper eller klicka på en befintlig för att redigera dess frågor (rubriker, skala, flerval, fritext). Nya formulärtyper är osynliga för alla roller tills du valt vilka som ska se dem.' } },
         { element: '#fb-questions-view', popover: { title: 'CSV-redigering', description: 'Klistra in en hel rad eller kolumn direkt från Excel via "Redigera CSV" för snabb massredigering av frågor — praktiskt när du bygger om ett helt formulär på en gång.' } }
@@ -4385,13 +4481,16 @@
 
     function showPanel(panel) {
       checkForNewVersion();
+      // 'blank' är ett internt tomt-läge (t.ex. efter Avbryt i Min profil), inget riktigt
+      // panelbesök värt att logga.
+      if (panel !== 'blank') logUsageEvent('panel_view', panel);
       // Ta bort loading-overlay vid första showPanel
       const loadingEl = document.getElementById('app-loading');
       if (loadingEl) loadingEl.remove();
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports'].forEach(p =>
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports'].forEach(p => {
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -4438,6 +4537,7 @@
       if (panel === 'overview')          { loadMyOverview(); }
       if (panel === 'inbox')            { loadInbox(); }
       if (panel === 'request-stats')    { loadRequestStats(); }
+      if (panel === 'usage-stats')      { loadUsageStats(); }
       if (panel === 'progress')          { initProgress(); }
       if (panel !== 'progress') { _progressCharts.forEach(c => { try { c.destroy(); } catch(_){} }); _progressCharts = []; }
     }
@@ -4469,6 +4569,7 @@
   <script src="./js/my-assessments.js"></script>
   <script src="./js/scheduled-sends.js"></script>
   <script src="./js/request-stats.js"></script>
+  <script src="./js/usage-stats.js"></script>
   <script src="./js/clinic-assessments.js"></script>
   <script src="./js/admin.js"></script>
   <script src="./js/clinic-settings.js"></script>
