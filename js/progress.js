@@ -140,14 +140,16 @@
       const formType = document.getElementById('progress-formtype')?.value || '';
       const resultEl = document.getElementById('progress-ai-result');
       const btn = document.getElementById('progress-ai-btn');
-      if (!formType || (isStudierektor && !recipientEmail)) {
-        await customAlert('Välj formulärtyp (och läkare) först.');
+      if (isStudierektor && !recipientEmail) {
+        await customAlert('Välj läkare först.');
         return;
       }
       const origText = btn.textContent;
       btn.disabled = true; btn.textContent = 'Analyserar…';
       resultEl.classList.remove('hidden');
-      resultEl.textContent = 'Hämtar och analyserar bedömningsdata…';
+      resultEl.textContent = formType
+        ? 'Hämtar och analyserar bedömningsdata…'
+        : 'Hämtar och analyserar bedömningsdata från alla formulärtyper…';
       try {
         const res = await api('getProgressAiSummary', { recipientEmail, formType });
         resultEl.textContent = res.summary || res.error || 'Inget svar.';

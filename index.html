@@ -788,8 +788,8 @@
       </div>
       <div id="progress-swr-status" style="min-height:20px;margin-bottom:4px;"></div>
       <div style="margin-bottom:16px;">
-        <button class="btn-secondary btn-small" onclick="runProgressAiSummary()" id="progress-ai-btn">✨ AI-sammanställning (test)</button>
-        <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Experimentell funktion — ingen identifierande information (namn, klinik) skickas till AI-tjänsten.</span>
+        <button class="btn-secondary btn-small" onclick="runProgressAiSummary()" id="progress-ai-btn">✨ AI-sammanställning</button>
+        <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Ger en övergripande sammanställning om ingen formulärtyp är vald ovan, annars en djupare per formulärtyp. Ingen identifierande information (namn, klinik) skickas till AI-tjänsten.</span>
         <div id="progress-ai-result" class="hidden" style="margin-top:10px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px 16px;font-size:14px;white-space:pre-wrap;max-width:700px;"></div>
       </div>
       <div id="progress-content"></div>
@@ -1442,6 +1442,12 @@
         <div id="profile-role-status"></div>
         <div id="profile-pin-status"></div>
 
+        <!-- Hjälp -->
+        <div class="section-header" style="margin-top:24px;">Hjälp</div>
+        <div class="field">
+          <button class="btn-secondary" onclick="restartOnboardingTour()">Visa användarguide</button>
+        </div>
+
         <hr style="margin-top:32px;">
 
         <!-- Radera -->
@@ -1531,7 +1537,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.40.1';
+    const APP_VERSION = 'v4.41.0';
 
     let appData = null;
     let currentUser = null;
@@ -1684,7 +1690,7 @@
       checkAuthStatus:        { method: 'GET',    path: () => '/auth/status', query: p => ({ email: p.email }) },
       submitErrorReport:      { method: 'POST',   path: () => '/error-reports', body: p => ({ message: p.message, systemInfo: p.systemInfo }) },
       getRecentServerErrors:  { method: 'GET',    path: () => '/error-reports/recent-server-errors' },
-      markTourSeen:           { method: 'PATCH',  path: () => '/users/me/seen-tours', body: p => ({ tourId: p.tourId }) },
+      markTourSeen:           { method: 'PATCH',  path: () => '/users/me/seen-tours', body: p => ({ tourId: p.tourId, remove: !!p.remove }) },
       getErrorReports:        { method: 'GET',    path: () => '/error-reports' },
       getGlobalFeedbackSettings: { method: 'GET',  path: () => '/error-reports/global-settings' },
       saveGlobalFeedbackSettings: { method: 'PUT', path: () => '/error-reports/global-settings', body: p => ({ feedbackEmail: p.feedbackEmail }) },
@@ -2468,18 +2474,40 @@
     function driveSteps(steps, tourId) {
       const driverFactory = window.driver?.js?.driver;
       if (!driverFactory || !steps.length) return;
+      // Mobilsidomenyn är annars stängd (position:fixed;left:-100%) — steg som pekar på
+      // sidomenyknappar syns då inte. Öppna den för tourens varaktighet.
+      const isMobile = window.innerWidth <= 600;
+      if (isMobile) {
+        document.getElementById('sidebar')?.classList.add('open');
+        const overlay = document.getElementById('mob-sidebar-overlay');
+        if (overlay) overlay.style.display = 'block';
+      }
       const tour = driverFactory({
         showProgress: steps.length > 1,
         nextBtnText: 'Nästa',
         prevBtnText: 'Föregående',
         doneBtnText: 'Klart',
-        onDestroyed: () => markTourSeen(tourId)
+        onDestroyed: () => { if (isMobile) closeMenu(); markTourSeen(tourId); }
       });
       tour.setSteps(steps);
       tour.drive();
     }
 
     function startGuidedTour() { driveSteps(buildOnboardingSteps(), 'onboarding'); }
+
+    // "Visa användarguide" på Min profil — glömmer 'onboarding' igen (lokalt + backend) och
+    // startar om den, oavsett om den redan setts tidigare.
+    async function restartOnboardingTour() {
+      if (!currentUser) return;
+      currentUser.seenTours = (currentUser.seenTours || []).filter(t => t !== 'onboarding');
+      localStorage.setItem('dops_user', JSON.stringify(currentUser));
+      if (currentUser.isDemo) {
+        const cur = getDemoSeenToursCache().filter(t => t !== 'onboarding');
+        localStorage.setItem(DEMO_SEEN_TOURS_CACHE_KEY, JSON.stringify(cur));
+      }
+      try { await api('markTourSeen', { tourId: 'onboarding', remove: true }); } catch (e) { /* tyst, samma logik som markTourSeen */ }
+      startGuidedTour();
+    }
 
     function maybeShowTourPrompt() {
       if (hasSeenTour('onboarding')) return;
@@ -2501,14 +2529,28 @@
     // som stör vid varje panelbyte. Oberoende av onboardingens "visa inte igen".
     const PANEL_TOURS = {
       assessment: [{ popover: { title: 'Registrera bedömning', description: 'Välj mottagarens kategori, fyll i formuläret och skicka in — mottagaren notifieras automatiskt.' } }],
-      'my-assessments': [{ popover: { title: 'Mina bedömningar', description: 'Allt du registrerat och tagit emot. Filtrera på datum eller formulärtyp, och exportera som Word-dokument.' } }],
-      overview: [{ popover: { title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp. Byt period och upplösning i filtren.' } }],
+      'my-assessments': [
+        { popover: { title: 'Mina bedömningar', description: 'Allt du registrerat och tagit emot. Filtrera på datum eller formulärtyp, och exportera som Word-dokument.' } },
+        { element: '#filter-toggle-btn', popover: { title: 'Filtrera', description: 'Öppna filtret för att avgränsa på datumintervall eller specifika formulärtyper.' } }
+      ],
+      overview: [
+        { popover: { title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp.' } },
+        { element: '#overview-resolution', popover: { title: 'Upplösning', description: 'Byt mellan dag/vecka/månad för att se utvecklingen på olika detaljnivå.' } }
+      ],
       statistics: [
         { element: '#chart-line-card', popover: { title: 'Bedömningar över tid', description: 'Klinikens aktivitet, uppdelat per formulärtyp.' } },
-        { element: '#chart-pie-card', popover: { title: 'Fördelning per formulärtyp', description: 'Hur bedömningarna fördelar sig mellan formulärtyper.' } }
+        { element: '#chart-pie-card', popover: { title: 'Fördelning per formulärtyp', description: 'Hur bedömningarna fördelar sig mellan formulärtyper.' } },
+        { element: '#stat-filter-toggle-btn', popover: { title: 'Filtrera', description: 'Avgränsa på datum eller formulärtyp, och byt upplösning (dag/vecka/månad) längre ner på sidan.' } }
       ],
-      'clinic-overview': [{ popover: { title: 'Klinikens bedömningar', description: 'Som Studierektor ser du alla bedömningar i kliniken här, med filter på kategori och mottagare.' } }],
-      admin: [{ popover: { title: 'Administration', description: 'Hantera användare, behörigheter och kliniker. Klicka på en klinik i listan för att se dess användare.' } }]
+      'clinic-overview': [
+        { popover: { title: 'Klinikens bedömningar', description: 'Som Studierektor ser du alla bedömningar i kliniken här.' } },
+        { element: '#co-filter-toggle-btn', popover: { title: 'Filtrera', description: 'Avgränsa på datum, kategori, formulärtyp eller mottagarens namn.' } }
+      ],
+      admin: [{ popover: { title: 'Administration', description: 'Hantera användare, behörigheter och kliniker. Klicka på en klinik i listan för att se dess användare.' } }],
+      progress: [
+        { element: '#progress-formtype', popover: { title: 'Formulärtyp', description: 'Välj en formulärtyp för grafer och detaljerad progress, eller lämna tomt för en övergripande AI-sammanställning över alla dina formulärtyper.' } },
+        { element: '#progress-ai-btn', popover: { title: 'AI-sammanställning', description: 'Ger en AI-genererad sammanställning av dina bedömningar — anonymiserad, inga namn eller kliniker skickas.' } }
+      ]
     };
 
     function maybeOfferPanelTour(panel) {

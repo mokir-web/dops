@@ -77,9 +77,17 @@
     }
     function updateFormTypeFilters(assessments) {
       const types = [...new Set(assessments.map(a => a.formType))].sort();
-      availableFormTypes = types;
       const counts = {};
       assessments.forEach(a => { counts[a.formType] = (counts[a.formType]||0)+1; });
+      // Om ett pending-filter pekar på en typ det inte finns bedömningar av bland de laddade,
+      // finns annars ingen kryssruta att kryssa i — filtret faller då tyst tillbaka till "inget
+      // filter" (visar allt) istället för "filtrerat, noll träffar". Synliggör den ändå (0 st).
+      if (_pendingFormFilter && !types.includes(_pendingFormFilter)) {
+        types.push(_pendingFormFilter);
+        types.sort();
+        counts[_pendingFormFilter] = 0;
+      }
+      availableFormTypes = types;
       const container = document.getElementById('filter-formtypes');
       if (!container) return;
       // Spara befintligt val innan rebuild så SWR-revalidering inte nollställer filter
@@ -108,7 +116,7 @@
         const hasFilter = document.getElementById('filter-date-from')?.value || document.getElementById('filter-date-to')?.value
           || document.querySelectorAll('#filter-formtypes input:checked').length > 0;
         list.innerHTML = hasFilter
-          ? '<p style="color:#888">Inga bedömningar hittades för vald filtrering.</p>'
+          ? '<p style="color:#888">Inga registreringar med aktuellt filterval</p>'
           : '<p style="color:#888">Inga bedömningar hittades.</p>';
         show('assessment-actions', false);
         return;

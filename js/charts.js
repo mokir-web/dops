@@ -73,10 +73,19 @@
     function addMobileLegendToggle(chart, containerEl) {
       if (window.innerWidth > 600 || !containerEl) return;
       containerEl.querySelectorAll('.mobile-legend-toggle-btn').forEach(b => b.remove());
-      chart.options.plugins = chart.options.plugins || {};
-      chart.options.plugins.legend = chart.options.plugins.legend || {};
-      chart.options.plugins.legend.display = false;
-      chart.update();
+      // ROTORSAK (bekräftad genom felsökning) till "Maximum call stack size exceeded" på
+      // paj-diagrammet i Klinikens statistik på iPhone: `chart.options.plugins.legend =
+      // chart.options.plugins.legend || {}` — en självrefererande omtilldelning av ett
+      // Chart.js v4-optionsobjekt som har en `onClick`-callback (vilket legend alltid har
+      // här) — trigger en oändlig rekursion i Chart.js egna Proxy-baserade
+      // optionsupplösning. Detta har INGET med WebKit/ResizeObserver att göra (repro:as
+      // 100% av gångerna även i Chrome) — bara ovanligt eftersom koden bara körs under
+      // 600px bredd, vilket normal skrivbordsutveckling aldrig träffar. Fixen: rör ALDRIG
+      // chart.options.plugins/.legend via omtilldelning — mutera bara `.display` direkt.
+      if (chart.options.plugins.legend.display !== false) {
+        chart.options.plugins.legend.display = false;
+        chart.update();
+      }
       const btn = document.createElement('button');
       btn.className = 'btn-secondary btn-small mobile-legend-toggle-btn';
       btn.style.cssText = 'margin-top:8px;width:100%;';
