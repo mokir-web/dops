@@ -592,8 +592,7 @@
               <div id="privilege-inline" class="hidden" style="background:#24384a;border:1.5px solid #c7d1d7;border-top:none;border-radius:0 0 6px 6px;margin-bottom:8px;overflow:hidden;">
               </div>
               <button class="sidebar-btn-secondary" id="nav-btn-profile"    onclick="showPanel('profile')"><i class="ti ti-user" aria-hidden="true"></i><span class="sidebar-btn-label">Min profil</span></button>
-              <button onclick="openFeedbackModal()" class="sidebar-btn-secondary"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Felanmälan</span></button>
-              <button onclick="clearCache()" class="sidebar-btn-secondary"><i class="ti ti-refresh" aria-hidden="true"></i><span class="sidebar-btn-label">Rensa cache</span></button>
+              <button id="nav-btn-feedback" onclick="openFeedbackModal()" class="sidebar-btn-secondary"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Felanmälan</span></button>
               <button class="sidebar-btn-secondary" id="nav-btn-about"      onclick="showPanel('about')"><i class="ti ti-info-circle" aria-hidden="true"></i><span class="sidebar-btn-label">Om MoraDOPS</span></button>
             </div>
           </div>
@@ -617,7 +616,7 @@
     <div id="panel-assessment">
       <h2>Bedömning</h2>
       <p id="f-intro" style="color:#666; font-size:13px;">Frågor som inte anses relevanta kan med fördel lämnas obesvarade.</p>
-      <p class="kb-info-desktop-only" style="color:#8a97a0;font-size:12px;margin-top:-6px;">Formuläret kan navigeras med tangentbord: <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Tab</kbd> byter fält, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Enter</kbd> bekräftar och går vidare.</p>
+      <p class="kb-info-desktop-only" style="color:#8a97a0;font-size:12px;margin-top:-6px;">Formuläret kan navigeras med tangentbord: <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Tab</kbd> byter fält, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">Enter</kbd> bekräftar och går vidare, <kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">0</kbd>–<kbd style="background:#dde3e7;border:1px solid #c7d1d7;border-radius:3px;padding:1px 5px;font-size:11px;">9</kbd> väljer direkt ett värde på skalfrågor.</p>
 
       <div class="field" id="f1" style="display:none;">
         <label class="field-label">1. Klinik</label>
@@ -1465,6 +1464,13 @@
           <button class="btn-secondary" onclick="restartOnboardingTour()">Visa användarguide</button>
         </div>
 
+        <!-- Lokal lagring -->
+        <div class="section-header" style="margin-top:24px;">Lokal lagring</div>
+        <p style="color:#5b6b75;font-size:15px;">Rensar tillfälligt sparad data på den här enheten (t.ex. mellanlagrade listor) och laddar om sidan. Loggar inte ut dig och påverkar ingen sparad data på servern.</p>
+        <div class="field">
+          <button class="btn-secondary" onclick="clearCache()">Rensa cache</button>
+        </div>
+
         <hr style="margin-top:32px;">
 
         <!-- Radera -->
@@ -1524,6 +1530,17 @@
     </div>
   </div>
 
+  <!-- Rollväxlare som popup — används när sidomenyn är infälld och den inline-dropdown
+       som annars expanderas under användarkortet inte får plats/visas (CSS döljer den
+       explicit i infällt läge). -->
+  <div id="privilege-switch-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:340px;width:100%;">
+      <h3 style="margin-top:0;">Byt roll</h3>
+      <div id="privilege-switch-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+      <div class="btn-row"><button class="btn-secondary" onclick="closePrivilegeSwitchModal()">Avbryt</button></div>
+    </div>
+  </div>
+
   <div id="demo-lead-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
     <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;">
       <h3 style="margin-top:0;">Intresserad av MoraDOPS?</h3>
@@ -1554,7 +1571,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.41.3';
+    const APP_VERSION = 'v4.41.4';
 
     let appData = null;
     let currentUser = null;
@@ -2464,7 +2481,7 @@
     function buildOnboardingSteps() {
       const candidates = [
         { id: 'nav-btn-assessment', title: 'Registrera bedömning', description: 'Här registrerar du en ny bedömning av en kollega — appens kärnfunktion. Välj mottagarens kategori, fyll i formuläret (kan navigeras helt med tangentbordet) och skicka in, så notifieras mottagaren automatiskt via e-post.' },
-        { id: 'nav-btn-inbox', title: 'Förfrågningar', description: 'Här ser du inkommande förfrågningar om att bli bedömd och de du själv skickat. Du kan också be en specifik kollega (eller flera på en gång) om en bedömning genom att ange formulärtyp och ett meddelande.' },
+        { id: 'nav-btn-inbox', title: 'Förfrågningar', description: 'Här ser du inkommande förfrågningar om att bli bedömd och de du själv skickat. Begär en bedömning av en specifik kollega genom att ange formulärtyp och ett meddelande — de får ett mejl med en direktlänk.' },
         { id: 'nav-btn-my-assessments', title: 'Mina bedömningar', description: 'En samlad, filtrerbar lista över allt du registrerat och tagit emot. Markera enskilda bedömningar och exportera dem som ett Word-dokument som mejlas till dig.' },
         { id: 'nav-btn-overview', title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp, med målvärden satta av kliniken. Byt tidsperiod och upplösning (dag/vecka/månad) i filtren för att se detaljer eller helhetsbild.' },
         { id: 'nav-btn-progress', title: 'Progress', description: 'Detaljerad progress per formulärtyp med grafer över enskilda delmoment över tid. Lämna formulärtyp tom och klicka "AI-sammanställning" för en övergripande, anonymiserad AI-genererad sammanfattning istället.' },
@@ -2478,7 +2495,9 @@
         { id: 'nav-btn-pending-users', title: 'Användargodkännande', description: 'Nya konton som registrerat sig själva väntar här tills en admin godkänner dem — innan dess kan de bara se mottagna bedömningar. Godkänn direkt i listan eller via länken i mejlet som skickades vid registreringen.' },
         { id: 'nav-btn-documents', title: 'Dokument', description: 'Nedladdningsbara mallar och avtal för kliniker som vill ansluta till eller redan använder MoraDOPS.' },
         { id: 'nav-btn-reminders', title: 'Påminnelser', description: 'Ställ in automatiska återkommande e-postpåminnelser med personlig statistik till valda användare, t.ex. varje vecka eller varannan. Du väljer själv vilket innehåll (registrerat/mottaget/per formulärtyp) som ska ingå.' },
-        { id: 'nav-btn-profile', title: 'Min profil', description: 'Här ändrar du dina uppgifter, klinik, aviseringsinställningar och PIN. Du kan även byta startsida och radera ditt konto härifrån.' }
+        { id: 'nav-btn-profile', title: 'Min profil', description: 'Här ändrar du dina uppgifter, klinik, aviseringsinställningar och PIN. Du kan även byta startsida och radera ditt konto härifrån.' },
+        { id: 'nav-btn-feedback', title: 'Felanmälan', description: 'Rapportera buggar, oväntat beteende eller ge förbättringsförslag. Beskriv gärna vad du gjorde och vad som hände — teknisk systeminformation bifogas automatiskt för att underlätta felsökningen.' },
+        { id: 'nav-btn-about', title: 'Om MoraDOPS', description: 'Beskrivning av systemets olika formulärtyper och hur de används, samt kontaktuppgifter om du behöver nå oss.' }
       ];
       const steps = candidates
         .map(c => ({ el: document.getElementById(c.id), c }))
@@ -2494,6 +2513,25 @@
             description: 'Allt du ser är påhittad testdata i en egen testklinik — testa fritt, inget påverkar riktiga kliniker. Byt roll eller kontakta oss via knapparna här ovanför.'
           }
         });
+      }
+
+      // Extra sista steg för användare som ÄVEN har Studierektor-/Administratör-
+      // privilegium utöver sin vanliga roll (t.ex. en ST-läkare som också är
+      // Studierektor för kliniken) — förklarar hur man växlar, eftersom det annars
+      // är lätt att missa att fler vyer/funktioner finns tillgängliga.
+      if (currentUser?.privileges?.length) {
+        const sidebarCollapsed = document.getElementById('sidebar')?.classList.contains('collapsed');
+        const roleSwitchId = sidebarCollapsed ? 'sidebar-user-icon-collapsed' : 'sidebar-user-btn';
+        const roleSwitchEl = document.getElementById(roleSwitchId);
+        if (roleSwitchEl && roleSwitchEl.offsetParent !== null) {
+          steps.push({
+            element: '#' + roleSwitchId,
+            popover: {
+              title: 'Byt roll',
+              description: 'Utöver din vanliga roll har du även Studierektor- och/eller Administratör-behörighet för din klinik. Klicka här (på ditt namn, eller ikonen om menyn är infälld) för att växla — som Studierektor låser det bland annat upp gruppförfrågningar (fråga flera kollegor samtidigt) och Förfrågningsöversikt.'
+            }
+          });
+        }
       }
       return steps;
     }
@@ -2514,6 +2552,17 @@
         nextBtnText: 'Nästa',
         prevBtnText: 'Föregående',
         doneBtnText: 'Klart',
+        smoothScroll: true,
+        // driver.js egen scroll-logik nöjer sig med att BARA kanten av elementet är
+        // synlig — räcker inte när steget beskriver innehåll längre ner i ett stort
+        // element (t.ex. måluppfyllelse-graferna i Min översikt, som annars blir kvar
+        // utanför skärmen om sidan redan stod högst upp). Centrera manuellt istället.
+        // setTimeout: om skrollningen görs synkront hinner driver.js egen interna
+        // positionering (som körs direkt efter denna callback) tävla med/nollställa den —
+        // en kort fördröjning låter driver.js bli klar innan vi skrollar. behavior:'auto'
+        // (inte 'smooth') — två köade smooth-scroll-anrop (driver.js egen + detta) verkar
+        // kunna ta ut varandra och ge ingen nettorörelse alls.
+        onHighlightStarted: element => setTimeout(() => element?.scrollIntoView({ block: 'center', behavior: 'auto' }), 50),
         onDestroyed: () => { if (isMobile) closeMenu(); markTourSeen(tourId); }
       });
       tour.setSteps(steps);
@@ -2573,17 +2622,20 @@
     // panelbyte. Om användaren tackat nej till onboardingen (Inte nu/Visa inte) erbjuds
     // panel-hjälpen inte heller — se _onboardingDeclined ovan.
     const PANEL_TOURS = {
-      assessment: [{ popover: { title: 'Registrera bedömning', description: 'Välj mottagarens kategori, fyll i formuläret (varje DOPS bör representera ett eget ingrepp) och skicka in — mottagaren notifieras automatiskt via e-post. Formuläret går att fylla i helt med tangentbordet: Tab byter fält, Enter bekräftar och går vidare.' } }],
+      assessment: [{ popover: { title: 'Registrera bedömning', description: 'Välj mottagarens kategori, fyll i formuläret (varje DOPS bör representera ett eget ingrepp) och skicka in — mottagaren notifieras automatiskt via e-post. Formuläret går att fylla i helt med tangentbordet: Tab byter fält, Enter bekräftar och går vidare, 0–9 väljer direkt ett värde på skalfrågor.' } }],
       inbox: [
-        { popover: { title: 'Förfrågningar', description: 'Här hamnar förfrågningar om att bli bedömd som du fått, och de du själv skickat till kollegor. En obesvarad förfrågan markeras automatiskt "Inaktuell" efter det antal veckor kliniken satt (se Förfrågningsöversikt).' } },
-        { element: '#inbox-tab-request', popover: { title: 'Begär bedömning', description: 'Be en specifik kollega om en bedömning genom att ange formulärtyp och ett meddelande — de får ett mejl med en direktlänk. Finns även en gruppförfrågan-knapp för att fråga flera samtidigt.' } }
+        { popover: { title: 'Förfrågningar', description: 'Här hamnar förfrågningar om att bli bedömd som du fått, och de du själv skickat till kollegor. En obesvarad förfrågan markeras automatiskt "Inaktuell" efter det antal veckor kliniken satt.' } },
+        { element: '#inbox-tab-request', popover: { title: 'Begär bedömning', description: 'Be en specifik kollega om en bedömning genom att ange formulärtyp och ett meddelande — de får ett mejl med en direktlänk.' } }
       ],
       'my-assessments': [
         { popover: { title: 'Mina bedömningar', description: 'Allt du registrerat och tagit emot, uppdelat på flikarna "Mottagna"/"Skickade". Klicka på ett kort för att se alla svar i den bedömningen.' } },
         { element: '#filter-toggle-btn', popover: { title: 'Filtrera & exportera', description: 'Avgränsa på datumintervall eller specifika formulärtyper. Markera en eller flera bedömningar och klicka "Exportera" för att få dem som ett Word-dokument mejlat till dig.' } }
       ],
       overview: [
-        { popover: { title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp. Grönt = mål uppnått, gult = delvis uppfyllt, rött = inga registreringar ännu — målet skalas automatiskt om du byter tidsintervall.' } },
+        // element satt (inte bara en centrerad popover) så sidan faktiskt skrollar till
+        // måluppfyllelse-graferna texten beskriver — annars syns de inte om man står
+        // kvar längst upp.
+        { element: '#overview-content', popover: { title: 'Min översikt', description: 'Grafer över din egen utveckling över tid, per formulärtyp. Grönt = mål uppnått, gult = delvis uppfyllt, rött = inga registreringar ännu — målet skalas automatiskt om du byter tidsintervall.' } },
         { element: '#overview-resolution', popover: { title: 'Upplösning', description: 'Byt mellan dag/vecka/månad för att se utvecklingen på olika detaljnivå. Klicka direkt på en stapel för att hoppa till motsvarande filtrerade lista i Mina bedömningar.' } }
       ],
       statistics: [
@@ -3601,33 +3653,65 @@
 
 
 
+    function _buildPrivilegeOptions() {
+      const privs = currentUser.privileges || [];
+      const options = [{ label: currentUser.jobRole || 'Mitt konto', value: null, klinikId: null }];
+      privs.forEach(p => options.push({ label: p.privilege, value: p.privilege, klinikId: p.klinikId }));
+      return options;
+    }
+    // dark:true = mörk inline-dropdown (i sidomenyn), dark:false = ljus popup-modal
+    // (infälld meny) — samma val-lista, olika färgtema för respektive bakgrund.
+    function _privilegeOptionHtml(o, isActive, { dark, borderTop }) {
+      const bg     = isActive ? '#2e4a5f' : (dark ? 'transparent' : '#fff');
+      const color  = isActive ? '#7fd4a0' : (dark ? '#d4dde3' : '#1c2b36');
+      const border = dark ? `border-top:${borderTop || 'none'};` : 'border:1.5px solid #c7d1d7;border-radius:6px;';
+      return html`<div onclick="selectPrivilegeInline('${safe(jsAttr(o.value))}','${safe(jsAttr(o.klinikId || ''))}')"
+        style="padding:${safe(dark ? '8px 12px' : '10px 14px')};font-size:14px;cursor:pointer;
+        background:${safe(bg)};color:${safe(color)};font-weight:${safe(isActive ? 'bold' : 'normal')};${safe(border)}">
+        ${o.label}${isActive ? ' ✓' : ''}
+      </div>`;
+    }
+
     function togglePrivilegeFromUserBtn() {
+      // Infälld sidomeny: den inline-expanderande dropdownen döljs explicit av CSS
+      // (.sidebar.collapsed #privilege-inline) eftersom det inte finns plats — visa en
+      // popup istället.
+      if (document.getElementById('sidebar')?.classList.contains('collapsed')) {
+        openPrivilegeSwitchModal();
+        return;
+      }
+
       const inlineEl = document.getElementById('privilege-inline');
       if (!inlineEl) return;
       const isOpen = !inlineEl.classList.contains('hidden');
       if (isOpen) { inlineEl.classList.add('hidden'); return; }
 
-      // Bygg rollval inline
-      const privs = currentUser.privileges || [];
-      const options = [{ label: currentUser.jobRole || 'Mitt konto', value: null, klinikId: null }];
-      privs.forEach(p => options.push({ label: p.privilege, value: p.privilege, klinikId: p.klinikId }));
+      const options = _buildPrivilegeOptions();
       if (options.length <= 1) return; // inget att välja
-      inlineEl.innerHTML = options.map((o, i) => {
-        const isActive = activePrivilege === o.value;
-        return `<div onclick="selectPrivilegeInline('${o.value}','${o.klinikId||''}')"
-          style="padding:8px 12px;font-size:14px;cursor:pointer;
-          background:${isActive ? '#2e4a5f' : 'transparent'};
-          color:${isActive ? '#7fd4a0' : '#d4dde3'};
-          font-weight:${isActive ? 'bold' : 'normal'};
-          border-top:${i>0 ? '1px solid #3d5a70' : 'none'};">
-          ${esc(o.label)}${isActive ? ' ✓' : ''}
-        </div>`;
-      }).join('');
+      inlineEl.innerHTML = options.map((o, i) =>
+        _privilegeOptionHtml(o, activePrivilege === o.value, { dark: true, borderTop: i > 0 ? '1px solid #3d5a70' : 'none' })
+      ).join('');
       inlineEl.classList.remove('hidden');
+    }
+
+    function openPrivilegeSwitchModal() {
+      const options = _buildPrivilegeOptions();
+      if (options.length <= 1) return; // inget att välja
+      const listEl = document.getElementById('privilege-switch-list');
+      listEl.innerHTML = options.map(o =>
+        _privilegeOptionHtml(o, activePrivilege === o.value, { dark: false })
+      ).join('');
+      const el = document.getElementById('privilege-switch-modal');
+      el.style.display = 'flex'; el.classList.remove('hidden');
+    }
+    function closePrivilegeSwitchModal() {
+      const el = document.getElementById('privilege-switch-modal');
+      el.style.display = 'none'; el.classList.add('hidden');
     }
 
     function selectPrivilegeInline(privilege, klinikId) {
       document.getElementById('privilege-inline').classList.add('hidden');
+      closePrivilegeSwitchModal(); // no-op om popupen inte var öppen
       const priv = privilege === 'null' || !privilege ? null : privilege;
       const kid  = klinikId === 'null' || !klinikId ? null : klinikId;
       setPrivilege(priv, kid);
