@@ -1639,7 +1639,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.44.2';
+    const APP_VERSION = 'v4.44.4';
 
     let appData = null;
     let currentUser = null;
@@ -4555,13 +4555,28 @@
     let _navClosingFromPopstate = false;
     let _navBaselineInitialized = false;
 
-    // Anropas en gång vid appstart (bootApp()) — skapar en historikpost "under"
-    // appens första vy, så att ens det FÖRSTA bakåttrycket ger en popstate-händelse
-    // att fånga upp istället för att lämna sidan direkt.
+    // Antal "buffersidor" som läggs i botten av historiken (och läggs tillbaka varje
+    // gång de tar slut, se absorptionsläget i _handleNavPopstate). Detta skjuter bara
+    // upp gränsen — det sista steget ut ur dokumentets EGEN historik (till vad som
+    // låg innan appen, t.ex. en ny flik) är en riktig sidnavigering som JS aldrig kan
+    // avbryta (webbläsarens medvetna skydd mot att sidor låser in besökare). Fler
+    // buffersidor gör det bara osannolikare att en användare faktiskt trycker sig
+    // igenom dem alla i onödan.
+    const NAV_BUFFER_SIZE = 5;
+
+    function _pushNavBuffer() {
+      for (let i = 0; i < NAV_BUFFER_SIZE; i++) {
+        history.pushState({ __navBase: true }, '', location.href);
+      }
+    }
+
+    // Anropas en gång vid appstart (bootApp()) — skapar buffersidorna "under" appens
+    // första vy, så att de FÖRSTA bakåttrycken ger popstate-händelser att fånga upp
+    // istället för att lämna sidan direkt.
     function _initNavGuard() {
       if (_navBaselineInitialized) return;
       _navBaselineInitialized = true;
-      history.pushState({ __navBase: true }, '', location.href);
+      _pushNavBuffer();
     }
 
     function pushNav(onBack, opts) {
@@ -4583,9 +4598,10 @@
 
     async function _handleNavPopstate() {
       if (!_navStack.length) {
-        // Inget kvar att gå tillbaka till i appen — lägg tillbaka en post direkt så
-        // fliken aldrig faktiskt lämnar appen.
-        history.pushState({ __nav: 0 }, '', location.href);
+        // Inget kvar att gå tillbaka till i appen — fyll på hela buffertlagret igen så
+        // det tar NAV_BUFFER_SIZE nya bakåttryck innan nästa (icke-avbrytbara) steg ut
+        // ur dokumentets egen historik. Fliken lämnar aldrig appen medan bufferten räcker.
+        _pushNavBuffer();
         return;
       }
       const frame = _navStack[_navStack.length - 1];
@@ -4609,6 +4625,25 @@
     window.addEventListener('popstate', function() {
       if (_navPopstateGuard) { _navPopstateGuard = false; return; }
       _handleNavPopstate();
+    });
+
+    // Svep-navigering (styrplatta/musens sidoknapp) hanteras av webbläsarens/OS:ets
+    // navigerings-UI ett steg UTANFÖR sidans JS — eftersom hela vår pushState-kedja
+    // aldrig faktiskt laddar om sidan (samma dokument hela tiden) kan webbläsaren se
+    // det som EN enda "sida" att svepa förbi, och hoppa rakt förbi popstate-fångsten
+    // ovan till vad som helst som låg innan appen (hittat 2026-07-18, bekräftat i
+    // Chrome). Det går inte att stoppa helt via JS/CSS — men beforeunload fångar
+    // fortfarande FAKTISKA sidnedladdningsförsök (inklusive svep) och ger en inbyggd
+    // webbläsarvarning, så länge något är osparat. _navStack.some(...) återanvänder
+    // samma isDirty-koll som redan är kopplad till varje panel/modal ovan.
+    function _anyUnsavedNavData() {
+      return _navStack.some(f => f.isDirty && f.isDirty());
+    }
+    window.addEventListener('beforeunload', function(e) {
+      if (_anyUnsavedNavData()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
     });
 
     // Generisk "osparade ändringar"-koll för modaler/formulär: jämför nuvarande
