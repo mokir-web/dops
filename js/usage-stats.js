@@ -73,33 +73,51 @@
       loadUsageDevices();
     }
 
+    let usageDevicesChart = null;
+
     async function loadUsageDevices() {
-      const el = document.getElementById('us-devices-list');
+      const el = document.getElementById('us-devices-chart-wrap');
       if (!el) return;
-      el.innerHTML = '<p style="color:#888;font-size:13px;">Hämtar…</p>';
+      const statusEl = document.getElementById('us-devices-status');
+      if (statusEl) statusEl.textContent = '';
       try {
         const data = await api('getUsageDevices', { filters: _usageStatsFilters() });
         renderUsageDevices(data);
       } catch (err) {
-        el.innerHTML = html`<p class="status-err">${err.message}</p>`;
+        if (statusEl) statusEl.innerHTML = html`<p class="status-err">${err.message}</p>`;
       }
     }
 
+    // Slagit ihop enhet+webbläsare till EN kombinerad graf (t.ex. "Mobil – Firefox")
+    // istället för två separata fördelningar — enklare att på en blick se vad som
+    // faktiskt ska prioriteras vid optimering. Följer samma Chart.js-mönster (paj +
+    // CHART_COLORS + mobil-legend-fix) som js/statistics.js — se addMobileLegendToggle()
+    // i charts.js för VARFÖR legend-optionerna aldrig får omtilldelas rakt av
+    // (självrefererande Proxy-krasch på iPhone, hittad tidigare i den här appen).
     function renderUsageDevices(data) {
-      const el = document.getElementById('us-devices-list');
-      if (!data.total) { el.innerHTML = '<p style="color:#888;">Inga sessioner för valt filter.</p>'; return; }
-      const bar = (name, count) => {
-        const pct = Math.round((count / data.total) * 100);
-        return html`<div style="margin-bottom:8px;">
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px;"><span>${name}</span><span style="color:#5b6b75;">${count} (${pct}%)</span></div>
-          <div style="background:#c7d1d7;border-radius:4px;height:6px;overflow:hidden;"><div style="background:#2e4a5f;height:100%;width:${pct}%;"></div></div>
-        </div>`;
-      };
-      let out = '<div style="display:flex;gap:32px;flex-wrap:wrap;max-width:600px;">';
-      out += '<div style="flex:1;min-width:220px;"><div class="section-header" style="margin-bottom:8px;">Enhet</div>' + data.devices.map(d => bar(d.name, d.count)).join('') + '</div>';
-      out += '<div style="flex:1;min-width:220px;"><div class="section-header" style="margin-bottom:8px;">Webbläsare</div>' + data.browsers.map(b => bar(b.name, b.count)).join('') + '</div>';
-      out += '</div>';
-      el.innerHTML = out;
+      const statusEl = document.getElementById('us-devices-status');
+      const cardEl = document.getElementById('us-devices-chart-card');
+      if (!data.total) {
+        if (statusEl) statusEl.innerHTML = '<p style="color:#888;">Inga sessioner för valt filter.</p>';
+        if (usageDevicesChart) { usageDevicesChart.destroy(); usageDevicesChart = null; }
+        return;
+      }
+      const labels = data.combos.map(c => c.name);
+      const values = data.combos.map(c => c.count);
+      if (usageDevicesChart) usageDevicesChart.destroy();
+      const ctx = document.getElementById('chart-usage-devices').getContext('2d');
+      usageDevicesChart = new Chart(ctx, {
+        type: 'pie',
+        data: { labels, datasets: [{ data: values, backgroundColor: CHART_COLORS.slice(0, labels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, resizeDelay: 100,
+          plugins: {
+            legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(usageDevicesChart)(e, li) },
+            tooltip: { callbacks: { label: ctx2 => `${ctx2.label}: ${ctx2.parsed} (${Math.round(ctx2.parsed / data.total * 100)}%)` } }
+          }
+        }
+      });
+      addMobileLegendToggle(usageDevicesChart, cardEl);
     }
 
     function renderUsageSummary(rows) {
