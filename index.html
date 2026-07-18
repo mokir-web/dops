@@ -1632,7 +1632,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.43.0';
+    const APP_VERSION = 'v4.44.0';
 
     let appData = null;
     let currentUser = null;
@@ -2044,6 +2044,7 @@
 
     function bootApp() {
       // Email-nycklad cache – rensa inte andras data, bara säkerställ att vi använder rätt nycklar
+      _initNavGuard();
 
       logUsageEvent('session_start');
       activePrivilege = null;
@@ -2970,6 +2971,7 @@
     async function loadForm(formName) {
       savedAnswers = {};
       _sectionHistory = [];
+      _armAssessmentNavFrame();
       window._formStartTime = new Date().toISOString();
       document.getElementById('form-questions').innerHTML = '<p style="color:#888">Laddar frågor...</p>';
       const submitBtn = document.getElementById('submit-btn');
@@ -3308,14 +3310,58 @@
       showSection(next);
     }
 
+    // ── Bakåtknappen inuti bedömningsformuläret ─────────────────────────────────
+    // En enda "själv-återladdande" navigeringsram (istället för en per avsnitt):
+    // isDirty/onBack läser _sectionHistory/savedAnswers live vid varje bakåttryck,
+    // så samma ram täcker både "stega ett avsnitt bakåt" (inget att varna för —
+    // goBackSection() kastar ingenting) och "lämna formuläret helt" (varnar om
+    // något är ifyllt, precis som cancelAssessment()-knappen redan gör).
+    let _assessmentNavArmed = false;
+
+    function hasUnsavedAssessmentData() {
+      if (currentSection) saveCurrentSectionAnswers(currentSection);
+      return Object.keys(savedAnswers).length > 0;
+    }
+
+    function _armAssessmentNavFrame() {
+      if (_assessmentNavArmed) return;
+      _assessmentNavArmed = true;
+      pushNav(_assessmentNavBack, {
+        isDirty: () => _sectionHistory.length === 0 && hasUnsavedAssessmentData(),
+        message: 'Du har en påbörjad bedömning som inte skickats. Vill du fortsätta ändå? (Dina svar sparas automatiskt som utkast om du kommit förbi första avsnittet.)'
+      });
+    }
+
+    function _disarmAssessmentNavFrame() {
+      if (!_assessmentNavArmed) return;
+      _assessmentNavArmed = false;
+      popNav();
+    }
+
+    function _assessmentNavBack() {
+      if (_sectionHistory.length > 0) { goBackSection(); return; }
+      // Ramen är redan konsumerad av popstate-hanteraren vid det här laget.
+      _assessmentNavArmed = false;
+      clearDraft();
+      savedAnswers = {};
+      currentFormData = null;
+      window._pendingAssessmentMeta = null;
+      pendingRequestId = null; pendingRequestFrom = null; pendingRequestFormType = null;
+      showPanel('assessment');
+    }
+
     function goBackSection() {
       const prev = _sectionHistory.pop();
       if (prev === undefined) return;
+      _assessmentNavArmed = false;
+      popNav();
       showSection(prev);
+      _armAssessmentNavFrame();
     }
 
     async function cancelAssessment() {
       if (!await customConfirm('Vill du verkligen avbryta? Dina registrerade svar går förlorade.', 'Ja, rensa', 'Nej, fortsätt registrering')) return;
+      _disarmAssessmentNavFrame();
       clearDraft();
       savedAnswers = {};
       currentFormData = null;
@@ -3358,6 +3404,7 @@
           return;
         }
         clearDraft();
+        _disarmAssessmentNavFrame();
         // Markera berörda cachar inaktuella: innehåll visas direkt, revalidering hämtar nya bedömningen
         bgMarkStale('myOverview');
         bgMarkStale('myAssessments_sent');
@@ -4421,6 +4468,7 @@
     async function resumeDraftAsync(draft) {
       window._pendingAssessmentMeta = { recipient: draft.recipient, formType: draft.formType, category: draft.category };
       _sectionHistory = draft.sectionHistory || [];
+      _armAssessmentNavFrame();
       ['f-intro', 'f1', 'f2', 'f3', 'f4', 'f5', 'f34-summary', 'f-till-bedomning'].forEach(id => show(id, false));
       show('f6-container', true);
       document.getElementById('form-questions').innerHTML = '<p style="color:#888">Laddar frågor...</p>';
@@ -4433,12 +4481,14 @@
       } catch (err) {
         await customAlert('Kunde inte återuppta bedömningen: ' + err.message);
         localStorage.removeItem(draftKey());
+        _disarmAssessmentNavFrame();
         resetAssessment();
       }
     }
 
     function resetAssessment() {
       // Nollställ formulärdata – pending-state sätts separat av startRequestedAssessment
+      _disarmAssessmentNavFrame();
       savedAnswers = {};
       currentFormData = null;
       _lastTillBedomningReady = false;
@@ -4478,7 +4528,119 @@
 
     let activeKlinikId = null;
 
-    function showPanel(panel) {
+    // ── Navigeringsstack för webbläsarens bakåtknapp ────────────────────────────
+    // Appen är en SPA utan egen URL-routing, så bakåtknappen hade tidigare ingen
+    // egen historik att gå tillbaka i — den tog användaren rakt ut ur appen. Detta
+    // fångar bakåttrycket och kopplar det till appens EGNA bakåt/stäng-funktioner
+    // istället (panelbyten, formulärsteg, modaler), och absorberar trycket (lämnar
+    // aldrig appen) när det inte finns något kvar att gå tillbaka till.
+    //
+    // Modell: en JS-stack (_navStack) hålls i synk med webbläsarens historikdjup —
+    // varje pushNav() lägger både en stack-post och en history.pushState()-post.
+    // popNav() (anropas av våra EGNA stäng/avbryt-knappar) konsumerar båda, så
+    // historiken aldrig hamnar i otakt oavsett om man stänger via knapp eller
+    // fysisk bakåtknapp. _navPopstateGuard/_navClosingFromPopstate förhindrar att
+    // våra egna history.back()-anrop triggar en ny varv i popstate-hanteraren.
+    let _navStack = [];
+    let _navPopstateGuard = false;
+    let _navClosingFromPopstate = false;
+    let _navBaselineInitialized = false;
+
+    // Anropas en gång vid appstart (bootApp()) — skapar en historikpost "under"
+    // appens första vy, så att ens det FÖRSTA bakåttrycket ger en popstate-händelse
+    // att fånga upp istället för att lämna sidan direkt.
+    function _initNavGuard() {
+      if (_navBaselineInitialized) return;
+      _navBaselineInitialized = true;
+      history.pushState({ __navBase: true }, '', location.href);
+    }
+
+    function pushNav(onBack, opts) {
+      opts = opts || {};
+      _navStack.push({ onBack, isDirty: opts.isDirty || null, message: opts.message || null });
+      history.pushState({ __nav: _navStack.length }, '', location.href);
+    }
+
+    // Anropas av appens egna stäng/avbryt/tillbaka-funktioner (inte av bakåtknappen
+    // själv) för att konsumera den historikpost som lades i motsvarande pushNav().
+    // No-op om popstate-hanteraren redan har hand om avstängningen (se nedan).
+    function popNav() {
+      if (_navClosingFromPopstate) return;
+      if (!_navStack.length) return;
+      _navStack.pop();
+      _navPopstateGuard = true;
+      history.back();
+    }
+
+    async function _handleNavPopstate() {
+      if (!_navStack.length) {
+        // Inget kvar att gå tillbaka till i appen — lägg tillbaka en post direkt så
+        // fliken aldrig faktiskt lämnar appen.
+        history.pushState({ __nav: 0 }, '', location.href);
+        return;
+      }
+      const frame = _navStack[_navStack.length - 1];
+      if (frame.isDirty && frame.isDirty()) {
+        // Webbläsaren har redan "gått bakåt" här — lägg tillbaka posten medan
+        // bekräftelsedialogen visas så vi inte de facto lämnar sidan under tiden.
+        history.pushState({ __nav: _navStack.length }, '', location.href);
+        const leave = await customConfirm(
+          frame.message || 'Du har osparade ändringar som går förlorade om du fortsätter. Vill du fortsätta ändå?',
+          'Ja, fortsätt', 'Nej, stanna kvar'
+        );
+        if (!leave) return; // stanna kvar — historikposten ligger redan där
+        _navPopstateGuard = true;
+        history.back(); // konsumera posten vi precis lade tillbaka
+      }
+      _navStack.pop();
+      _navClosingFromPopstate = true;
+      try { frame.onBack(); } finally { _navClosingFromPopstate = false; }
+    }
+
+    window.addEventListener('popstate', function() {
+      if (_navPopstateGuard) { _navPopstateGuard = false; return; }
+      _handleNavPopstate();
+    });
+
+    // Generisk "osparade ändringar"-koll för modaler/formulär: jämför nuvarande
+    // fältvärden i en container mot ett snapshot draget när containern öppnades.
+    // Används av admin-modalerna (ny klinik, redigera/lägg till användare,
+    // CSV-import) så bakåtknappen kan varna innan ifyllda men osparade fält kastas.
+    function _snapshotFormValues(containerId) {
+      const el = document.getElementById(containerId);
+      const snap = {};
+      if (!el) return snap;
+      el.querySelectorAll('input,select,textarea').forEach((f, i) => {
+        const key = f.id || f.name || ('_' + i);
+        snap[key] = (f.type === 'checkbox' || f.type === 'radio') ? f.checked : f.value;
+      });
+      return snap;
+    }
+    function _formValuesDirty(containerId, snapshot) {
+      const el = document.getElementById(containerId);
+      if (!el || !snapshot) return false;
+      let dirty = false;
+      el.querySelectorAll('input,select,textarea').forEach((f, i) => {
+        const key = f.id || f.name || ('_' + i);
+        const cur = (f.type === 'checkbox' || f.type === 'radio') ? f.checked : f.value;
+        if (snapshot[key] !== cur) dirty = true;
+      });
+      return dirty;
+    }
+
+    let _currentNavPanel = null;
+
+    function panelHasUnsavedData(panelName) {
+      if (panelName === 'assessment') return hasUnsavedAssessmentData();
+      if (panelName === 'profile') {
+        const btn = document.getElementById('profile-save-btn');
+        return !!(btn && !btn.disabled);
+      }
+      return false;
+    }
+
+    function showPanel(panel, navOpts) {
+      navOpts = navOpts || {};
       checkForNewVersion();
       // 'blank' är ett internt tomt-läge (t.ex. efter Avbryt i Min profil), inget riktigt
       // panelbesök värt att logga.
@@ -4493,6 +4655,22 @@
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
+      // Bakåtknappen ska kunna stega tillbaka genom besökta paneler istället för att
+      // lämna appen — se navigeringsstacken ovan. navOpts.fromNav === true betyder att
+      // det ÄR ett sådant bakåtsteg som spelas upp, så det ska inte lägga en NY post
+      // (då skulle stacken bara växa). 'blank' är ett internt tomläge, inget att gå
+      // tillbaka till i sig.
+      const prevNavPanel = _currentNavPanel;
+      if (!navOpts.fromNav && prevNavPanel && prevNavPanel !== panel && panel !== 'blank') {
+        // isDirty ska spegla panelen vi (så småningom) BACKAR IFRÅN — dvs den vi just
+        // gick TILL (panel) — inte den vi kom ifrån (prevNavPanel). Annars kollas fel
+        // panels formulärstatus när bakåtknappen faktiskt trycks.
+        pushNav(() => showPanel(prevNavPanel, { fromNav: true }), {
+          isDirty: () => panelHasUnsavedData(panel),
+          message: 'Du har osparade ändringar. Vill du lämna sidan ändå?'
+        });
+      }
+      if (panel !== 'blank') _currentNavPanel = panel;
       closeMenu();
       closeMenu();
       maybeOfferPanelTour(panel);

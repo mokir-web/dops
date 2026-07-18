@@ -90,16 +90,23 @@
       }
     }
 
+    let _newClinicSnapshot = null;
     function openNewClinicModal() {
       document.getElementById('newclinic-name').value = '';
       document.getElementById('newclinic-contact').value = '';
       document.getElementById('newclinic-status').textContent = '';
       const el = document.getElementById('new-clinic-modal');
       el.style.display = 'flex'; el.classList.remove('hidden');
+      _newClinicSnapshot = _snapshotFormValues('new-clinic-modal');
+      pushNav(closeNewClinicModal, {
+        isDirty: () => _formValuesDirty('new-clinic-modal', _newClinicSnapshot),
+        message: 'Du har ifyllda uppgifter för den nya kliniken som inte sparats. Vill du stänga ändå?'
+      });
     }
     function closeNewClinicModal() {
       const el = document.getElementById('new-clinic-modal');
       el.style.display = 'none'; el.classList.add('hidden');
+      popNav();
     }
     async function submitNewClinic() {
       const name = document.getElementById('newclinic-name').value.trim();
@@ -225,6 +232,7 @@
       });
     }
 
+    let _userEditSnapshot = null;
     function openUserEdit(u) {
       document.getElementById('admin-edit-overlay').style.display = 'flex';
       document.getElementById('edit-firstname').value = u.firstName || '';
@@ -265,6 +273,11 @@
       if (inaktChk) inaktChk.checked = !!(u.inaktiverad);
       show('admin-edit-overlay', true);
       loadUserPrivileges(u.id);
+      _userEditSnapshot = _snapshotFormValues('admin-edit-overlay');
+      pushNav(closeUserEdit, {
+        isDirty: () => _formValuesDirty('admin-edit-overlay', _userEditSnapshot),
+        message: 'Du har osparade ändringar i användarredigeringen. Vill du stänga ändå?'
+      });
     }
 
     async function loadUserPrivileges(id) {
@@ -305,7 +318,11 @@
       loadUserPrivileges(id);
     }
 
-    function closeUserEdit() { const el = document.getElementById('admin-edit-overlay'); el.style.display = 'none'; el.classList.add('hidden'); }
+    function closeUserEdit() {
+      const el = document.getElementById('admin-edit-overlay');
+      el.style.display = 'none'; el.classList.add('hidden');
+      popNav();
+    }
 
     async function saveUserEdit() {
       const id = document.getElementById('edit-id').value;
@@ -342,6 +359,7 @@
     }
 
     // ── Registrera användare (admin) ────────────────────────────────────
+    let _addUserSnapshot = null;
     function openAddUserModal() {
       ['addu-firstname','addu-lastname','addu-email','addu-pin'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('addu-temppin').checked = true;
@@ -349,10 +367,16 @@
       document.getElementById('addu-status').textContent = '';
       const el = document.getElementById('add-user-modal');
       el.style.display = 'flex'; el.classList.remove('hidden');
+      _addUserSnapshot = _snapshotFormValues('add-user-modal');
+      pushNav(closeAddUserModal, {
+        isDirty: () => _formValuesDirty('add-user-modal', _addUserSnapshot),
+        message: 'Du har ifyllda uppgifter för den nya användaren som inte sparats. Vill du stänga ändå?'
+      });
     }
     function closeAddUserModal() {
       const el = document.getElementById('add-user-modal');
       el.style.display = 'none'; el.classList.add('hidden');
+      popNav();
     }
     function toggleAddUserPinField() {
       show('addu-pin-field', !document.getElementById('addu-temppin').checked);
@@ -394,10 +418,17 @@
       userCsvRows = [];
       const el = document.getElementById('csv-import-modal');
       el.style.display = 'flex'; el.classList.remove('hidden');
+      // Dirty-kollen läser dynamiskt tillagda rader i CSV-rutnätet också (de är
+      // vanliga <input>-element under #csv-import-modal), inget extra krävs för det.
+      pushNav(closeCsvImportModal, {
+        isDirty: () => document.getElementById('csv-file-input')?.value || (userCsvRows && userCsvRows.length > 0),
+        message: 'Du har en påbörjad CSV-import som inte slutförts. Vill du stänga ändå?'
+      });
     }
     function closeCsvImportModal() {
       const el = document.getElementById('csv-import-modal');
       el.style.display = 'none'; el.classList.add('hidden');
+      popNav();
     }
 
     // Enkel CSV-parser (hanterar citerade fält, komma ELLER semikolon som avgränsare,

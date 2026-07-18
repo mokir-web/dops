@@ -160,6 +160,7 @@
       } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
     }
 
+    let _newFormTypeSnapshot = null;
     function openNewFormTypeModal() {
       document.getElementById('newtype-name').value = '';
       document.getElementById('newtype-time-savings').value = '';
@@ -167,10 +168,16 @@
       document.getElementById('newtype-status').textContent = '';
       const el = document.getElementById('fb-newtype-modal');
       el.style.display = 'flex'; el.classList.remove('hidden');
+      _newFormTypeSnapshot = _snapshotFormValues('fb-newtype-modal');
+      pushNav(closeNewFormTypeModal, {
+        isDirty: () => _formValuesDirty('fb-newtype-modal', _newFormTypeSnapshot),
+        message: 'Du har ifyllda uppgifter för den nya formulärtypen som inte sparats. Vill du stänga ändå?'
+      });
     }
     function closeNewFormTypeModal() {
       const el = document.getElementById('fb-newtype-modal');
       el.style.display = 'none'; el.classList.add('hidden');
+      popNav();
     }
     async function createNewFormType() {
       const name = document.getElementById('newtype-name').value.trim();
@@ -555,16 +562,23 @@
     }
 
     // ── Ny fråga (modal) ──────────────────────────────────────────────────
+    let _newQuestionSnapshot = null;
     function openNewQuestionModal() {
       document.getElementById('newq-fields').innerHTML = fbQuestionFormHtml('newq', null);
       wireQuestionForm(document.getElementById('newq-fields'), 'newq', null);
       document.getElementById('newq-status').textContent = '';
       const el = document.getElementById('fb-newq-modal');
       el.style.display = 'flex'; el.classList.remove('hidden');
+      _newQuestionSnapshot = _snapshotFormValues('fb-newq-modal');
+      pushNav(closeNewQuestionModal, {
+        isDirty: () => _formValuesDirty('fb-newq-modal', _newQuestionSnapshot),
+        message: 'Du har ifyllda uppgifter för den nya frågan som inte sparats. Vill du stänga ändå?'
+      });
     }
     function closeNewQuestionModal() {
       const el = document.getElementById('fb-newq-modal');
       el.style.display = 'none'; el.classList.add('hidden');
+      popNav();
     }
     async function createNewQuestion() {
       const question = readQuestionForm('newq');
