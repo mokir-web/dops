@@ -78,7 +78,7 @@
       let out = '<table style="width:100%;border-collapse:collapse;max-width:920px;">';
       out += '<tr style="text-align:left;font-size:12px;color:#5b6b75;border-bottom:1.5px solid #c7d1d7;">'
         + '<th style="padding:6px 8px;">Namn</th><th>Klinik</th><th>Roll</th><th>Sessioner</th>'
-        + '<th>Aktiv tid</th><th>Mest besökt</th><th>Rollbyten</th><th>Senast aktiv</th></tr>';
+        + '<th>Aktiv tid</th><th class="us-desktop-only">Mest besökt</th><th class="us-desktop-only">Rollbyten</th><th>Senast aktiv</th></tr>';
       rows.forEach(r => {
         out += html`<tr style="cursor:pointer;border-bottom:1px solid #e4e9ec;" onclick="openUsageSessionsView('${safe(jsAttr(r.userId))}','${safe(jsAttr(r.name))}')">
           <td style="padding:6px 8px;font-weight:bold;">${r.name}</td>
@@ -86,8 +86,8 @@
           <td>${r.jobRole}</td>
           <td>${r.sessionCount}</td>
           <td>${_formatDuration(r.activeSeconds)}</td>
-          <td>${r.topPanel}</td>
-          <td>${r.privilegeSwitches}</td>
+          <td class="us-desktop-only">${r.topPanel}</td>
+          <td class="us-desktop-only">${r.privilegeSwitches}</td>
           <td style="font-size:12px;color:#5b6b75;">${r.lastSeen ? new Date(r.lastSeen).toLocaleString('sv-SE') : ''}</td>
         </tr>`;
       });
@@ -152,4 +152,24 @@
     function closeUsageSessionModal() {
       const el = document.getElementById('usage-session-modal');
       el.style.display = 'none'; el.classList.add('hidden');
+    }
+
+    // Filnedladdning kan inte gå via den generiska api()-wrappern (den förväntar sig JSON),
+    // så samma fetch+blob-mönster som downloadUsersTemplate() i admin.js används här.
+    async function downloadUsageExport() {
+      const stored = currentUser || JSON.parse(localStorage.getItem('dops_user') || 'null');
+      const qs = Object.entries(_usageStatsFilters())
+        .filter(([, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
+      try {
+        const res = await fetch(API_BASE + '/usage-events/export' + (qs ? '?' + qs : ''), {
+          headers: stored?.token ? { 'Authorization': 'Bearer ' + stored.token } : {}
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'anvandningsstatistik.csv';
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      } catch (err) { await customAlert('Kunde inte exportera: ' + err.message); }
     }
