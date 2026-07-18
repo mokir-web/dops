@@ -1632,7 +1632,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.44.0';
+    const APP_VERSION = 'v4.44.1';
 
     let appData = null;
     let currentUser = null;
@@ -3347,7 +3347,9 @@
       currentFormData = null;
       window._pendingAssessmentMeta = null;
       pendingRequestId = null; pendingRequestFrom = null; pendingRequestFormType = null;
-      showPanel('assessment');
+      // fromNav: true — det här är bakåtknappen som spelar upp en tidigare vy, inte en ny
+      // sidnavigering, så checkForNewVersion() ska inte köras (se motivering i showPanel()).
+      showPanel('assessment', { fromNav: true });
     }
 
     function goBackSection() {
@@ -4641,7 +4643,13 @@
 
     function showPanel(panel, navOpts) {
       navOpts = navOpts || {};
-      checkForNewVersion();
+      // Hoppa över versionskollen vid navOpts.fromNav — det är bakåtknappen som spelar
+      // upp en panel användaren redan besökt, inget nytt hämtas från servern. checkForNewVersion()
+      // kan trigga location.reload() om en ny version upptäcks, och ett sådant reload rakt
+      // under fötterna på ett bakåttryck upplevs som att man "ramlar av sidan" — trots att
+      // det tekniskt sett stannar på samma URL (hittat 2026-07-18 när bakåtknappen ibland
+      // lämnade appen efter att ha backat till startsidan).
+      if (!navOpts.fromNav) checkForNewVersion();
       // 'blank' är ett internt tomt-läge (t.ex. efter Avbryt i Min profil), inget riktigt
       // panelbesök värt att logga.
       if (panel !== 'blank') logUsageEvent('panel_view', panel);
