@@ -70,6 +70,36 @@
         statusEl.innerHTML = '';
         listEl.innerHTML = html`<p class="status-err">${err.message}</p>`;
       }
+      loadUsageDevices();
+    }
+
+    async function loadUsageDevices() {
+      const el = document.getElementById('us-devices-list');
+      if (!el) return;
+      el.innerHTML = '<p style="color:#888;font-size:13px;">Hämtar…</p>';
+      try {
+        const data = await api('getUsageDevices', { filters: _usageStatsFilters() });
+        renderUsageDevices(data);
+      } catch (err) {
+        el.innerHTML = html`<p class="status-err">${err.message}</p>`;
+      }
+    }
+
+    function renderUsageDevices(data) {
+      const el = document.getElementById('us-devices-list');
+      if (!data.total) { el.innerHTML = '<p style="color:#888;">Inga sessioner för valt filter.</p>'; return; }
+      const bar = (name, count) => {
+        const pct = Math.round((count / data.total) * 100);
+        return html`<div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:2px;"><span>${name}</span><span style="color:#5b6b75;">${count} (${pct}%)</span></div>
+          <div style="background:#c7d1d7;border-radius:4px;height:6px;overflow:hidden;"><div style="background:#2e4a5f;height:100%;width:${pct}%;"></div></div>
+        </div>`;
+      };
+      let out = '<div style="display:flex;gap:32px;flex-wrap:wrap;max-width:600px;">';
+      out += '<div style="flex:1;min-width:220px;"><div class="section-header" style="margin-bottom:8px;">Enhet</div>' + data.devices.map(d => bar(d.name, d.count)).join('') + '</div>';
+      out += '<div style="flex:1;min-width:220px;"><div class="section-header" style="margin-bottom:8px;">Webbläsare</div>' + data.browsers.map(b => bar(b.name, b.count)).join('') + '</div>';
+      out += '</div>';
+      el.innerHTML = out;
     }
 
     function renderUsageSummary(rows) {
@@ -120,7 +150,7 @@
       if (!rows.length) { listEl.innerHTML = '<p style="color:#888;">Inga sessioner.</p>'; return; }
       let out = '<table style="width:100%;border-collapse:collapse;max-width:760px;">';
       out += '<tr style="text-align:left;font-size:12px;color:#5b6b75;border-bottom:1.5px solid #c7d1d7;">'
-        + '<th style="padding:6px 8px;">Start</th><th>Total tid</th><th>Aktiv tid</th><th>Händelser</th></tr>';
+        + '<th style="padding:6px 8px;">Start</th><th>Total tid</th><th>Aktiv tid</th><th>Händelser</th><th class="us-desktop-only">Enhet/webbläsare</th></tr>';
       rows.forEach(r => {
         const totalSeconds = Math.max(0, Math.round((new Date(r.endedAt) - new Date(r.startedAt)) / 1000));
         out += html`<tr style="cursor:pointer;border-bottom:1px solid #e4e9ec;" onclick="openUsageSessionModal('${safe(jsAttr(r.sessionId))}')">
@@ -128,6 +158,7 @@
           <td>${_formatDuration(totalSeconds)}</td>
           <td>${_formatDuration(r.activeSeconds)}</td>
           <td>${r.eventCount}</td>
+          <td class="us-desktop-only" style="font-size:12px;color:#5b6b75;">${r.browser} · ${r.deviceType}</td>
         </tr>`;
       });
       out += '</table>';

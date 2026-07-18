@@ -1196,6 +1196,12 @@
       <div id="us-summary-status" style="min-height:18px;"></div>
       <div id="us-summary-list"></div>
 
+      <div style="margin-top:24px;">
+        <div class="section-header">Enheter &amp; webbläsare</div>
+        <p style="color:#5b6b75;font-size:13px;margin-top:4px;">Fördelning över sessioner för valt filter — underlag för vad som bör prioriteras.</p>
+        <div id="us-devices-list"></div>
+      </div>
+
       <div id="us-sessions-view" class="hidden" style="margin-top:24px;">
         <div class="btn-row" style="margin-bottom:10px;align-items:center;">
           <button class="btn-secondary btn-small" onclick="closeUsageSessionsView()">← Tillbaka till sammanfattning</button>
@@ -1639,7 +1645,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.44.4';
+    const APP_VERSION = 'v4.45.0';
 
     let appData = null;
     let currentUser = null;
@@ -1810,6 +1816,7 @@
       getUsageSummary:        { method: 'GET',    path: () => '/usage-events/summary', query: p => p.filters || {} },
       getUsageSessions:       { method: 'GET',    path: () => '/usage-events/sessions', query: p => p.filters || {} },
       getUsageSessionEvents:  { method: 'GET',    path: p => '/usage-events/sessions/' + encodeURIComponent(p.sessionId) },
+      getUsageDevices:        { method: 'GET',    path: () => '/usage-events/devices', query: p => p.filters || {} },
       getErrorReports:        { method: 'GET',    path: () => '/error-reports' },
       getGlobalFeedbackSettings: { method: 'GET',  path: () => '/error-reports/global-settings' },
       saveGlobalFeedbackSettings: { method: 'PUT', path: () => '/error-reports/global-settings', body: p => ({ feedbackEmail: p.feedbackEmail }) },
