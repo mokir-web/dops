@@ -22,8 +22,15 @@
       --demo-banner-h: calc(var(--demo-banner-content-h) + var(--safe-top));
     }
     * { box-sizing: border-box; }
+    /* Stänger av webbläsarens/OS:ets svep-för-att-navigera-gest (styrplatta/musens
+       sidoknapp) i sidled — den gesten hanteras på webbläsarkrom-nivå och kringgår vår
+       JS-baserade bakåtknapp-fångst helt (till skillnad från ett klick på bakåt-pilen,
+       som webbläsaren låter sidor fånga upp). Utan detta kan ett fullföljt svep ta
+       användaren ur appen trots navigeringsstacken ovan (hittat 2026-07-18).
+       Stöds av Chrome/Edge fullt ut; nyare Safari respekterar den också. */
+    html { overscroll-behavior-x: none; }
     html { width: 100%; font-size: 16px; }
-    body { min-width: 0 !important; }
+    body { min-width: 0 !important; overscroll-behavior-x: none; }
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #1c2b36; font-size: 19px; -webkit-text-size-adjust: 100%; background: #e4e9ec; overflow-wrap: break-word; word-wrap: break-word; }
     h2 { color: #1c2b36; margin-top: 0; font-size: 26px; }
     h3 { color: #1c2b36; font-size: 21px; }
@@ -1632,7 +1639,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.44.1';
+    const APP_VERSION = 'v4.44.2';
 
     let appData = null;
     let currentUser = null;
