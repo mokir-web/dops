@@ -417,31 +417,18 @@
     </div>
 
     <div id="forgot-view" class="hidden">
-      <h3 style="color:#1a73e8;">Återställ PIN</h3>
+      <h3 style="color:#1a73e8;">Återställ lösenord</h3>
       <div id="forgot-step1">
+        <p style="color:#5b6b75;font-size:14px;">Vi skickar en länk till din e-post — klicka på den för att sätta ett nytt lösenord direkt.</p>
         <div class="field">
           <label class="field-label">E-postadress</label>
           <input type="email" id="forgot-email" placeholder="din@email.se">
         </div>
         <div class="btn-row">
-          <button class="btn-primary" onclick="sendResetCode()">Skicka kod</button>
+          <button class="btn-primary" onclick="sendResetCode()">Skicka återställningslänk</button>
           <button class="btn-secondary" onclick="showLoginView('login')">Tillbaka</button>
         </div>
         <div id="forgot-status1"></div>
-      </div>
-      <div id="forgot-step2" class="hidden">
-        <div class="field">
-          <label class="field-label">Kod (från mailet)</label>
-          <input type="text" id="forgot-code" maxlength="6" placeholder="123456">
-        </div>
-        <div class="field">
-          <label class="field-label">Ny PIN (4–6 siffror)</label>
-          <input type="password" id="forgot-newpin" maxlength="6">
-        </div>
-        <div class="btn-row">
-          <button class="btn-primary" onclick="doResetPin()">Spara ny PIN</button>
-        </div>
-        <div id="forgot-status2"></div>
       </div>
     </div>
 
@@ -1648,7 +1635,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.46.0';
+    const APP_VERSION = 'v4.47.0';
 
     let appData = null;
     let currentUser = null;
@@ -1824,7 +1811,6 @@
       getGlobalFeedbackSettings: { method: 'GET',  path: () => '/error-reports/global-settings' },
       saveGlobalFeedbackSettings: { method: 'PUT', path: () => '/error-reports/global-settings', body: p => ({ feedbackEmail: p.feedbackEmail }) },
       sendResetCode:          { method: 'POST',   path: () => '/auth/reset-code', body: p => ({ email: p.email }) },
-      resetPin:               { method: 'POST',   path: () => '/auth/reset-pin', body: p => ({ email: p.email, code: p.code, newPin: p.newPin }) },
       loginWithToken:         { method: 'POST',   path: () => '/auth/login-token', body: p => ({ token: p.token }) },
       getDemoUsers:           { method: 'GET',    path: () => '/demo/users' },
       demoLogin:              { method: 'POST',   path: () => '/demo/login', body: p => ({ userId: p.userId }) },
@@ -2810,36 +2796,15 @@
     // ── Forgot PIN ────────────────────────────────────────────────
     async function sendResetCode() {
       if (_isProcessing) return;
-      const btn = document.querySelector('#forgot-step1 .btn-primary');
       lockUI();
       const email = document.getElementById('forgot-email').value.trim();
       if (!email) { setStatus('forgot-status1', 'Ange e-postadress.', true); unlockUI(); return; }
       try {
         const result = await api('sendResetCode', { email });
         if (result.error) { setStatus('forgot-status1', result.error, true); unlockUI(); return; }
-        setStatus('forgot-status1', '✓ Kod skickad till din e-post.', false);
-        document.getElementById('forgot-step2').classList.remove('hidden');
+        setStatus('forgot-status1', '✓ Länk skickad till din e-post. Klicka på den för att sätta ett nytt lösenord.', false);
         unlockUI();
       } catch(err) { setStatus('forgot-status1', err.message, true); unlockUI(); }
-    }
-
-    async function doResetPin() {
-      if (_isProcessing) return;
-      const btn = document.querySelector('#forgot-step2 .btn-primary');
-      lockUI();
-      const email  = document.getElementById('forgot-email').value.trim();
-      const code   = document.getElementById('forgot-code').value.trim();
-      const newPin = document.getElementById('forgot-newpin').value.trim();
-      if (!code || !newPin) { setStatus('forgot-status2', 'Fyll i kod och ny PIN.', true); unlockUI(); return; }
-      try {
-        const result = await api('resetPin', { email, code, newPin });
-        if (result.error) { setStatus('forgot-status2', result.error, true); unlockUI(); return; }
-        setStatus('forgot-status2', '✓ PIN ändrad! Loggar in…', false);
-        currentUser = normalizeUserPrivileges(result);
-        localStorage.setItem('dops_user', JSON.stringify(result));
-        unlockUI();
-        bootApp();
-      } catch(err) { setStatus('forgot-status2', err.message, true); unlockUI(); }
     }
 
     // ── Assessment ────────────────────────────────────────────────
@@ -4095,11 +4060,7 @@
       if (loginPin)   loginPin.addEventListener('keydown',   e => { if (e.key === 'Enter') { e.preventDefault(); doLogin(); } });
       // Glömt PIN
       const forgotEmail  = document.getElementById('forgot-email');
-      const forgotCode   = document.getElementById('forgot-code');
-      const forgotNewpin = document.getElementById('forgot-newpin');
       if (forgotEmail)  forgotEmail.addEventListener('keydown',  e => { if (e.key === 'Enter') { e.preventDefault(); sendResetCode(); } });
-      if (forgotCode)   forgotCode.addEventListener('keydown',   e => { if (e.key === 'Enter') { e.preventDefault(); forgotNewpin.focus(); } });
-      if (forgotNewpin) forgotNewpin.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doResetPin(); } });
       // Registrering: kedja fält i ordning
       const regFields = ['reg-firstname','reg-lastname','reg-email','reg-pin'];
       regFields.forEach((id, i) => {
