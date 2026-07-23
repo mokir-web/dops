@@ -8,6 +8,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MoraDOPS">
+  <meta name="theme-color" content="#1c2b36">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'><circle cx='22' cy='22' r='17' fill='none' stroke='%232a1f18' stroke-width='2'/><text x='22' y='27' font-family='Arial' font-size='13' font-weight='700' fill='%232a1f18' text-anchor='middle'>MD</text><circle cx='35' cy='35' r='8' fill='%234a9e62'/></svg>">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <style>
@@ -630,7 +633,7 @@
       <div class="field" id="f3">
         <label class="field-label">Mottagarens kategori *</label>
         <div class="radio-group" id="category-group">
-          <label><input type="radio" name="category" value="Spec" onchange="updateRecipients(); updateTillBedomningBtn()"> Spec</label>
+          <label><input type="radio" name="category" value="Spec" onchange="updateRecipients(); updateTillBedomningBtn()"> Specialist</label>
           <label><input type="radio" name="category" value="ST"   onchange="updateRecipients(); updateTillBedomningBtn()"> ST</label>
           <label><input type="radio" name="category" value="BT"   onchange="updateRecipients(); updateTillBedomningBtn()"> BT</label>
           <label><input type="radio" name="category" value="AT"   onchange="updateRecipients(); updateTillBedomningBtn()"> AT</label>
@@ -674,9 +677,17 @@
         <div style="font-size:56px;margin-bottom:16px;">✓</div>
         <h2 style="color:#2e4a5f;margin-bottom:8px;">Bedömning skickad!</h2>
         <p id="confirm-recipient" style="color:#5b6b75;font-size:16px;margin-bottom:24px;"></p>
-          <div id="confirm-time-saving" class="hidden" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:20px;margin-bottom:28px;text-align:left;">
-          <div style="font-size:18px;font-weight:bold;color:#2e4a5f;margin-bottom:12px;">Uppskattad tidsbesparing j&#228;mf&#246;rt papper</div>
-          <div id="confirm-time-this" style="font-size:28px;font-weight:bold;color:#2e4a5f;line-height:1.1;"></div>
+          <div id="confirm-time-saving" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:20px;margin-bottom:28px;text-align:left;">
+          <table style="width:100%;border-collapse:collapse;font-size:16px;color:#2e4a5f;">
+            <tr>
+              <td style="padding:6px 0;color:#5b6b75;">Tidsåtgång</td>
+              <td id="confirm-time-elapsed" style="padding:6px 0;text-align:right;font-weight:bold;"></td>
+            </tr>
+            <tr id="confirm-time-saved-row" class="hidden">
+              <td style="padding:6px 0;color:#5b6b75;">Sparad tid jämfört papper</td>
+              <td id="confirm-time-this" style="padding:6px 0;text-align:right;font-weight:bold;"></td>
+            </tr>
+          </table>
           <div id="confirm-time-total" style="font-size:13px;color:#8a97a0;margin-top:12px;"></div>
           <div id="confirm-time-context"></div>
         </div>
@@ -852,11 +863,12 @@
         <p>Användare kan när som helst radera sitt konto. För radering av bedömningar registrerade och/eller mottagna av användaren vänligen kontakta systemansvarig enligt nedan kontaktuppgifter. Användare har alltid full tillgång till samtliga insamlade uppgifter via "Min profil" samt "Mina bedömningar".</p>
         <p>Klinikadministratör har behörighet att se användarinformation och bedömningar för samtliga klinikens användare samt ändra användarinställningar.</p>
         <p>Studierektor har behörighet att se alla klinikens utförda bedömningar men inte specifika användaruppgifter annat än namn tillhörande aktuell bedömning.</p>
+        <p>Systemet samlar viss anonymiserad användningsstatistik (t.ex. enhetstyp, webbläsare och vilket svenskt landskap/län inloggningen sker ifrån, härlett från IP-adress) för att förstå hur MoraDOPS används och prioritera vidareutveckling. Denna statistik redovisas endast aggregerat — regionen kopplas inte till enskilda användare i gränssnittet, och IP-adressen sparas aldrig.</p>
 
         <div class="section-header">Systemadministratör och utvecklare</div>
         <p>Simon Wigge<br>
         <a href="mailto:simon@wigge.se" style="color:#2e4a5f;">simon@wigge.se</a><br>
-        02504 93 121<br>
+        +46 76 256 16 71<br>
         ST-läkare Kirurgkliniken Mora</p>
 
         <div class="section-header">Version</div>
@@ -1191,6 +1203,15 @@
         <div id="us-devices-status"></div>
         <div id="us-devices-chart-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div id="us-devices-chart-wrap" class="chart-canvas-wrap" style="width:100%;height:260px;"><canvas id="chart-usage-devices"></canvas></div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;max-width:420px;">
+        <div class="section-header">Region</div>
+        <p style="color:#5b6b75;font-size:13px;margin-top:4px;">Var inloggningarna sker ifrån geografiskt, härlett från IP-adress. Endast aggregerat, ej kopplat till enskilda användare.</p>
+        <div id="us-regions-status"></div>
+        <div id="us-regions-chart-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
+          <div id="us-regions-chart-wrap" class="chart-canvas-wrap" style="width:100%;height:260px;"><canvas id="chart-usage-regions"></canvas></div>
         </div>
       </div>
 
@@ -1651,8 +1672,19 @@
     </div>
   </div>
 
+  <div id="install-prompt-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:450;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:380px;width:100%;">
+      <h3 id="install-prompt-title" style="margin-top:0;"></h3>
+      <p id="install-prompt-body" style="color:#5b6b75;font-size:14px;line-height:1.6;"></p>
+      <div class="btn-row" style="flex-wrap:wrap;gap:8px;">
+        <button id="install-prompt-action" class="btn-primary hidden"></button>
+        <button class="btn-secondary" onclick="installPromptRespond()">Stäng</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const APP_VERSION = 'v4.48.0';
+    const APP_VERSION = 'v4.48.4';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -1681,6 +1713,18 @@
     };
     window.addEventListener('error', e => logSessionError({ type: 'window', message: e.message, source: (e.filename || '') + ':' + e.lineno }));
     window.addEventListener('unhandledrejection', e => logSessionError({ type: 'promise', message: String(e.reason) }));
+
+    // ── PWA: hemskärm/installation ──
+    // Fångas tidigt (innan inloggning) eftersom webbläsaren bara skickar eventet en gång
+    // per sidladdning — om vi missar det kan vi inte trigga det egna installationsflödet.
+    let _deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      _deferredInstallPrompt = e;
+    });
+    function isStandaloneApp() {
+      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
 
     // ── Användningsstatistik (global admin ser aggregerat i adminpanelen) ──
     // sessions-id: ett nytt slumpvärde per appstart/flik, INTE kopplat till hur länge
@@ -1831,6 +1875,7 @@
       getUsageSessions:       { method: 'GET',    path: () => '/usage-events/sessions', query: p => p.filters || {} },
       getUsageSessionEvents:  { method: 'GET',    path: p => '/usage-events/sessions/' + encodeURIComponent(p.sessionId) },
       getUsageDevices:        { method: 'GET',    path: () => '/usage-events/devices', query: p => p.filters || {} },
+      getUsageRegions:        { method: 'GET',    path: () => '/usage-events/regions', query: p => p.filters || {} },
       getErrorReports:        { method: 'GET',    path: () => '/error-reports' },
       getGlobalFeedbackSettings: { method: 'GET',  path: () => '/error-reports/global-settings' },
       saveGlobalFeedbackSettings: { method: 'PUT', path: () => '/error-reports/global-settings', body: p => ({ feedbackEmail: p.feedbackEmail }) },
@@ -2063,6 +2108,7 @@
       _initNavGuard();
 
       logUsageEvent('session_start');
+      logUsageEvent('app_launch_mode', isStandaloneApp() ? 'standalone' : 'browser');
       activePrivilege = null;
       document.getElementById('login-panel').classList.add('hidden');
       document.getElementById('app').classList.remove('hidden');
@@ -2117,6 +2163,7 @@
       setTimeout(backgroundLoad, 100);
       setTimeout(fitSidebarMenu, 50);
       setTimeout(maybeShowTourPrompt, 600);
+      setTimeout(maybeShowInstallPrompt, 1400);
     }
 
     // Väntande konton (självregistrerade, ej godkända) — bara Mottagna bedömningar synligt.
@@ -2727,6 +2774,49 @@
       if (choice === 'yes') startGuidedTour();
       else if (choice === 'never') { markTourSeen('onboarding'); _onboardingDeclined = true; }
       else { _onboardingDeclined = true; } // 'later' — frågas igen nästa inloggning.
+    }
+
+    // ── Hemskärm/installation: visas selektivt — bara i vanlig webbläsarflik, aldrig
+    // när appen redan körs som installerad hemskärmsapp (isStandaloneApp()), och bara
+    // en gång per enhet/webbläsare (localStorage, inte kontobundet — installation är en
+    // enhetsegenskap, inte en användarprofilinställning).
+    function maybeShowInstallPrompt() {
+      if (isStandaloneApp()) return;
+      if (localStorage.getItem('dops_install_prompt_dismissed') === '1') return;
+      const tourModal = document.getElementById('tour-prompt-modal');
+      if (tourModal && !tourModal.classList.contains('hidden')) return; // undvik dubbla modaler, erbjuds nästa inloggning
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const titleEl = document.getElementById('install-prompt-title');
+      const bodyEl = document.getElementById('install-prompt-body');
+      const actionBtn = document.getElementById('install-prompt-action');
+      if (isIOS) {
+        titleEl.textContent = 'Lägg till MoraDOPS på hemskärmen';
+        bodyEl.innerHTML = 'Öppna snabbare, utan webbläsarfält:<br>1. Tryck på Dela-ikonen i verktygsfältet.<br>2. Välj "Lägg till på hemskärmen".<br>3. Tryck "Lägg till".';
+        actionBtn.classList.add('hidden');
+      } else if (_deferredInstallPrompt) {
+        titleEl.textContent = 'Installera MoraDOPS som app';
+        bodyEl.textContent = 'Få snabb åtkomst direkt från hemskärmen/skrivbordet, utan webbläsarfält.';
+        actionBtn.textContent = 'Installera';
+        actionBtn.classList.remove('hidden');
+        actionBtn.onclick = async () => {
+          const prompt = _deferredInstallPrompt;
+          _deferredInstallPrompt = null;
+          installPromptRespond();
+          if (prompt) { prompt.prompt(); await prompt.userChoice; }
+        };
+      } else {
+        titleEl.textContent = 'Snabbare åtkomst till MoraDOPS';
+        bodyEl.textContent = 'Bokmärk sidan (Ctrl+D, eller Cmd+D på Mac) för att hitta tillbaka snabbt nästa gång.';
+        actionBtn.classList.add('hidden');
+      }
+      const el = document.getElementById('install-prompt-modal');
+      el.style.display = 'flex'; el.classList.remove('hidden');
+    }
+
+    function installPromptRespond() {
+      const el = document.getElementById('install-prompt-modal');
+      el.style.display = 'none'; el.classList.add('hidden');
+      localStorage.setItem('dops_install_prompt_dismissed', '1');
     }
 
     // ── Per-funktions-guider (diskret knapp, inte en modal i ansiktet) ──
@@ -3468,24 +3558,29 @@
                           || 0;
         const refSec      = refMins * 60;
         const savedSec    = refSec > 0 ? refSec - elapsedSec : 0;
-        const confirmTimeEl = document.getElementById('confirm-time-saving');
-        if (savedSec > 30 && confirmTimeEl) {
-          confirmTimeEl.classList.remove('hidden');
+        const elapsedMins = Math.floor(elapsedSec / 60), elapsedSecs = elapsedSec % 60;
+        document.getElementById('confirm-time-elapsed').textContent =
+          elapsedMins > 0 ? `${elapsedMins} min ${elapsedSecs > 0 ? elapsedSecs + ' sek' : ''}`.trim() : `${elapsedSecs} sek`;
+        const savedRow = document.getElementById('confirm-time-saved-row');
+        if (savedSec > 30) {
+          savedRow.classList.remove('hidden');
           const mins = Math.floor(savedSec / 60), secs = Math.round(savedSec % 60);
           const savedStr = mins > 0 ? `${mins} min ${secs > 0 ? secs + ' sek' : ''}`.trim() : `${secs} sek`;
-          document.getElementById('confirm-time-this').textContent = 'Denna registrering: ' + savedStr;
+          document.getElementById('confirm-time-this').textContent = savedStr;
           const ov = bgGet('myOverview');
           const tot = (ov?.totalMinutesSaved || 0) + Math.round(savedSec / 60);
           if (tot > 0) {
             const h = Math.floor(tot / 60), m = tot % 60;
             const totStr = h > 0 ? `${h} tim ${m > 0 ? m + ' min' : ''}`.trim() : `${m} min`;
-            document.getElementById('confirm-time-total').textContent = 'Totalt med MoraDOPS: ' + totStr;
+            document.getElementById('confirm-time-total').textContent = 'Totalt sparad tid med MoraDOPS: ' + totStr;
           } else {
             document.getElementById('confirm-time-total').textContent = '';
           }
           document.getElementById('confirm-time-context').textContent = '';
-        } else if (confirmTimeEl) {
-          confirmTimeEl.classList.add('hidden');
+        } else {
+          savedRow.classList.add('hidden');
+          document.getElementById('confirm-time-total').textContent = '';
+          document.getElementById('confirm-time-context').textContent = '';
         }
 
         unlockUI(); // frigör knappar innan vi byter panel

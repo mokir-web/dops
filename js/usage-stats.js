@@ -71,6 +71,7 @@
         listEl.innerHTML = html`<p class="status-err">${err.message}</p>`;
       }
       loadUsageDevices();
+      loadUsageRegions();
     }
 
     let usageDevicesChart = null;
@@ -118,6 +119,49 @@
         }
       });
       addMobileLegendToggle(usageDevicesChart, cardEl);
+    }
+
+    let usageRegionsChart = null;
+
+    async function loadUsageRegions() {
+      const el = document.getElementById('us-regions-chart-wrap');
+      if (!el) return;
+      const statusEl = document.getElementById('us-regions-status');
+      if (statusEl) statusEl.textContent = '';
+      try {
+        const data = await api('getUsageRegions', { filters: _usageStatsFilters() });
+        renderUsageRegions(data);
+      } catch (err) {
+        if (statusEl) statusEl.innerHTML = html`<p class="status-err">${err.message}</p>`;
+      }
+    }
+
+    // Samma mönster som renderUsageDevices — se den för varför legend-optionerna
+    // aldrig får omtilldelas rakt av (self-refererande Proxy-krasch på iPhone).
+    function renderUsageRegions(data) {
+      const statusEl = document.getElementById('us-regions-status');
+      const cardEl = document.getElementById('us-regions-chart-card');
+      if (!data.total) {
+        if (statusEl) statusEl.innerHTML = '<p style="color:#888;">Inga sessioner för valt filter.</p>';
+        if (usageRegionsChart) { usageRegionsChart.destroy(); usageRegionsChart = null; }
+        return;
+      }
+      const labels = data.regions.map(r => r.name);
+      const values = data.regions.map(r => r.count);
+      if (usageRegionsChart) usageRegionsChart.destroy();
+      const ctx = document.getElementById('chart-usage-regions').getContext('2d');
+      usageRegionsChart = new Chart(ctx, {
+        type: 'pie',
+        data: { labels, datasets: [{ data: values, backgroundColor: CHART_COLORS.slice(0, labels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, resizeDelay: 100,
+          plugins: {
+            legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(usageRegionsChart)(e, li) },
+            tooltip: { callbacks: { label: ctx2 => `${ctx2.label}: ${ctx2.parsed} (${Math.round(ctx2.parsed / data.total * 100)}%)` } }
+          }
+        }
+      });
+      addMobileLegendToggle(usageRegionsChart, cardEl);
     }
 
     function renderUsageSummary(rows) {
