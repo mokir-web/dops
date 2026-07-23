@@ -72,6 +72,7 @@
       }
       loadUsageDevices();
       loadUsageRegions();
+      loadUsageLaunchMode();
     }
 
     let usageDevicesChart = null;
@@ -162,6 +163,48 @@
         }
       });
       addMobileLegendToggle(usageRegionsChart, cardEl);
+    }
+
+    let usageLaunchModeChart = null;
+
+    async function loadUsageLaunchMode() {
+      const el = document.getElementById('us-launchmode-chart-wrap');
+      if (!el) return;
+      const statusEl = document.getElementById('us-launchmode-status');
+      if (statusEl) statusEl.textContent = '';
+      try {
+        const data = await api('getUsageLaunchMode', { filters: _usageStatsFilters() });
+        renderUsageLaunchMode(data);
+      } catch (err) {
+        if (statusEl) statusEl.innerHTML = html`<p class="status-err">${err.message}</p>`;
+      }
+    }
+
+    // Samma mönster som renderUsageDevices/renderUsageRegions.
+    function renderUsageLaunchMode(data) {
+      const statusEl = document.getElementById('us-launchmode-status');
+      const cardEl = document.getElementById('us-launchmode-chart-card');
+      if (!data.total) {
+        if (statusEl) statusEl.innerHTML = '<p style="color:#888;">Inga sessioner för valt filter.</p>';
+        if (usageLaunchModeChart) { usageLaunchModeChart.destroy(); usageLaunchModeChart = null; }
+        return;
+      }
+      const labels = data.modes.map(m => m.name);
+      const values = data.modes.map(m => m.count);
+      if (usageLaunchModeChart) usageLaunchModeChart.destroy();
+      const ctx = document.getElementById('chart-usage-launchmode').getContext('2d');
+      usageLaunchModeChart = new Chart(ctx, {
+        type: 'pie',
+        data: { labels, datasets: [{ data: values, backgroundColor: CHART_COLORS.slice(0, labels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, resizeDelay: 100,
+          plugins: {
+            legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(usageLaunchModeChart)(e, li) },
+            tooltip: { callbacks: { label: ctx2 => `${ctx2.label}: ${ctx2.parsed} (${Math.round(ctx2.parsed / data.total * 100)}%)` } }
+          }
+        }
+      });
+      addMobileLegendToggle(usageLaunchModeChart, cardEl);
     }
 
     function renderUsageSummary(rows) {
