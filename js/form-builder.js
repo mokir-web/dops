@@ -230,6 +230,10 @@
             <button class="btn-secondary btn-small" style="padding:2px 8px;min-height:0;" ${idx === 0 ? 'disabled' : ''} onclick="moveQuestion('${q.id}',-1)">▲</button>
             <button class="btn-secondary btn-small" style="padding:2px 8px;min-height:0;" ${idx === fbQuestionsCache.length - 1 ? 'disabled' : ''} onclick="moveQuestion('${q.id}',1)">▼</button>
           </div>
+          <input type="number" min="1" max="${fbQuestionsCache.length}" value="${idx + 1}" title="Skriv en position och tryck Enter för att flytta hit"
+            style="width:44px;padding:4px;font-size:13px;border:1.5px solid #c7d1d7;border-radius:5px;text-align:center;"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();setQuestionPosition('${q.id}', this.value);}"
+            onblur="setQuestionPosition('${q.id}', this.value)">
           <div style="flex:1;cursor:pointer;" onclick="toggleQuestionExpand('${q.id}')">
             <strong>${esc(q.section || '')}</strong> — ${esc(q.question)} <span style="color:#5b6b75;font-size:13px;">(${esc(q.type)})</span>
           </div>
@@ -290,19 +294,37 @@
       renderQuestionsList();
     }
 
+    // Samma mönster som applyFormTypeReorder/moveFormType/setFormTypePosition ovan —
+    // en bulk-omnumrering (order_index = 0,1,2... utifrån hela listan) istället för
+    // en parvis swap mellan grannar, som kunde ge ingen effekt vid gamla
+    // null/kolliderande order_index-värden (samma buggklass som fixades för
+    // formulärtyper, se PUT /form-types/reorder).
+    async function applyQuestionReorder(ids) {
+      try {
+        const res = await api('reorderFormQuestions', { formTypeId: fbCurrentFormTypeId, ids });
+        if (res.error) { await customAlert(res.error); return; }
+        openFormQuestions(fbCurrentFormTypeId, fbCurrentFormTypeName);
+      } catch (err) { await customAlert(err.message); }
+    }
+
     async function moveQuestion(id, dir) {
       const idx = fbQuestionsCache.findIndex(q => q.id === id);
       const swapIdx = idx + dir;
       if (swapIdx < 0 || swapIdx >= fbQuestionsCache.length) return;
-      const a = fbQuestionsCache[idx], b = fbQuestionsCache[swapIdx];
-      const aOrder = a.orderIndex ?? idx, bOrder = b.orderIndex ?? swapIdx;
-      try {
-        const res1 = await api('updateFormQuestion', { formTypeId: fbCurrentFormTypeId, id: a.id, question: { ...a, orderIndex: bOrder } });
-        if (res1.error) { await customAlert(res1.error); return; }
-        const res2 = await api('updateFormQuestion', { formTypeId: fbCurrentFormTypeId, id: b.id, question: { ...b, orderIndex: aOrder } });
-        if (res2.error) { await customAlert(res2.error); return; }
-        openFormQuestions(fbCurrentFormTypeId, fbCurrentFormTypeName);
-      } catch (err) { await customAlert(err.message); }
+      const ids = fbQuestionsCache.map(q => q.id);
+      [ids[idx], ids[swapIdx]] = [ids[swapIdx], ids[idx]];
+      await applyQuestionReorder(ids);
+    }
+
+    async function setQuestionPosition(id, newPosStr) {
+      const newPos = parseInt(newPosStr) - 1; // fältet visar 1-indexerat, arrayen är 0-indexerad
+      const idx = fbQuestionsCache.findIndex(q => q.id === id);
+      if (idx === -1 || Number.isNaN(newPos) || newPos === idx) { renderQuestionsList(); return; }
+      const clamped = Math.max(0, Math.min(fbQuestionsCache.length - 1, newPos));
+      const ids = fbQuestionsCache.map(q => q.id);
+      const [moved] = ids.splice(idx, 1);
+      ids.splice(clamped, 0, moved);
+      await applyQuestionReorder(ids);
     }
 
     function csvEscape(val) {
