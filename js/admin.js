@@ -485,7 +485,13 @@
     }
 
     // ── Delad cellbaserad tabellredigerare (Excel-liknande klistra in rad/kolumn) ──
+    // "Markerad rad" (selectedIdx) följer vilken cell som senast fick fokus — precis
+    // som i Excel styr den aktiva cellen var Infoga rad ovanför/under hamnar, istället
+    // för att bara kunna lägga till längst ner. null = inget valt än (t.ex. redigeraren
+    // precis öppnad); då hamnar "ovanför" högst upp och "under" längst ner, samma
+    // beteende som gamla addRow() hade.
     function buildCsvCellTable(tableEl, columns, rows) {
+      let selectedIdx = null;
       function render() {
         tableEl.innerHTML = '';
         const thead = document.createElement('tr');
@@ -499,6 +505,7 @@
         tableEl.appendChild(thead);
         rows.forEach((row, r) => {
           const tr = document.createElement('tr');
+          tr.style.background = r === selectedIdx ? '#dbe7f0' : '';
           columns.forEach((c, ci) => {
             const td = document.createElement('td'); td.style.padding = '2px';
             const inp = document.createElement('input');
@@ -506,16 +513,28 @@
             inp.style.cssText = 'width:100%;min-width:80px;padding:5px 6px;font-size:13px;border:1px solid #c7d1d7;border-radius:3px;';
             inp.addEventListener('input', () => { row[c.key] = inp.value; });
             inp.addEventListener('paste', e => handleGridPaste(e, r, ci));
+            inp.addEventListener('focus', () => { selectedIdx = r; highlightRow(); });
             td.appendChild(inp);
             tr.appendChild(td);
           });
           const delTd = document.createElement('td');
           const delBtn = document.createElement('button'); delBtn.type = 'button'; delBtn.className = 'btn-danger btn-small'; delBtn.textContent = '✕';
-          delBtn.onclick = () => { rows.splice(r, 1); render(); };
+          delBtn.onclick = () => {
+            rows.splice(r, 1);
+            if (selectedIdx === r) selectedIdx = null;
+            else if (selectedIdx !== null && r < selectedIdx) selectedIdx--;
+            render();
+          };
           delTd.appendChild(delBtn);
           tr.appendChild(delTd);
           tableEl.appendChild(tr);
         });
+      }
+      // Ommålar bara bakgrunden på befintliga <tr> (ingen full render()) — annars
+      // skulle fokus-eventet som triggar detta rycka bort fokus från cellen precis
+      // när användaren klickat i den, innan de hunnit skriva något.
+      function highlightRow() {
+        [...tableEl.rows].forEach((tr, i) => { tr.style.background = (i - 1 === selectedIdx) ? '#dbe7f0' : ''; });
       }
       function handleGridPaste(e, startRow, startCol) {
         const text = (e.clipboardData || window.clipboardData).getData('text');
@@ -533,9 +552,18 @@
         });
         render();
       }
-      function addRow() { rows.push({}); render(); }
+      // offset 0 = ovanför den markerade raden, 1 = under — som Excels "Infoga rad".
+      function insertRow(offset) {
+        const at = selectedIdx === null ? (offset === 0 ? 0 : rows.length) : selectedIdx + offset;
+        rows.splice(at, 0, {});
+        selectedIdx = at;
+        render();
+        tableEl.rows[at + 1]?.querySelector('input')?.focus();
+      }
+      function insertRowAbove() { insertRow(0); }
+      function insertRowBelow() { insertRow(1); }
       render();
-      return { addRow, getRows: () => rows };
+      return { insertRowAbove, insertRowBelow, getRows: () => rows };
     }
 
     // ── In-app CSV-redigerare: användare (cellbaserad Excel-lik tabell) ──
@@ -565,7 +593,8 @@
       }
     }
 
-    function addUserCsvRow() { userCsvGrid?.addRow(); }
+    function addUserCsvRowAbove() { userCsvGrid?.insertRowAbove(); }
+    function addUserCsvRowBelow() { userCsvGrid?.insertRowBelow(); }
     function cancelUserCsvEditor() { document.getElementById('user-csv-editor').classList.add('hidden'); }
 
     function validateUserCsvRow(row) {

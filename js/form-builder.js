@@ -8,7 +8,7 @@
 
     // ══════════════ FORMULÄRBYGGARE (endast global Admin) ══════════════
     const FB_CATEGORIES = ['ST', 'Spec', 'AT', 'BT'];
-    const FB_QTYPES = ['rubrik', 'radio', 'fritext', 'multi', 'skala'];
+    const FB_QTYPES = ['rubrik', 'radio', 'fritext', 'multi', 'skala', 'info'];
 
     let fbFormTypesCache = [];
     let fbQuestionsCache = [];
@@ -384,7 +384,8 @@
       }
     }
 
-    function addQuestionCsvRow() { questionCsvGrid?.addRow(); }
+    function addQuestionCsvRowAbove() { questionCsvGrid?.insertRowAbove(); }
+    function addQuestionCsvRowBelow() { questionCsvGrid?.insertRowBelow(); }
     function cancelQuestionCsvEditor() { document.getElementById('question-csv-editor').classList.add('hidden'); }
 
     function validateQuestionCsvRow(row) {

@@ -1032,10 +1032,11 @@
           </div>
           <div id="csv-import-status" style="margin-top:10px;"></div>
           <div id="user-csv-editor" class="hidden" style="margin-top:16px;border-top:1px solid #c7d1d7;padding-top:16px;">
-            <p style="color:#5b6b75;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Yrkesroll: ST/Spec/AT/BT/Admin. Användarroll: Registrerare/Mottagare/Blandbild/Administratör.</p>
+            <p style="color:#5b6b75;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Yrkesroll: ST/Spec/AT/BT/Admin. Användarroll: Registrerare/Mottagare/Blandbild/Administratör. Klicka i en rad för att markera den — "Rad ovanför/under" infogas relativt den markerade raden.</p>
             <div style="overflow-x:auto;"><table id="user-csv-table" style="border-collapse:collapse;width:100%;"></table></div>
             <div class="btn-row" style="margin-top:10px;">
-              <button class="btn-secondary btn-small" onclick="addUserCsvRow()">+ Lägg till rad</button>
+              <button class="btn-secondary btn-small" onclick="addUserCsvRowAbove()">+ Rad ovanför</button>
+              <button class="btn-secondary btn-small" onclick="addUserCsvRowBelow()">+ Rad under</button>
               <button class="btn-primary btn-small" onclick="submitUserCsvEditor()">Ladda upp redigerad data</button>
               <button class="btn-secondary btn-small" onclick="cancelUserCsvEditor()">Avbryt</button>
             </div>
@@ -1122,10 +1123,11 @@
           <button class="btn-secondary btn-small" onclick="downloadFormTypeCsv()">Ladda ner CSV</button>
         </div>
         <div id="question-csv-editor" class="hidden assessment-card" style="margin-bottom:14px;">
-          <p style="color:#5b6b75;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Lämna "Id" tom för nya frågor. Typ: rubrik/radio/fritext/multi/skala.</p>
+          <p style="color:#5b6b75;font-size:13px;">Klistra in en hel rad eller kolumn direkt från Excel. Lämna "Id" tom för nya frågor. Typ: rubrik/radio/fritext/multi/skala/info. Klicka i en rad för att markera den — "Rad ovanför/under" infogas relativt den markerade raden.</p>
           <div style="overflow-x:auto;"><table id="question-csv-table" style="border-collapse:collapse;width:100%;"></table></div>
           <div class="btn-row" style="margin-top:10px;">
-            <button class="btn-secondary btn-small" onclick="addQuestionCsvRow()">+ Lägg till rad</button>
+            <button class="btn-secondary btn-small" onclick="addQuestionCsvRowAbove()">+ Rad ovanför</button>
+            <button class="btn-secondary btn-small" onclick="addQuestionCsvRowBelow()">+ Rad under</button>
             <button class="btn-primary btn-small" onclick="submitQuestionCsvEditor()">Spara alla</button>
             <button class="btn-secondary btn-small" onclick="cancelQuestionCsvEditor()">Avbryt</button>
           </div>
@@ -1693,7 +1695,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.48.7';
+    const APP_VERSION = 'v4.48.8';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -3129,6 +3131,15 @@
           const h = document.createElement('h4');
           h.textContent = q.question;
           container.appendChild(h);
+          return;
+        }
+        if (q.type === 'info') {
+          // Ren informationstext (t.ex. varifrån formuläret är hämtat) — inget svar,
+          // ingen input, hoppas över av tangentbordsnavigeringen precis som 'rubrik'.
+          const p = document.createElement('p');
+          p.className = 'field-description';
+          p.textContent = q.question;
+          container.appendChild(p);
           return;
         }
         const div = document.createElement('div');
