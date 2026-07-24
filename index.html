@@ -868,8 +868,7 @@
         <div class="section-header">Systemadministratör och utvecklare</div>
         <p>Simon Wigge<br>
         <a href="mailto:simon@wigge.se" style="color:#2e4a5f;">simon@wigge.se</a><br>
-        +46 76 256 16 71<br>
-        ST-läkare Kirurgkliniken Mora</p>
+        +46 76 256 16 71</p>
 
         <div class="section-header">Version</div>
         <p>MoraDOPS <span id="about-version"></span></p>
@@ -1206,12 +1205,13 @@
         </div>
       </div>
 
-      <div style="margin-top:24px;max-width:420px;">
-        <div class="section-header">Region</div>
-        <p style="color:#5b6b75;font-size:13px;margin-top:4px;">Var inloggningarna sker ifrån geografiskt, härlett från IP-adress. Endast aggregerat, ej kopplat till enskilda användare.</p>
+      <div style="margin-top:24px;">
+        <div class="section-header">Region över tid</div>
+        <p style="color:#5b6b75;font-size:13px;margin-top:4px;">Var inloggningarna sker ifrån geografiskt, härlett från IP-adress, över tid. Endast aggregerat, ej kopplat till enskilda användare.</p>
+        <label style="font-size:13px;color:#5b6b75;display:flex;align-items:center;gap:6px;margin-bottom:8px;">Upplösning: <select id="us-regions-resolution" onchange="onUsageRegionsResolutionChange()" style="font-size:13px;padding:3px 6px;border:1px solid #c7d1d7;border-radius:4px;background:#eef1f3;"><option value="day">Dag</option><option value="week">Vecka</option><option value="month" selected>Månad</option></select></label>
         <div id="us-regions-status"></div>
         <div id="us-regions-chart-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
-          <div id="us-regions-chart-wrap" class="chart-canvas-wrap" style="width:100%;height:260px;"><canvas id="chart-usage-regions"></canvas></div>
+          <div id="us-regions-chart-wrap" class="chart-canvas-wrap" style="width:100%;height:320px;"><canvas id="chart-usage-regions"></canvas></div>
         </div>
       </div>
 
@@ -1693,7 +1693,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.48.5';
+    const APP_VERSION = 'v4.48.6';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.

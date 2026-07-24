@@ -224,7 +224,7 @@
       window._overviewCharts[key]?.destroy();
       window._overviewCharts[key] = new Chart(ctx, {
         type: 'bar',
-        data: { labels: filteredKeys.map(k => byBucket?.[k]?.label || k), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
+        data: { labels: filteredKeys.map(k => byBucket?.[k]?.label || formatPeriodLabel(k, resolution)), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
         options: {
           responsive: true, maintainAspectRatio: false, resizeDelay: 100,
           plugins: { legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[key])(e, li) } },

@@ -124,6 +124,15 @@
 
     let usageRegionsChart = null;
 
+    // Samma "utgå från tidigaste faktiska dagspost, annars idag"-princip som
+    // statDataDateRange() i js/statistics.js, fast för region-datat.
+    function regionsDateRange(data) {
+      const dayKeys = Object.keys(data.byRegionByDay || {}).sort();
+      const today = new Date();
+      if (!dayKeys.length) return { start: today, end: today };
+      return { start: new Date(dayKeys[0] + 'T00:00:00'), end: today };
+    }
+
     async function loadUsageRegions() {
       const el = document.getElementById('us-regions-chart-wrap');
       if (!el) return;
@@ -131,14 +140,22 @@
       if (statusEl) statusEl.textContent = '';
       try {
         const data = await api('getUsageRegions', { filters: _usageStatsFilters() });
+        window._usageRegionsData = data; // cache: upplösningsbyte ritar om utan ny förfrågan
         renderUsageRegions(data);
       } catch (err) {
         if (statusEl) statusEl.innerHTML = html`<p class="status-err">${err.message}</p>`;
       }
     }
 
-    // Samma mönster som renderUsageDevices — se den för varför legend-optionerna
-    // aldrig får omtilldelas rakt av (self-refererande Proxy-krasch på iPhone).
+    function onUsageRegionsResolutionChange() {
+      if (window._usageRegionsData) renderUsageRegions(window._usageRegionsData);
+    }
+
+    // Staplat stapeldiagram över tid (en serie per region) — samma uppbyggnad som
+    // areadiagrammet i renderStatistics() (js/statistics.js): komplett obruten
+    // tidslinje via generateTimelineKeys(), regioner sorterade minst→mest, plus en
+    // överlagrad totallinje. Upplösning (dag/vecka/månad) väljs via
+    // #us-regions-resolution; tidsperiod styrs av samma datumfilter som resten av panelen.
     function renderUsageRegions(data) {
       const statusEl = document.getElementById('us-regions-status');
       const cardEl = document.getElementById('us-regions-chart-card');
@@ -147,21 +164,43 @@
         if (usageRegionsChart) { usageRegionsChart.destroy(); usageRegionsChart = null; }
         return;
       }
-      const labels = data.regions.map(r => r.name);
-      const values = data.regions.map(r => r.count);
+      const resolution = document.getElementById('us-regions-resolution')?.value || 'month';
+      const byBucket = resolution === 'day' ? data.byRegionByDay : resolution === 'week' ? data.byRegionByWeek : data.byRegionByMonth;
+
+      const dateFromVal = document.getElementById('us-date-from')?.value;
+      const dateToVal   = document.getElementById('us-date-to')?.value;
+      let rangeStart, rangeEnd;
+      if (dateFromVal) {
+        rangeStart = new Date(dateFromVal + 'T00:00:00');
+        rangeEnd   = dateToVal ? new Date(dateToVal + 'T00:00:00') : new Date();
+      } else {
+        const r = regionsDateRange(data);
+        rangeStart = r.start; rangeEnd = r.end;
+      }
+      const timelineKeys = generateTimelineKeys(resolution, rangeStart, rangeEnd).map(o => o.key);
+
+      const allRegions = Object.keys(data.byRegion || {}).sort((a, b) => data.byRegion[a] - data.byRegion[b]); // minst → mest
+      const datasets = allRegions.map((region, i) => ({
+        label: region,
+        data: timelineKeys.map(k => byBucket?.[k]?.[region] || 0),
+        backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+      }));
+
       if (usageRegionsChart) usageRegionsChart.destroy();
       const ctx = document.getElementById('chart-usage-regions').getContext('2d');
       usageRegionsChart = new Chart(ctx, {
-        type: 'pie',
-        data: { labels, datasets: [{ data: values, backgroundColor: CHART_COLORS.slice(0, labels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
+        type: 'bar',
+        data: { labels: timelineKeys.map(k => byBucket?.[k]?.label || formatPeriodLabel(k, resolution)), datasets: [...datasets, makeTotalLine(datasets, timelineKeys.length)] },
         options: {
           responsive: true, maintainAspectRatio: false, resizeDelay: 100,
-          plugins: {
-            legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(usageRegionsChart)(e, li) },
-            tooltip: { callbacks: { label: ctx2 => `${ctx2.label}: ${ctx2.parsed} (${Math.round(ctx2.parsed / data.total * 100)}%)` } }
+          plugins: { legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(usageRegionsChart)(e, li) } },
+          scales: {
+            y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } },
+            x: { stacked: true, grid: { color: '#c7d1d7' } }
           }
         }
       });
+      attachLegendTouch(usageRegionsChart);
       addMobileLegendToggle(usageRegionsChart, cardEl);
     }
 

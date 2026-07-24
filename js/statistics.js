@@ -139,7 +139,7 @@
         const lineBarDs = areaDatasets.map(d => ({ ...d, fill: undefined, tension: undefined, pointRadius: undefined }));
         lineChart = new Chart(lineCtx, {
           type: 'bar',
-          data: { labels: timelineKeys.map(k => byFormTypeByRes[k]?.label || k), datasets: [...lineBarDs, makeTotalLine(lineBarDs, lineBarDs[0]?.data.length || 0)] },
+          data: { labels: timelineKeys.map(k => byFormTypeByRes[k]?.label || formatPeriodLabel(k, resolution)), datasets: [...lineBarDs, makeTotalLine(lineBarDs, lineBarDs[0]?.data.length || 0)] },
           options: {
             responsive: true, maintainAspectRatio: false, resizeDelay: 100,
             plugins: { legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(lineChart)(e, li) } },

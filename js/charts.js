@@ -2,8 +2,6 @@
 // Används av js/statistics.js och js/overview.js (Chart.js-instanser).
 // Klassiskt script (ej type="module") — se js/progress.js för motivering.
 
-    const MONTH_LABELS_SV = ['jan','feb','mar','apr','maj','jun','jul','aug','sep','okt','nov','dec'];
-
     // ISO 8601-veckonyckel (YYYY-Www, måndag som första veckodag) — speglar
     // backendens stockholmWeekKey() men räknar på webbläsarens lokala tid
     // (för svenska användare av ett svenskt system är det i praktiken samma sak).
@@ -32,6 +30,19 @@
       return 'month';
     }
 
+    // Formaterar en dag-/vecko-/månadsnyckel till samma numerära etikettformat som
+    // backenden sätter i sina byXByRes-svar (MM-DD / v.NN / YYYY-MM) — delad så
+    // fallbacken för perioder UTAN data (byBucket?.[k]?.label || formatPeriodLabel(k,
+    // resolution), i overview.js/statistics.js/usage-stats.js) alltid matchar formatet
+    // på perioder MED data istället för att falla tillbaka på den råa oformaterade
+    // nyckeln (t.ex. "2026-05-16" istället för "05-16") — hittat 2026-07-24, samma
+    // buggklass som det utskrivna månadsnamnet ("jul 2026" vs "07-23").
+    function formatPeriodLabel(key, resolution) {
+      if (resolution === 'day') return key.slice(5);
+      if (resolution === 'week') return 'v.' + key.slice(6);
+      return key; // month: redan YYYY-MM
+    }
+
     // Genererar en komplett, obruten lista av {key,label} för given upplösning mellan
     // start och slut (inklusive) — så grafer kan visa alla perioder, även utan data,
     // istället för att bara visa de perioder som råkar ha data.
@@ -41,7 +52,7 @@
         const cur = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
         while (cur <= endDate) {
           const key = clientDayKey(cur);
-          out.push({ key, label: key.slice(5) });
+          out.push({ key, label: formatPeriodLabel(key, 'day') });
           cur.setDate(cur.getDate() + 1);
         }
       } else if (resolution === 'week') {
@@ -50,14 +61,14 @@
         cur.setDate(cur.getDate() - dayNum); // till veckans måndag
         while (cur <= endDate) {
           const key = clientWeekKey(cur);
-          out.push({ key, label: 'v.' + key.slice(6) });
+          out.push({ key, label: formatPeriodLabel(key, 'week') });
           cur.setDate(cur.getDate() + 7);
         }
       } else { // month
         const cur = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
         while (cur <= endDate) {
           const key = clientMonthKey(cur);
-          out.push({ key, label: MONTH_LABELS_SV[cur.getMonth()] + ' ' + cur.getFullYear() });
+          out.push({ key, label: formatPeriodLabel(key, 'month') });
           cur.setMonth(cur.getMonth() + 1);
         }
       }
