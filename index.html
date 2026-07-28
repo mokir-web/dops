@@ -1695,7 +1695,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.48.8';
+    const APP_VERSION = 'v4.48.10';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2063,6 +2063,7 @@
               appData = await api('getData', { klinikId: currentUser.klinikId });
               localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
               populateLocationDropdown();
+              updateVersionLabels();
               prefillAssessment();
               if (document.querySelector('input[name="category"]:checked')) updateRecipients();
             } catch(_e) {}
@@ -2086,6 +2087,7 @@
           if (Date.now() - ad.ts < AD_TTL) {
             appData = ad.data;
             populateLocationDropdown();
+            updateVersionLabels();
           }
         }
       } catch(e) {}
@@ -2099,6 +2101,7 @@
           appData = await api('getData', { klinikId: currentUser.klinikId });
           localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
           populateLocationDropdown();
+          updateVersionLabels();
           prefillAssessment();
           if (document.querySelector('input[name="category"]:checked')) updateRecipients();
         } catch(err) { console.error('getData failed:', err); }
@@ -2109,6 +2112,7 @@
             appData = await api('getData');
             localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
             populateLocationDropdown();
+            updateVersionLabels();
           } catch(err) {
             console.error(err);
           }
@@ -2424,6 +2428,7 @@
           appData = await api('getData', { klinikId: currentUser.klinikId });
           localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
           populateLocationDropdown();
+          updateVersionLabels();
           if (document.querySelector('input[name="category"]:checked')) updateRecipients();
         } catch(_e) { /* tyst, försöker igen vid nästa sidladdning */ }
       } catch(err) { setStatus('login-status', err.message, true); unlockUI(); }
@@ -2563,6 +2568,7 @@
           appData = await api('getData', { klinikId: currentUser.klinikId });
           localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
           populateLocationDropdown();
+          updateVersionLabels();
         } catch (_e) { /* tyst */ }
       } catch (err) { setStatus('demo-status', err.message, true); unlockUI(); }
     }
@@ -4237,6 +4243,20 @@
       field.classList.add('kb-focused-flash');
     }
 
+    // Scrollar ENDAST neråt, och bara om målelementet faktiskt är dolt under
+    // synfältets nederkant — aldrig uppåt. scrollIntoView({block:'center'}) kan
+    // scrolla uppåt om elementet råkar hamna ovanför mitten (t.ex. efter att
+    // tangentbordet stängts och synfältet växt), vilket skulle fighta en
+    // användare som medvetet scrollat upp för att läsa en tidigare fråga igen.
+    // window.scrollBy med ett positivt värde kan till sin natur aldrig scrolla
+    // uppåt, så det garanterar detta istället för att bara råka fungera så.
+    function _scrollDownIntoView(el) {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const overflow = rect.bottom - window.innerHeight;
+      if (overflow > 0) window.scrollBy({ top: overflow + 24, behavior: 'smooth' });
+    }
+
     function _setFieldFocus(idx) {
       const fields = _getFormFields();
       if (idx < 0 || idx >= fields.length) return;
@@ -4247,7 +4267,7 @@
       // Focus first focusable input in the field
       const inp = field.querySelector('input:not([type=hidden]), textarea, select');
       if (inp) { inp.focus(); }
-      field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      _scrollDownIntoView(field);
     }
 
     function _advanceField() {
@@ -4264,7 +4284,13 @@
         if (nextBtn) { nextBtn.click(); }
         else {
           const sub = document.getElementById('submit-btn');
-          if (sub && !sub.classList.contains('hidden')) sub.focus();
+          // scrollIntoView saknades tidigare här (till skillnad från varje annat
+          // fält via _setFieldFocus ovan) — knappen fick fokus men användaren
+          // fick manuellt hitta ner till den, extra besvärligt på iPhone där
+          // .focus() på en <button> (till skillnad från text-inputs) inte
+          // triggar webbläsarens egen auto-scroll (hittat 2026-07-24, rapporterat
+          // som svåråtkomlig "Skicka"-knapp på iPhone).
+          if (sub && !sub.classList.contains('hidden')) { sub.focus(); _scrollDownIntoView(sub); }
         }
       }
     }
@@ -4404,11 +4430,24 @@
       ['filter-date-from', 'filter-date-to', 'stat-date-from', 'stat-date-to',
        'progress-from', 'progress-to', 'co-date-from', 'co-date-to'].forEach(setupDateTriple);
       // Sätt versionsnummer på alla ställen
+      updateVersionLabels();
+    });
+
+    // Visar frontend- OCH backend-version separat (t.ex. "v4.48.8f/4.48.5b") eftersom
+    // de nu kan öka oberoende av varandra vid separata leveranser. Backend-versionen
+    // kommer från appData.backendVersion (GET /reference-data) — inte tillgänglig
+    // förrän första getData()-anropet svarat, så innan dess visas bara frontend-
+    // versionen (samma som tidigare beteende) tills updateVersionLabels() anropas
+    // igen efter att appData satts.
+    function updateVersionLabels() {
+      const fe = APP_VERSION.replace(/^v/, '');
+      const be = appData?.backendVersion;
+      const text = be ? `v${fe}f/${be}b` : APP_VERSION;
       ['login-version','sidebar-version','about-version'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.textContent = APP_VERSION;
+        if (el) el.textContent = text;
       });
-    });
+    }
     let _lastAssessmentCount = null;
 
     // ── Hjälpfunktioner för skalvisning ───────────────────────────────────────
@@ -4483,9 +4522,15 @@
     // kommunikationen användaren ser) och performUpdate() nedan (showBanner:false,
     // eftersom nedräkningsdialogen redan kommunicerat att en uppdatering är på gång).
     // dops_resume_panel och osparade bedömningsutkast bevaras alltid genom rensningen.
+    // dops_install_prompt_dismissed måste också bevaras — annars återkommer
+    // hemskärms-/installationserbjudandet (maybeShowInstallPrompt) vid nästa inloggning
+    // efter VARJE versionsuppdatering, även i standalone-läge om isStandaloneApp() av
+    // någon anledning inte hinner slå in innan modalen hade hunnit visas en gång
+    // tidigare (hittat i produktion 2026-07-24, rapporterat som "kommer till och från
+    // när jag uppdaterar sidan" — sammanföll med att flera versioner levererats tätt).
     function _applyVersionUpdateAndReload(newVersion, opts) {
       opts = opts || {};
-      const preserveKeys = ['dops_user', 'dops_sound_notify', 'dops_resume_panel'];
+      const preserveKeys = ['dops_user', 'dops_sound_notify', 'dops_resume_panel', 'dops_install_prompt_dismissed'];
       const preserved = {};
       Object.keys(localStorage).forEach(k => {
         if (preserveKeys.includes(k) || k.startsWith('dops_assessment_draft_')) preserved[k] = localStorage.getItem(k);
