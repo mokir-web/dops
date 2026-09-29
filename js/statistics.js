@@ -59,6 +59,7 @@
         ? (statKlinikId || activeKlinikId || currentUser.klinikId || '*')
         : (currentUser.klinikId || '*');
       window._statKlinikId = effectiveStatKlinik; // för uppföljningen per person nedan
+      loadStatCompetition(effectiveStatKlinik); // kvartalstävlingens preliminära prispall överst (js/competition.js)
       const noFilter = !dateFrom && !dateTo && !checkedForms.length;
       const cacheKey = 'statistics_' + effectiveStatKlinik;
 

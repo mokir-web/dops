@@ -295,6 +295,28 @@
     /* Frågegrupp-avstånd */
     .field + .field { margin-top: 24px; }
     /* Avsnittets frågor i ett gemensamt kort, åtskilda av tunna linjer (se _sectionCard). */
+    /* Kvartalstävling: prispall (fliken + överst i Klinikens statistik) */
+    .comp-card { background: #fff; border: 1.5px solid #c7d1d7; border-radius: 10px; padding: 14px 16px; margin: 0 0 16px; max-width: 760px; }
+    .comp-card.comp-past { background: #f4f6f7; }
+    .comp-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin-bottom: 10px; }
+    .comp-head strong { font-size: 16px; color: #1c2b36; }
+    .comp-head span { font-size: 13px; color: #5b6b75; }
+    .comp-podiums { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .comp-board-title { font-weight: 700; font-size: 13px; color: #1c2b36; margin-bottom: 8px; }
+    .comp-podium { display: flex; align-items: flex-end; gap: 6px; }
+    .comp-step { flex: 1; text-align: center; min-width: 0; }
+    .comp-name { font-weight: 700; font-size: 13px; color: #1c2b36; overflow-wrap: anywhere; }
+    .comp-count { font-size: 12px; color: #5b6b75; margin-bottom: 4px; }
+    .comp-block { border-radius: 6px 6px 0 0; color: #fff; font-weight: 700; font-size: 16px; display: flex; justify-content: center; padding-top: 6px; }
+    .comp-block.comp-empty { background: #e3e8eb; }
+    .comp-none { color: #8a97a0; font-size: 13px; margin: 0; }
+    .comp-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 16px; border-top: 1px solid #e3e8eb; padding-top: 12px; }
+    .comp-list table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+    .comp-list td { padding: 4px 0; border-bottom: 1px solid #eef1f3; }
+    .comp-list td.pl { width: 28px; color: #8a97a0; }
+    .comp-list td.ct { text-align: right; font-weight: 700; }
+    .comp-list tr.top td { font-weight: 700; }
+    .comp-upcoming { background: #eef1f3; border-radius: 8px; padding: 10px 12px; font-size: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; max-width: 760px; }
     .section-card { margin-top: 20px; background: #ffffff; border: 1.5px solid #c7d1d7; border-radius: 10px; padding: 4px 16px; box-shadow: 0 1px 3px rgba(20,30,38,0.06); }
     .section-card > .field { margin: 0; background: none; border: 0; border-radius: 0; box-shadow: none; padding: 16px 0; }
     .section-card > .field + .field, .section-card > * + .field, .section-card > .field + * { border-top: 1px solid #e3e8eb; }
@@ -605,6 +627,7 @@
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-overview" onclick="showPanel('clinic-overview')"><i class="ti ti-building-hospital" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens bedömningar</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-clinic-settings" onclick="showPanel('clinic-settings')"><i class="ti ti-settings" aria-hidden="true"></i><span class="sidebar-btn-label">Klinikens inställningar</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-request-stats" onclick="showPanel('request-stats')"><i class="ti ti-chart-bar" aria-hidden="true"></i><span class="sidebar-btn-label">Förfrågningsöversikt</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-competition" onclick="showPanel('competition')"><i class="ti ti-trophy" aria-hidden="true"></i><span class="sidebar-btn-label">Kvartalstävling</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')"><i class="ti ti-users" aria-hidden="true"></i><span class="sidebar-btn-label">Administration</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-error-reports"   onclick="showPanel('error-reports')"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Felanmälningar</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-usage-stats"   onclick="showPanel('usage-stats')"><i class="ti ti-chart-dots" aria-hidden="true"></i><span class="sidebar-btn-label">Användningsstatistik</span></button>
@@ -777,6 +800,7 @@
     <!-- ── STATISTICS ───────────────────────────────────────────── -->
     <div id="panel-statistics" class="hidden">
       <h2>Klinikens statistik</h2>
+      <div id="stat-competition"></div>
       <div id="statistics-swr-status" style="min-height:18px;margin-bottom:4px;"></div>
       <div id="stat-klinik-row" class="hidden" style="margin-bottom:14px;">
         <label class="field-label">Klinik</label>
@@ -1332,6 +1356,17 @@
     </div>
 
     <!-- ── REQUEST STATS ────────────────────────────────────────── -->
+    <!-- ── KVARTALSTÄVLING (v4.53.0) ─────────────────────────────── -->
+    <div id="panel-competition" class="hidden">
+      <h2>Kvartalstävling</h2>
+      <p style="color:#5b6b75;font-size:14px;max-width:640px;">Flest registrerade och flest mottagna bedömningar under en 3-månadersomgång. Den preliminära prispallen visas för alla överst i Klinikens statistik. När en omgång är slut mejlas resultatet till klinikens Studierektorer och Administratörer.</p>
+      <div class="field hidden" id="comp-clinic-field" style="margin-top:8px;">
+        <label class="field-label">Klinik</label>
+        <select id="comp-clinic" onchange="_compKlinikId = this.value; loadCompetition()" style="max-width:360px;"></select>
+      </div>
+      <div id="competition-content" style="margin-top:14px;"></div>
+    </div>
+
     <div id="panel-request-stats" class="hidden">
       <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:0;">
         <h2 style="margin:0;">Förfrågningsöversikt</h2>
@@ -1455,6 +1490,9 @@
             </label>
             <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;">
               <input type="checkbox" id="sch-content-received-from"> Mottagit bedömningar av (per person)
+            </label>
+            <label style="display:flex;gap:10px;align-items:center;font-size:14px;cursor:pointer;margin-top:6px;">
+              <input type="checkbox" id="sch-content-competition"> Kvartalstävlingens preliminära prispall
             </label>
           </div>
         </div>
@@ -1757,7 +1795,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.52.0';
+    const APP_VERSION = 'v4.53.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2070,6 +2108,9 @@
       markRequestRead:        { method: 'PATCH',  path: p => '/requests/' + encodeURIComponent(p.id) + '/read' },
       markRequestDone:        { method: 'PATCH',  path: p => '/requests/' + encodeURIComponent(p.id) + '/done' },
       getRequestStats:        { method: 'GET',    path: () => '/requests/stats', query: p => ({ clinicId: p.klinikId }) },
+      getCompetition:         { method: 'GET',    path: () => '/competition', query: p => ({ clinicId: p.klinikId }) },
+      startCompetitionRound:  { method: 'POST',   path: () => '/competition/rounds', body: p => ({ clinicId: p.klinikId, startDate: p.startDate }) },
+      deleteCompetitionRound: { method: 'DELETE', path: p => '/competition/rounds/' + encodeURIComponent(p.id) },
       getStatisticsTrainees:  { method: 'GET',    path: () => '/statistics/trainees', query: p => ({ clinicId: p.klinikId, dateFrom: p.dateFrom, dateTo: p.dateTo }) },
 
       getMyOverview:          { method: 'GET',    path: () => '/overview' },
@@ -2364,6 +2405,9 @@
       if (reqStatsBtn) reqStatsBtn.classList.toggle('hidden', !isStudierektor);
       const remindersBtn = document.getElementById('nav-btn-reminders');
       if (remindersBtn) remindersBtn.classList.toggle('hidden', !isStudierektor);
+      // Kvartalstävling (v4.53.0): Studierektor och Administratör
+      const competitionBtn = document.getElementById('nav-btn-competition');
+      if (competitionBtn) competitionBtn.classList.toggle('hidden', !hasPriv);
       // Klinikens inställningar: Studierektor och Administratör
       const clinicSettingsBtn = document.getElementById('nav-btn-clinic-settings');
       if (clinicSettingsBtn) clinicSettingsBtn.classList.toggle('hidden', !hasPriv);
@@ -4411,6 +4455,7 @@
       if (priv === 'Studierektor' || priv === 'Administratör') {
         base.push({ value: 'clinic-overview', label: 'Klinikens bedömningar' });
         base.push({ value: 'request-stats',   label: 'Förfrågningsöversikt' });
+        base.push({ value: 'competition',     label: 'Kvartalstävling' });
       }
       if (priv === 'Administratör') {
         base.push({ value: 'admin', label: 'Administration' });
@@ -5220,10 +5265,10 @@
       // Ta bort loading-overlay vid första showPanel
       const loadingEl = document.getElementById('app-loading');
       if (loadingEl) loadingEl.remove();
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats'].forEach(p =>
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats','competition'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats'].forEach(p => {
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats','competition'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -5286,6 +5331,7 @@
       if (panel === 'overview')          { loadMyOverview(); }
       if (panel === 'inbox')            { loadInbox(); }
       if (panel === 'request-stats')    { loadRequestStats(); }
+      if (panel === 'competition')      { loadCompetition(); }
       if (panel === 'usage-stats')      { loadUsageStats(); }
       if (panel === 'progress')          { initProgress(); }
       if (panel !== 'progress') { _progressCharts.forEach(c => { try { c.destroy(); } catch(_){} }); _progressCharts = []; }
@@ -5329,5 +5375,6 @@
   <script src="./js/error-reports.js"></script>
   <script src="./js/documents.js"></script>
   <script src="./js/profile.js"></script>
+  <script src="./js/competition.js"></script>
 </body>
 </html>

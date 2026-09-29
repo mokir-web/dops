@@ -64,6 +64,8 @@
       if (fc)  fc.checked  = innehall.includes('formtypes');
       if (stc) stc.checked = innehall.includes('sent_to');
       if (rfc) rfc.checked = innehall.includes('received_from');
+      const cpc = document.getElementById('sch-content-competition');
+      if (cpc) cpc.checked = innehall.includes('competition');
       const pEl = document.getElementById('sch-period');
       if (pEl) pEl.value = existing?.periodVeckor || 1;
       // Klinikval
@@ -125,6 +127,7 @@
         document.getElementById('sch-content-formtypes')?.checked     ? 'formtypes'      : '',
         document.getElementById('sch-content-sent-to')?.checked       ? 'sent_to'        : '',
         document.getElementById('sch-content-received-from')?.checked ? 'received_from'  : '',
+        document.getElementById('sch-content-competition')?.checked   ? 'competition'    : '',
       ].filter(Boolean).join(',');
       const periodVeckor = parseInt(document.getElementById('sch-period')?.value) || 1;
       const schedule = {
