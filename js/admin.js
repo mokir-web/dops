@@ -14,7 +14,7 @@
     // <option value="Admin">Administratör</option>), men visades tidigare rakt av som "Admin"
     // i användarlistorna — förvirrande bredvid Användarroll som redan kan heta "Administratör".
     function jobRoleLabel(jobRole) {
-      return jobRole === 'Admin' ? 'Administratör' : (jobRole || '');
+      return jobRole === 'Admin' ? 'Administratör' : roleLabel(jobRole);
     }
 
     async function loadAdminPanel() {

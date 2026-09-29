@@ -453,7 +453,7 @@
         <select id="reg-jobrole">
           <option value="">-- Välj --</option>
           <option value="ST">ST</option>
-          <option value="Spec">Spec</option>
+          <option value="Spec">Specialist</option>
           <option value="AT">AT</option>
           <option value="BT">BT</option>
           <option value="Admin">Administratör</option>
@@ -858,7 +858,7 @@
         </div>
 
         <div class="section-header">Behörighetsnivåer</div>
-        <p>Systemet använder en hierarki för vem som kan bedöma vem. Specialister (Spec) kan bedöma alla. ST-läkare kan bedöma AT- och BT-läkare. Rollen sätts vid registrering och kan ändras under Min profil. Det är vid registrering och under profil möjligt att välja om användaren ska både kunna registrera och ta emot bedömningar.</p>
+        <p>Systemet använder en hierarki för vem som kan bedöma vem. Specialister kan bedöma alla. ST-läkare kan bedöma AT- och BT-läkare. Rollen sätts vid registrering och kan ändras under Min profil. Det är vid registrering och under profil möjligt att välja om användaren ska både kunna registrera och ta emot bedömningar.</p>
         <p>Utökad behörighet för klinikadministratör eller studierektor kan erhållas, vänligen kontakta systemansvarig.</p>
 
         <div class="section-header">Hantering av personuppgifter</div>
@@ -907,7 +907,7 @@
           <select id="co-category" onchange="filterCoFormTypesByCategory()">
             <option value="">Alla</option>
             <option value="ST">ST</option>
-            <option value="Spec">Spec</option>
+            <option value="Spec">Specialist</option>
             <option value="AT">AT</option>
             <option value="BT">BT</option>
           </select>
@@ -1001,7 +1001,7 @@
           <div class="field"><label class="field-label">Efternamn</label><input type="text" id="addu-lastname"></div>
           <div class="field"><label class="field-label">E-post</label><input type="email" id="addu-email"></div>
           <div class="field"><label class="field-label">Yrkesroll</label>
-            <select id="addu-jobrole"><option value="ST">ST</option><option value="Spec">Spec</option><option value="AT">AT</option><option value="BT">BT</option><option value="Admin">Administratör</option></select>
+            <select id="addu-jobrole"><option value="ST">ST</option><option value="Spec">Specialist</option><option value="AT">AT</option><option value="BT">BT</option><option value="Admin">Administratör</option></select>
           </div>
           <div class="field"><label class="field-label">Användarroll</label>
             <select id="addu-userrole"><option value="Registrerare">Registrerare</option><option value="Mottagare">Mottagare</option><option value="Blandbild">Blandbild</option><option value="Administratör">Administratör</option></select>
@@ -1053,7 +1053,7 @@
           <div class="field"><label class="field-label">Förnamn</label><input type="text" id="edit-firstname"></div>
           <div class="field"><label class="field-label">Efternamn</label><input type="text" id="edit-lastname"></div>
           <div class="field"><label class="field-label">Yrkesroll</label>
-            <select id="edit-jobrole"><option value="ST">ST</option><option value="Spec">Spec</option><option value="AT">AT</option><option value="BT">BT</option><option value="Admin">Administratör</option></select>
+            <select id="edit-jobrole"><option value="ST">ST</option><option value="Spec">Specialist</option><option value="AT">AT</option><option value="BT">BT</option><option value="Admin">Administratör</option></select>
           </div>
           <div class="field"><label class="field-label">Användarroll</label>
             <select id="edit-userrole"><option value="Registrerare">Registrerare</option><option value="Mottagare">Mottagare</option><option value="Blandbild">Blandbild</option><option value="Administratör">Administratör</option></select>
@@ -1182,7 +1182,7 @@
           </div>
           <div style="flex:1;min-width:140px;"><label class="field-label">Yrkesroll</label>
             <select id="us-jobrole-filter" style="width:100%;">
-              <option value="">Alla</option><option value="ST">ST</option><option value="Spec">Spec</option>
+              <option value="">Alla</option><option value="ST">ST</option><option value="Spec">Specialist</option>
               <option value="AT">AT</option><option value="BT">BT</option><option value="Admin">Admin</option>
             </select>
           </div>
@@ -1318,6 +1318,51 @@
           <span id="expiry-save-status" style="font-size:12px;"></span>
         </div>
       </div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-primary btn-small" onclick="showManagedRequestForm()">+ Ny förfrågan</button>
+        <label style="font-size:13px;color:#5b6b75;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="reqstat-mine-only" onchange="renderRequestStats(_lastRequestStats)"> Visa bara mina utskick</label>
+      </div>
+      <div id="managed-request-form" class="hidden filter-box" style="margin-top:14px;max-width:640px;">
+        <div class="field">
+          <label class="field-label">Typ av förfrågan</label>
+          <div class="radio-group" id="mr-mode-group">
+            <label><input type="radio" name="mr-mode" value="directed" checked onchange="updateManagedRequestForm()"> <span><strong>Riktad</strong> — be en bedömare bedöma en viss person</span></label>
+            <label><input type="radio" name="mr-mode" value="obtain" onchange="updateManagedRequestForm()"> <span><strong>Massutskick: inhämta bedömning</strong> — var och en ber själv en kollega om en bedömning</span></label>
+            <label><input type="radio" name="mr-mode" value="self" onchange="updateManagedRequestForm()"> <span><strong>Massutskick: självskattning</strong> — var och en bedömer sig själv</span></label>
+          </div>
+        </div>
+        <div id="mr-directed-fields">
+          <div class="field"><label class="field-label">Person som ska bedömas *</label><select id="mr-subject" style="max-width:400px;"></select></div>
+          <div class="field"><label class="field-label">Bedömare *</label><select id="mr-assessor" style="max-width:400px;"></select></div>
+        </div>
+        <div id="mr-mass-fields" class="hidden">
+          <div class="field">
+            <label class="field-label">Yrkesgrupp</label>
+            <select id="mr-role" onchange="populateManagedRecipients()" style="max-width:300px;">
+              <option value="">-- Välj grupp --</option><option value="ST">ST</option><option value="Spec">Specialist</option><option value="AT">AT</option><option value="BT">BT</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Mottagare <small style="color:#5b6b75;">(kryssa ur dem som inte ska få utskicket)</small></label>
+            <div id="mr-recipients" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+          </div>
+        </div>
+        <div class="field"><label class="field-label" id="mr-formtype-label">Formulär (valfritt)</label><select id="mr-formtype" style="max-width:400px;"></select></div>
+        <div class="field" style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div><label class="field-label">Sista datum (valfritt)</label><input type="date" id="mr-due" onchange="updateManagedRequestForm()"></div>
+          <div><label class="field-label">Påminnelse</label>
+            <select id="mr-remind" disabled>
+              <option value="0">Ingen påminnelse</option><option value="3">3 dagar före sista datum</option><option value="7">1 vecka före sista datum</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label class="field-label">Meddelande *</label><textarea id="mr-message" style="max-width:560px;" placeholder="T.ex. syfte och vad som ska bedömas…"></textarea></div>
+        <div class="btn-row">
+          <button class="btn-primary" onclick="sendManagedRequest()">Skicka</button>
+          <button class="btn-secondary" onclick="hideManagedRequestForm()">Avbryt</button>
+        </div>
+        <div id="mr-status"></div>
+      </div>
       <div id="reqstat-content" style="margin-top:16px;"></div>
     </div>
 
@@ -1406,9 +1451,6 @@
         <button class="tab-btn active" id="inbox-tab-inbox"  onclick="setInboxTab('inbox')">Mottagna</button>
         <button class="tab-btn" id="inbox-tab-outbox" onclick="setInboxTab('outbox')">Skickade</button>
         <button class="tab-btn" id="inbox-tab-request" onclick="setInboxTab('request')">Begär bedömning</button>
-        <span id="bulk-request-btn-wrap" class="hidden" style="margin-left:auto;">
-          <button class="btn-secondary btn-small" onclick="showBulkRequestForm()">+ Gruppförfrågan</button>
-        </span>
       </div>
       <!-- Ny förfrågan-formulär -->
       <div id="request-form" class="hidden filter-box" style="margin-bottom:16px;">
@@ -1443,41 +1485,6 @@
           <span id="inbox-notify-status" style="font-size:13px;color:#2e4a5f;"></span>
         </div>
       </div>
-      <!-- Bulk-förfrågan formulär -->
-      <div id="bulk-request-form" class="hidden filter-box" style="margin-bottom:16px;">
-        <div style="font-weight:bold;font-size:16px;margin-bottom:12px;">Gruppförfrågan</div>
-        <div class="field">
-          <label class="field-label">Formulärtyp</label>
-          <select id="bulk-formtype" style="max-width:400px;"></select>
-        </div>
-        <div class="field">
-          <label class="field-label">Yrkesgrupp att skicka till</label>
-          <select id="bulk-role-filter" onchange="populateBulkRecipients()" style="max-width:300px;">
-            <option value="">-- Välj grupp --</option>
-            <option value="ST">ST</option>
-            <option value="Spec">Spec</option>
-            <option value="AT">AT</option>
-            <option value="BT">BT</option>
-          </select>
-        </div>
-        <div class="field">
-          <label class="field-label">Mottagare <small style="color:#5b6b75;">(kryssa i dem du vill skicka till)</small></label>
-          <div id="bulk-recipients" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
-          <label style="font-size:13px;cursor:pointer;margin-top:8px;display:block;">
-            <input type="checkbox" id="bulk-select-all" onchange="toggleBulkAll(this.checked)"> Markera alla
-          </label>
-        </div>
-        <div class="field">
-          <label class="field-label">Meddelande</label>
-          <textarea id="bulk-message" placeholder="Beskriv vad du vill att de ska göra..." style="max-width:560px;"></textarea>
-        </div>
-        <div class="btn-row">
-          <button class="btn-primary" onclick="sendBulkRequest()">Skicka till markerade</button>
-          <button class="btn-secondary" onclick="hideBulkRequestForm()">Avbryt</button>
-        </div>
-        <div id="bulk-status"></div>
-      </div>
-
       <div id="inbox-list"></div>
     </div>
 
@@ -1512,7 +1519,7 @@
           <label class="field-label">Yrkesroll</label>
           <select id="profile-jobrole">
             <option value="ST">ST</option>
-            <option value="Spec">Spec</option>
+            <option value="Spec">Specialist</option>
             <option value="AT">AT</option>
             <option value="BT">BT</option>
             <option value="Admin">Administratör</option>
@@ -1711,7 +1718,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.49.1';
+    const APP_VERSION = 'v4.50.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -1846,7 +1853,6 @@
 
     function _bk(key) { return (currentUser?.email || '__anon__') + ':' + key; }
     function bgGet(key) { const e = _bgCache[_bk(key)]; return (e && Date.now()-e.ts < BG_TTL) ? e.data : null; }
-    function bgAge(key) { const e = _bgCache[_bk(key)]; return e ? Date.now()-e.ts : Infinity; }
     function bgSet(key, data) { _bgCache[_bk(key)] = { data, ts: Date.now() }; }
     function bgInvalidate(key) { delete _bgCache[_bk(key)]; }
     const SWR_FRESH_MS = 60 * 1000; // hoppa revalidering om cachen är yngre än detta
@@ -1909,6 +1915,9 @@
     }
 
     const hierarchy = ['Spec', 'ST', 'BT', 'AT'];
+    // Visningsnamn för yrkesroll. Det lagrade värdet är fortfarande 'Spec' (databas, filter,
+    // behörighetshierarki, CSV-import) — bara det som visas för användaren skrivs ut.
+    function roleLabel(role) { return role === 'Spec' ? 'Specialist' : (role || ''); }
     // Formulärtyper hämtas dynamiskt från Sheets via appData.formTypes
 
     // ── Node/Postgres backend URL ────────────────────────────────
@@ -2017,11 +2026,10 @@
       deleteFormQuestion:      { method: 'DELETE', path: p => '/form-types/' + encodeURIComponent(p.formTypeId) + '/questions/' + encodeURIComponent(p.id) },
 
       sendAssessmentRequest:  { method: 'POST',   path: () => '/requests', body: p => ({ toEmail: p.toEmail, message: p.message, formType: p.formType }) },
-      sendBulkRequest:        { method: 'POST',   path: () => '/requests/bulk', body: p => ({ toEmails: p.toEmails, message: p.message, formType: p.formType }) },
+      sendManagedRequest:     { method: 'POST',   path: () => '/requests/managed', body: p => ({ clinicId: p.clinicId, mode: p.mode, subjectId: p.subjectId, assessorId: p.assessorId, userIds: p.userIds, formType: p.formType, message: p.message, dueDate: p.dueDate, remindDaysBefore: p.remindDaysBefore }) },
       getAssessmentRequests:  { method: 'GET',    path: () => '/requests' },
       markRequestRead:        { method: 'PATCH',  path: p => '/requests/' + encodeURIComponent(p.id) + '/read' },
       markRequestDone:        { method: 'PATCH',  path: p => '/requests/' + encodeURIComponent(p.id) + '/done' },
-      markRequestDoneByParticipants: { method: 'PATCH', path: () => '/requests/done-by-participants', body: p => ({ fromEmail: p.fromEmail, toEmail: p.toEmail }) },
       getRequestStats:        { method: 'GET',    path: () => '/requests/stats', query: p => ({ clinicId: p.klinikId }) },
 
       getMyOverview:          { method: 'GET',    path: () => '/overview' },
@@ -2210,7 +2218,7 @@
       updateSidebarPrivButtons(activePrivilege);
       updatePendingUsersBadge();
       const initRoleLabel = document.getElementById('nav-role-label');
-      if (initRoleLabel) { initRoleLabel.textContent = activePrivilege || currentUser.jobRole || ''; initRoleLabel.style.display = 'block'; }
+      if (initRoleLabel) { initRoleLabel.textContent = activePrivilege || roleLabel(currentUser.jobRole); initRoleLabel.style.display = 'block'; }
       const isReceiverOnly = currentUser.userRole === 'Mottagare';
       const assessmentBtn = document.getElementById('nav-btn-assessment');
       if (assessmentBtn) assessmentBtn.classList.toggle('hidden', isReceiverOnly);
@@ -2396,13 +2404,13 @@
         let activeLabel = '';
         if (privilege === 'Administratör') activeLabel = 'Administratör';
         else if (privilege === 'Studierektor') activeLabel = 'Studierektor';
-        else activeLabel = currentUser.jobRole || '';
+        else activeLabel = roleLabel(currentUser.jobRole);
         roleLabel.textContent = activeLabel;
         roleLabel.style.display = 'block';
         // Övriga tillgängliga roller
         const otherRolesEl = document.getElementById('nav-other-roles');
         if (otherRolesEl && privs.length) {
-          const all = [{ label: currentUser.jobRole || 'Mitt konto', value: null }];
+          const all = [{ label: roleLabel(currentUser.jobRole) || 'Mitt konto', value: null }];
           privs.forEach(p => all.push({ label: p.privilege, value: p.privilege }));
           const others = all.filter(o => o.label !== activeLabel);
           otherRolesEl.textContent = others.length ? others.map(o => o.label).join(' · ') : '';
@@ -3745,16 +3753,9 @@
         if (reqId) {
           api('markRequestDone', { id: reqId }).then(afterMark).catch(() => {});
         } else {
-          // Direkt-läge: matcha via mottagarens email
-          const recip = (window._pendingAssessmentMeta?.recipient) || document.getElementById('recipient')?.value || '';
-          if (recip) {
-            api('getRecipientEmail', { recipientFullName: recip }).then(toEmail => {
-              if (toEmail) {
-                api('markRequestDoneByParticipants', { fromEmail: currentUser.email, toEmail })
-                  .then(afterMark).catch(() => {});
-              }
-            }).catch(() => {});
-          }
+          // Direkt-läge: servern har redan stängt matchande förfrågningar när bedömningen
+          // sparades (POST /assessments) — hämta bara om inkorgen.
+          afterMark();
         }
 
         // Visa bekräftelsepanel
@@ -4051,8 +4052,7 @@
     // ── Inkorg ────────────────────────────────────────────────────
     // currentInboxTab/inboxData/setInboxTab/loadInboxBadge/updateInboxBadge/loadInbox/
     // renderInbox/showRequestForm/hideRequestForm/sendRequest/startRequestedAssessment/
-    // startRequestedAssessmentDirect/showBulkRequestForm/hideBulkRequestForm/
-    // populateBulkRecipients/toggleBulkAll/sendBulkRequest utbrutna till js/inbox.js.
+    // startRequestedAssessmentDirect/startObtainRequest utbrutna till js/inbox.js.
 
 
 
@@ -4072,13 +4072,6 @@
 
 
 
-
-    function prefillPrivKlinik() {
-      const input = document.getElementById('edit-priv-klinik');
-      if (!input.value && activeKlinikId && activeKlinikId !== '*') {
-        input.value = activeKlinikId;
-      }
-    }
 
     function checkCategorySelected() {
       const category = document.querySelector('input[name="category"]:checked')?.value;
@@ -4106,7 +4099,7 @@
 
     function _buildPrivilegeOptions() {
       const privs = currentUser.privileges || [];
-      const options = [{ label: currentUser.jobRole || 'Mitt konto', value: null, klinikId: null }];
+      const options = [{ label: roleLabel(currentUser.jobRole) || 'Mitt konto', value: null, klinikId: null }];
       privs.forEach(p => options.push({ label: p.privilege, value: p.privilege, klinikId: p.klinikId }));
       return options;
     }

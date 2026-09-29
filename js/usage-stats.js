@@ -300,7 +300,7 @@
         out += html`<tr style="cursor:pointer;border-bottom:1px solid #e4e9ec;" onclick="openUsageSessionsView('${safe(jsAttr(r.userId))}','${safe(jsAttr(r.name))}')">
           <td style="padding:6px 8px;font-weight:bold;">${r.name}</td>
           <td>${r.clinicName}</td>
-          <td>${r.jobRole}</td>
+          <td>${roleLabel(r.jobRole)}</td>
           <td>${r.sessionCount}</td>
           <td>${_formatDuration(r.activeSeconds)}</td>
           <td class="us-desktop-only">${r.topPanel}</td>

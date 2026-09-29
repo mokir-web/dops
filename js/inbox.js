@@ -33,9 +33,6 @@
     }
     function updateInboxBadge() {
       const total = (inboxData?.inbox || []).length;
-      // Visa/dölj bulk-knapp
-      const bulkWrap = document.getElementById('bulk-request-btn-wrap');
-      if (bulkWrap) bulkWrap.classList.toggle('hidden', !activePrivilege); // visa så länge det finns förfrågningar
       const badge = document.getElementById('inbox-badge');
       if (badge) {
         badge.textContent = total;
@@ -70,21 +67,46 @@
         card.style.marginTop = '12px';
         if (currentInboxTab === 'inbox' && !item.read) card.style.borderLeft = '4px solid #2e4a5f';
         const isInbox = currentInboxTab === 'inbox';
-        const personName = isInbox ? item.fromName : item.toName;
-        card.innerHTML = html`<div style="font-weight:bold;font-size:16px;">${personName}</div>${item.formType ? safe(html`<div style="font-size:13px;color:#2e4a5f;font-weight:bold;margin-top:2px;">📋 ${item.formType}</div>`) : ''}<div style="font-size:13px;color:#5b6b75;margin-top:2px;">${item.timestamp}</div><div style="margin-top:8px;font-size:15px;">${item.message}</div>`;
+        // Tre-partsförfrågningar (v4.50.0): kind 'obtain' = uppmaning att själv inhämta en
+        // bedömning, isSelf = självskattning, subjectName = den som ska bedömas (avsändaren
+        // i det ursprungliga fallet). fromName = den som skickade/begärde förfrågan.
+        const kind = item.kind || 'assessment';
+        const aboutMe = item.subject === currentUser.email;
+        let personName = isInbox ? (item.subjectName || item.fromName) : item.toName;
+        const lines = [];
+        if (isInbox) {
+          if (kind === 'obtain') personName = 'Inhämta en bedömning';
+          else if (item.isSelf) personName = 'Självskattning';
+          if (item.subjectName && item.fromName && item.fromName !== item.subjectName) lines.push('Begärd av ' + item.fromName);
+        } else if (!item.sentByMe) {
+          lines.push('ska bedöma dig · begärd av ' + item.fromName);
+        } else if (kind === 'obtain') {
+          lines.push('ska inhämta en bedömning');
+        } else if (item.isSelf) {
+          lines.push('självskattning');
+        } else if (item.subjectName && !aboutMe) {
+          lines.push('ska bedöma ' + item.subjectName);
+        }
+        if (item.dueDate) lines.push('Sista datum ' + item.dueDate);
+        card.innerHTML = html`<div style="font-weight:bold;font-size:16px;">${personName}</div>${lines.length ? safe(html`<div style="font-size:13px;color:#5b6b75;margin-top:2px;">${lines.join(' · ')}</div>`) : ''}${item.formType ? safe(html`<div style="font-size:13px;color:#2e4a5f;font-weight:bold;margin-top:2px;">📋 ${item.formType}</div>`) : ''}<div style="font-size:13px;color:#5b6b75;margin-top:2px;">${item.timestamp}</div><div style="margin-top:8px;font-size:15px;">${item.message}</div>`;
         if (isInbox) {
           const btn = document.createElement('button');
           btn.className = 'btn-primary btn-small';
           btn.style.marginTop = '10px';
-          btn.textContent = 'Utför bedömning';
-          btn.onclick = () => startRequestedAssessment(item);
+          if (kind === 'obtain') {
+            btn.textContent = 'Be en kollega om bedömning';
+            btn.onclick = () => startObtainRequest(item);
+          } else {
+            btn.textContent = 'Utför bedömning';
+            btn.onclick = () => startRequestedAssessment(item);
+          }
           card.appendChild(btn);
         } else if (!isInbox && item.status === 'Inaktuell') {
           const tag = document.createElement('div');
           tag.style.cssText = 'margin-top:8px;font-size:13px;color:#8a97a0;font-weight:bold;';
           tag.textContent = '× Inaktuell — förfrågan har passerat tidsgränsen';
           card.appendChild(tag);
-        } else if (!isInbox && item.status !== 'Utförd') {
+        } else if (!isInbox && item.status !== 'Utförd' && item.sentByMe !== false) {
           const doneBtn = document.createElement('button');
           doneBtn.className = 'btn-secondary btn-small';
           doneBtn.style.marginTop = '10px';
@@ -179,7 +201,18 @@
         setTimeout(() => { hideRequestForm(); loadInbox(); }, 1500);
       } catch(err) { setStatus('request-status', err.message, true); if (btn) btn.textContent = origBtnText; unlockUI(); }
     }
+    // Uppmaning att inhämta en bedömning: öppna det vanliga "Begär bedömning"-formuläret
+    // med formuläret förvalt. Uppmaningen markeras utförd automatiskt (av servern) när
+    // personen får en bedömning med formuläret.
+    function startObtainRequest(item) {
+      setInboxTab('request');
+      const ft = document.getElementById('request-formtype');
+      if (ft && item.formType) ft.value = item.formType;
+    }
     function startRequestedAssessment(item) {
+      // Den som ska bedömas är subjectName (tre-parts-/självskattningsförfrågningar);
+      // resten av flödet använder fromName, som i det ursprungliga fallet är densamma.
+      item = { ...item, fromName: item.subjectName || item.fromName };
       // Om formulärtyp är känd: hoppa direkt till formuläret
       if (item.formType) {
         startRequestedAssessmentDirect(item);
@@ -227,6 +260,7 @@
       }, 300);
     }
     async function startRequestedAssessmentDirect(item) {
+      item = { ...item, fromName: item.subjectName || item.fromName }; // se startRequestedAssessment
       // Sätt pending-state DIREKT (resetAssessment anropas inte här)
       pendingRequestId       = item.id;
       pendingRequestFrom     = item.fromName;
@@ -267,71 +301,4 @@
         }
         renderForm(data);
       } catch(err) { await customAlert('Fel: ' + err.message); showPanel('inbox'); }
-    }
-    function showBulkRequestForm() {
-      show('bulk-request-form', true);
-      // Fyll formulärtyper
-      const ftSel = document.getElementById('bulk-formtype');
-      ftSel.innerHTML = '<option value="">-- Välj formulärtyp --</option>';
-      if (appData && appData.formTypes) {
-        const allForms = [...new Set(Object.values(appData.formTypes).flat())].sort((a, b) => a.localeCompare(b, 'sv'));
-        allForms.forEach(ft => {
-          const opt = document.createElement('option');
-          opt.value = ft; opt.textContent = ft;
-          if (ft === 'Självskattning inför specialistkollegium') opt.selected = true;
-          ftSel.appendChild(opt);
-        });
-      }
-    }
-    function hideBulkRequestForm() { show('bulk-request-form', false); }
-    function populateBulkRecipients() {
-      const role = document.getElementById('bulk-role-filter').value;
-      const container = document.getElementById('bulk-recipients');
-      container.innerHTML = '';
-      if (!role || !appData || !appData.lists) return;
-      const clinic = currentUser.clinic;
-      const names = (appData.lists[role]?.[clinic] || []);
-      names.forEach(name => {
-        const shortName = name.split(' -- ')[0].trim();
-        const label = document.createElement('label');
-        label.style.cssText = 'display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;background:#eef1f3;border:1px solid #c7d1d7;border-radius:4px;padding:4px 10px;';
-        const cb = document.createElement('input');
-        cb.type = 'checkbox'; cb.value = name; cb.checked = true;
-        cb.className = 'bulk-recipient-cb';
-        label.appendChild(cb);
-        label.appendChild(document.createTextNode(shortName));
-        container.appendChild(label);
-      });
-    }
-    function toggleBulkAll(checked) {
-      document.querySelectorAll('.bulk-recipient-cb').forEach(cb => cb.checked = checked);
-    }
-    async function sendBulkRequest() {
-      if (_isProcessing) return;
-      const btn = document.querySelector('#bulk-request-form .btn-primary');
-      const origBtnText = btn?.textContent || 'Skicka till markerade';
-      if (btn) btn.textContent = 'Skickar\u2026';
-      lockUI();
-      const formType = document.getElementById('bulk-formtype').value;
-      const message  = document.getElementById('bulk-message').value.trim();
-      const selected = [...document.querySelectorAll('.bulk-recipient-cb:checked')].map(cb => cb.value);
-      if (!formType)       { setStatus('bulk-status', 'Välj formulärtyp.', true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-      if (!selected.length){ setStatus('bulk-status', 'Markera minst en mottagare.', true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-      if (!message)        { setStatus('bulk-status', 'Skriv ett meddelande.', true); if (btn) btn.textContent = origBtnText; unlockUI(); return; }
-
-      try {
-        const toEmails = await Promise.all(
-          selected.map(name => api('getRecipientEmail', { recipientFullName: name }).catch(() => null))
-        ).then(emails => emails.filter(Boolean));
-
-        const result = await api('sendBulkRequest', {
-          fromEmail: currentUser.email,
-          toEmails,
-          message,
-          formType
-        });
-        if (btn) btn.textContent = origBtnText;
-        unlockUI();
-        setTimeout(() => { hideBulkRequestForm(); loadInbox(); }, 1500);
-      } catch(err) { setStatus('bulk-status', err.message, true); if (btn) btn.textContent = origBtnText; unlockUI(); }
     }

@@ -143,7 +143,7 @@
         card.appendChild(topRow);
         const meta = document.createElement('div');
         meta.className = 'meta';
-        meta.textContent = `${a.timestamp || ''} · ${a.recipient ? a.recipient.split(' -- ')[0] : ''} (${a.category || ''}) · Registr: ${a.registrar || ''}`;
+        meta.textContent = `${a.timestamp || ''} · ${a.recipient ? a.recipient.split(' -- ')[0] : ''} (${roleLabel(a.category)}) · Registr: ${a.registrar || ''}`;
         card.appendChild(meta);
         card.style.cursor = 'pointer';
         const answersDiv = document.createElement('div');
