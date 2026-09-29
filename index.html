@@ -68,30 +68,39 @@
     .scale-group input { margin-bottom: 5px; width: 22px; height: 22px; cursor: pointer; }
 
     .slider-wrap { margin-top: 10px; max-width: 480px; }
-    .slider-value-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; position: relative; }
+    .slider-value-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; position: relative; }
     .slider-value-label {
       min-width: 28px; text-align: center; font-size: 17px; font-weight: bold;
       color: #8a97a0; transition: color 0.15s;
     }
     .slider-value-label.touched { color: #2e4a5f; }
+    /* Skalreglage: tunn linje som fylls i fram till valt värde (--frac 0–1, sätts av
+       _syncSlider), vit knopp tills man valt ett värde, siffrorna på en rad under.
+       Paddingen ger en stor träffyta för tummen trots den tunna linjen. */
     input[type=range].skala-slider {
-      flex: 1; -webkit-appearance: none; appearance: none; height: 6px;
-      padding: 14px 0; box-sizing: content-box; background-clip: content-box;
-      border-radius: 3px; background-color: #c7d1d7; outline: none; cursor: pointer;
+      flex: 1; -webkit-appearance: none; appearance: none; height: 4px;
+      padding: 16px 0; box-sizing: content-box;
+      border-radius: 2px; background: #c7d1d7 content-box; outline: none; cursor: pointer;
+    }
+    input[type=range].skala-slider.touched {
+      background: linear-gradient(to right, #2e4a5f calc(11px + (100% - 22px) * var(--frac, 0)), #c7d1d7 0) content-box;
     }
     input[type=range].skala-slider::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
-      background: #8a97a0; cursor: pointer; border: 2px solid #eef1f3; transition: background 0.15s;
+      -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+      background: #fff; cursor: pointer; border: 2px solid #8a97a0;
+      box-shadow: 0 1px 3px rgba(28, 43, 54, 0.25); transition: background 0.15s, border-color 0.15s;
     }
-    input[type=range].skala-slider.touched::-webkit-slider-thumb { background: #2e4a5f; }
+    input[type=range].skala-slider.touched::-webkit-slider-thumb { background: #2e4a5f; border-color: #2e4a5f; }
     input[type=range].skala-slider::-moz-range-thumb {
-      width: 26px; height: 26px; border-radius: 50%; border: 2px solid #eef1f3;
-      background: #8a97a0; cursor: pointer; transition: background 0.15s;
+      width: 22px; height: 22px; border-radius: 50%; border: 2px solid #8a97a0; box-sizing: border-box;
+      background: #fff; cursor: pointer; box-shadow: 0 1px 3px rgba(28, 43, 54, 0.25); transition: background 0.15s, border-color 0.15s;
     }
-    input[type=range].skala-slider.touched::-moz-range-thumb { background: #2e4a5f; }
-    /* Siffrorna fällda in i linjen istället för på en egen rad under */
-    .slider-marks { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 20px; font-size: 14px; font-weight: 700; color: #2e4a5f; pointer-events: none; }
-    .slider-marks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; background: #eef1f3; padding: 1px 6px; }
+    input[type=range].skala-slider.touched::-moz-range-thumb { background: #2e4a5f; border-color: #2e4a5f; }
+    input[type=range].skala-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(46, 74, 95, 0.35); }
+    .slider-desc { margin: -6px 0 2px; font-size: 14px; color: #8a97a0; min-height: 1.4em; }
+    .slider-desc.set { color: #2e4a5f; font-weight: 700; }
+    .slider-marks { position: absolute; left: 0; right: 0; top: calc(50% + 10px); height: 16px; font-size: 12px; color: #8a97a0; pointer-events: none; }
+    .slider-marks span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
     .progress-charts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .progress-chart-wrap { height: 140px; }
 
@@ -274,6 +283,13 @@
 
     /* Frågegrupp-avstånd */
     .field + .field { margin-top: 24px; }
+    /* Avsnittets frågor i ett gemensamt kort, åtskilda av tunna linjer (se _sectionCard). */
+    .section-card { margin-top: 20px; background: #ffffff; border: 1.5px solid #c7d1d7; border-radius: 10px; padding: 4px 16px; box-shadow: 0 1px 3px rgba(20,30,38,0.06); }
+    .section-card > .field { margin: 0; background: none; border: 0; border-radius: 0; box-shadow: none; padding: 16px 0; }
+    .section-card > .field + .field, .section-card > * + .field, .section-card > .field + * { border-top: 1px solid #e3e8eb; }
+    .section-card > h4 { margin: 14px 0 0; }
+    .section-card > p.field-description { margin: 12px 0; }
+    .section-card > .field.kb-focused { outline-offset: 2px; }
 
     /* Radio/checkbox accent – använd palett-färg istället för system-blå */
     input[type=radio], input[type=checkbox] { accent-color: #2e4a5f; }
@@ -286,6 +302,14 @@
       content: " (ej tillgänglig)";
       font-size: 14px; color: #8a97a0; font-style: italic;
     }
+
+    /* Mottagarens kategori som reglage: fyra knappar i en rad istället för en lista.
+       Samma radioknappar och logik under — bara utseendet ändras. Ej tillgängliga
+       kategorier (hierarkin) tonas ner och förklaras i title istället för med text,
+       som inte får plats i en smal knapp. */
+    #category-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-width: 560px; }
+    #category-group label { margin: 0; padding: 11px 4px; text-align: center; font-size: 17px; }
+    #category-group label.disabled-option::after { content: none; }
 
     /* Sektionsavgränsare luftigare */
     .section-header {
@@ -514,18 +538,18 @@
       <i class="ti ti-info-circle" aria-hidden="true"></i> Visa snabbguide
     </button>
 
-    <!-- Mobil hamburger + logo -->
-    <div id="mobile-topbar" style="display:none;position:fixed;left:0;right:0;min-height:56px;background:#e4e9ec;z-index:140;align-items:center;padding-left:16px;padding-right:16px;box-sizing:border-box;">
+    <!-- Mobil hamburger + logo (mörk banner, samma färg som sidomenyn och theme-color) -->
+    <div id="mobile-topbar" style="display:none;position:fixed;left:0;right:0;min-height:56px;background:#1c2b36;z-index:140;align-items:center;padding-left:16px;padding-right:16px;box-sizing:border-box;">
       <button class="hamburger" id="hamburger-btn" aria-label="Meny" style="position:static;min-height:44px;">☰</button>
       <!-- Logga centrerad i topbar -->
       <div onclick="showPanel('overview')" style="position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;cursor:pointer;">
         <svg width="30" height="30" viewBox="0 0 44 44" style="overflow:visible;">
-          <circle cx="22" cy="22" r="17" fill="none" stroke="#1c2b36" stroke-width="2"/>
-          <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#1c2b36" text-anchor="middle">MD</text>
-          <circle cx="35" cy="35" r="8" fill="#4a9e62"/>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#eef1f3" stroke-width="2"/>
+          <text x="22" y="27" font-family="Arial,sans-serif" font-size="13" font-weight="700" fill="#eef1f3" text-anchor="middle">MD</text>
+          <circle cx="35" cy="35" r="8" fill="#4a9e62" stroke="#1c2b36" stroke-width="2"/>
           <polyline points="30,35 33,38 40,31" fill="none" stroke="#eef1f3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span style="font-weight:700;font-size:15px;color:#1c2b36;">MoraDOPS</span>
+        <span style="font-weight:700;font-size:15px;color:#eef1f3;">MoraDOPS</span>
       </div>
     </div>
 
@@ -1718,7 +1742,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.50.1';
+    const APP_VERSION = 'v4.51.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -3019,6 +3043,7 @@
         const isDisabled = userIdx === -1 || catIdx < userIdx;
         radio.disabled = isDisabled;
         radio.closest('label').classList.toggle('disabled-option', isDisabled);
+        radio.closest('label').title = isDisabled ? 'Ej tillgänglig för din yrkesroll' : '';
         radio.closest('label').style.opacity = '';
       });
       // Stegvis: f4 och f5 dolda tills resp. föregående fält fyllts
@@ -3264,7 +3289,8 @@
       info.style.cssText = 'background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:12px 14px;color:#2e4a5f;font-size:14px;';
       info.textContent = 'Fyll i frågorna nedan och skicka in direkt — eller klicka på ”Fyll även i hela bedömningsformuläret” längst ner om du vill besvara hela det associerade formuläret. Det du fyllt i här följer med.';
       container.appendChild(info);
-      _prioQuestions().forEach((q, i) => container.appendChild(_buildQuestionEl(q, 'q_prio_' + i)));
+      const card = _sectionCard(container);
+      _prioQuestions().forEach((q, i) => card.appendChild(_buildQuestionEl(q, 'q_prio_' + i)));
       const continueBtn = document.getElementById('continue-section-btn');
       continueBtn.textContent = 'Fyll även i hela bedömningsformuläret →';
       continueBtn.classList.remove('hidden');
@@ -3276,12 +3302,20 @@
     }
 
     // Avgör om en skalfrågas beskrivning har "verbala alternativ" (minst en rad med
-    // faktisk text, format "N: text") — då renderas frågan som radioknappar istället för
-    // en slider (t.ex. DOPS/Mini-CEX-svårighetsgrader). En ren numerisk skala utan sådan
-    // beskrivning (eller ingen beskrivning alls) förblir en slider som tidigare.
+    // faktisk text, format "N: text", t.ex. DOPS/Mini-CEX-nivåer) — då visas betydelsen
+    // av valt värde under reglaget istället för beskrivningen som text ovanför.
     function _skalaHasVerbalAlternatives(description) {
       if (!description) return false;
       return description.split(' | ').some(part => /^\d+:\s*\S+/.test(part.trim()));
+    }
+
+    // Alla frågor i ett avsnitt samlas i ett gemensamt kort (v4.51.0) istället för ett kort
+    // per fråga — .field behåller sin roll för tangentbordsnavigeringen (_getFormFields).
+    function _sectionCard(container) {
+      const card = document.createElement('div');
+      card.className = 'section-card';
+      container.appendChild(card);
+      return card;
     }
 
     // Bygger DOM-elementet för EN fråga (rubrik/info/fält). Delas av showSection och
@@ -3306,10 +3340,9 @@
       lbl.className = 'question-label';
       lbl.textContent = q.question;
       div.appendChild(lbl);
-      // Skalfrågor med verbala alternativ (minst en "N: text"-rad) visar beskrivningen
-      // inline per radioknapp istället (se q.type === 'skala' nedan) — annars dubbleras
-      // texten. Rena numeriska skalfrågor (ingen/enkel beskrivning) visar den som vanligt.
-      if (q.description && !(q.type === 'skala' && _skalaHasVerbalAlternatives(q.description))) {
+      // Skalfrågor visar sin beskrivning under reglaget istället (se q.type === 'skala'
+      // nedan): betydelsen av valt värde, eller den fria beskrivningstexten.
+      if (q.description && q.type !== 'skala') {
         const desc = document.createElement('div');
         desc.className = 'field-description';
         // Skaltexter har format "1: text | 3: text | 5: text" – rendera med radbrytning
@@ -3376,46 +3409,24 @@
           group.appendChild(lbl2);
         });
         div.appendChild(group);
-      } else if (q.type === 'skala' && _skalaHasVerbalAlternatives(q.description)) {
-        // Skalfråga med verbala alternativ (minst en "N: text"-rad, t.ex. DOPS/Mini-CEX-
-        // svårighetsgrader) — i praktiken kategoriska svar, inte ett kontinuerligt mått.
-        // Renderas som radioknappar (vertikalt staplade, tydlig markering vid val — samma
-        // .radio-group-mönster som vanliga radiofrågor) istället för slider. Siffran sparas
-        // fortfarande som svar (används i statistik/AI-sammanställning), bara UI:t ändras.
+      } else if (q.type === 'skala') {
+        // Skalfråga = reglage. Har beskrivningen textalternativ ("N: text", t.ex. DOPS/
+        // Mini-CEX-nivåer) visas betydelsen av det valda värdet direkt under reglaget och
+        // uppdateras medan man drar (v4.51.0 — ersatte radioknappslistan från v4.40.1);
+        // annars visas beskrivningen (om någon) som statisk text på samma plats.
+        // Siffran sparas som svar precis som förut (statistik/AI-sammanställning).
         const optStr = (q.options && q.options[0]) ? q.options[0].toString().trim() : '1-5';
         const parts = optStr.split('-').map(Number);
         const min = isNaN(parts[0]) ? 1 : parts[0];
         const max = isNaN(parts[1]) ? 5 : parts[1];
         const descByNum = {};
-        q.description.split(' | ').forEach(part => {
-          const m = part.trim().match(/^(\d+):\s*(.+)/);
-          if (m) descByNum[m[1]] = m[2].trim();
-        });
-        const group = document.createElement('div');
-        group.className = 'radio-group';
-        for (let v = min; v <= max; v++) {
-          const lbl2 = document.createElement('label');
-          const input = document.createElement('input');
-          input.type = 'radio'; input.name = fieldId; input.value = String(v);
-          input.className = 'skala-radio';
-          input.dataset.question = q.question;
-          input.dataset.section  = q.section;
-          input.dataset.jumpTo   = q.jumpTo;
-          input.dataset.min = min; input.dataset.max = max;
-          if (savedVal === String(v)) input.checked = true;
-          lbl2.appendChild(input);
-          const sp = document.createElement('span');
-          sp.textContent = descByNum[v] ? `${v} — ${descByNum[v]}` : String(v);
-          lbl2.appendChild(sp);
-          group.appendChild(lbl2);
+        if (_skalaHasVerbalAlternatives(q.description)) {
+          q.description.split(' | ').forEach(part => {
+            const m = part.trim().match(/^(\d+):\s*(.+)/);
+            if (m) descByNum[m[1]] = m[2].trim();
+          });
         }
-        div.appendChild(group);
-      } else if (q.type === 'skala') {
-        // Ren numerisk skala (ingen/enkel beskrivning) — oförändrad slider som tidigare.
-        const optStr = (q.options && q.options[0]) ? q.options[0].toString().trim() : '1-5';
-        const parts = optStr.split('-').map(Number);
-        const min = isNaN(parts[0]) ? 1 : parts[0];
-        const max = isNaN(parts[1]) ? 5 : parts[1];
+        const descKeys = Object.keys(descByNum).map(Number).sort((a, b) => a - b);
         const touched = savedVal !== undefined && savedVal !== null && savedVal !== '';
         const wrap = document.createElement('div');
         wrap.className = 'slider-wrap';
@@ -3437,6 +3448,7 @@
           input.classList.add('touched');
           label.classList.add('touched');
           label.textContent = input.value;
+          _syncSlider(input);
         });
         input.addEventListener('change', () => {
           // Synka fokus-index till DENNA fråga innan vi avancerar — annars kan
@@ -3454,6 +3466,7 @@
             input.classList.add('touched');
             label.classList.add('touched');
             label.textContent = input.value;
+            _syncSlider(input);
             const idx = _getFormFields().indexOf(input.closest('.field'));
             if (idx !== -1) _kbFocusIdx = idx;
             setTimeout(() => _advanceField(), 120);
@@ -3461,6 +3474,36 @@
         });
         valueRow.appendChild(input);
         valueRow.appendChild(label);
+        if (descKeys.length) {
+          const desc = document.createElement('div');
+          desc.className = 'slider-desc';
+          desc.setAttribute('aria-live', 'polite');
+          input._describe = () => {
+            if (input.dataset.touched !== 'true') {
+              const lo = descKeys[0], hi = descKeys[descKeys.length - 1];
+              desc.textContent = `${lo}: ${descByNum[lo]}  …  ${hi}: ${descByNum[hi]}`;
+              desc.classList.remove('set');
+              return;
+            }
+            const v = parseInt(input.value);
+            if (descByNum[v]) desc.textContent = `${v} — ${descByNum[v]}`;
+            else {
+              const lo = descKeys.filter(k => k < v).pop(), hi = descKeys.find(k => k > v);
+              desc.textContent = lo !== undefined && hi !== undefined
+                ? `${v} — mellan «${descByNum[lo]}» och «${descByNum[hi]}»`
+                : String(v);
+            }
+            desc.classList.add('set');
+          };
+          wrap.appendChild(desc);
+        } else if (q.description) {
+          // Ren sifferskala med fri beskrivning (inga "N: text"-alternativ): samma plats
+          // under reglaget, men statisk text.
+          const desc = document.createElement('div');
+          desc.className = 'slider-desc';
+          desc.textContent = q.description.split(' | ').map(p => p.trim()).filter(Boolean).join(' · ');
+          wrap.appendChild(desc);
+        }
         const marks = document.createElement('div');
         marks.className = 'slider-marks';
         const span = max - min;
@@ -3474,12 +3517,13 @@
           marks.appendChild(m);
         });
         valueRow.appendChild(marks);
-        wrap.appendChild(valueRow);
+        wrap.insertBefore(valueRow, wrap.firstChild);
+        _syncSlider(input);
         div.appendChild(wrap);
         requestAnimationFrame(() => {
           const trackWidth = input.offsetWidth;
           if (!trackWidth) return;
-          const thumbSize = 26;
+          const thumbSize = 22;
           const usable = Math.max(0, trackWidth - thumbSize);
           marks.querySelectorAll('span').forEach(m => {
             const v = parseFloat(m.dataset.value);
@@ -3489,6 +3533,14 @@
         });
       }
       return div;
+    }
+
+    // Synkar ett skalreglages utseende med dess värde: ifylld del (CSS-variabeln --frac,
+    // se .skala-slider.touched) och, för skalor med textalternativ, beskrivningen under.
+    function _syncSlider(input) {
+      const min = parseFloat(input.min), max = parseFloat(input.max);
+      input.style.setProperty('--frac', max === min ? 0 : (parseFloat(input.value) - min) / (max - min));
+      input._describe?.();
     }
 
     function showSection(sectionName) {
@@ -3505,8 +3557,9 @@
       sDiv.className = 'section-header';
       sDiv.textContent = sectionName;
       container.appendChild(sDiv);
+      const card = _sectionCard(container);
       questions.forEach((q, idx) => {
-        container.appendChild(_buildQuestionEl(q, `q_${sectionName}_${idx}`.replace(/[^a-zA-Z0-9_]/g, '_')));
+        card.appendChild(_buildQuestionEl(q, `q_${sectionName}_${idx}`.replace(/[^a-zA-Z0-9_]/g, '_')));
       });
       const nextSection = questions[0].nextSection;
       const continueBtn = document.getElementById('continue-section-btn');
@@ -3533,8 +3586,7 @@
         new Set(_prioQuestions().map(q => q.section)).forEach(sec => saveCurrentSectionAnswers(sec));
         return;
       }
-      // Täcker både vanliga radiofrågor och skala-frågor med verbala alternativ (nu
-      // radioknappar, se showSection/_skalaHasVerbalAlternatives).
+      // Vanliga radiofrågor.
       document.querySelectorAll(`input[type=radio][data-section="${sectionName}"]:checked`).forEach(input => {
         savedAnswers[`${sectionName}__${input.dataset.question}`] = {
           section: sectionName, question: input.dataset.question,
@@ -4489,7 +4541,6 @@
           }
         }
 
-        const isSkalaRadio = active?.type === 'radio' && active.classList.contains('skala-radio');
         const isScale   = active?.type === 'range';
         const isRadio   = active?.type === 'radio';
         const isTA      = active?.tagName === 'TEXTAREA';
@@ -4525,21 +4576,9 @@
           return;
         }
 
-        // ── Siffra → välj skalfrågans radioknapp och gå vidare ──
-        if (isSkalaRadio) {
-          const num = parseInt(e.key);
-          const min = parseInt(active.dataset.min), max = parseInt(active.dataset.max);
-          if (!isNaN(num) && num >= min && num <= max) {
-            e.preventDefault();
-            const target = [...document.getElementsByName(active.name)].find(r => r.value === String(num));
-            if (target) { target.checked = true; target.focus(); }
-            setTimeout(() => _advanceField(), 120);
-          }
-        }
-
         // Pil vänster/höger inom skalfrågan hanteras nativt av <input type=range>.
 
-        // ── Siffra → välj och gå vidare (ren numerisk skalfråga, slider) ──
+        // ── Siffra → välj och gå vidare (skalfråga, slider) ──
         if (isScale) {
           const num = parseInt(e.key);
           if (!isNaN(num) && num >= parseInt(active.min) && num <= parseInt(active.max)) {
@@ -4547,6 +4586,7 @@
             active.value = num;
             active.dataset.touched = 'true';
             active.classList.add('touched');
+            _syncSlider(active);
             const label = active.parentElement?.querySelector('.slider-value-label');
             if (label) { label.textContent = num; label.classList.add('touched'); }
             active.focus();
