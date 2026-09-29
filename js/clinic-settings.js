@@ -146,7 +146,7 @@
         card.className = 'assessment-card';
         let out = html`<div style="font-weight:bold;font-size:16px;margin-bottom:8px;">${s.formType}</div>`;
         out += '<div style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:13px;">';
-        out += '<tr><td></td>' + ROLE_LIST.map(r => `<td style="padding:2px 8px;font-weight:bold;text-align:center;">${roleLabel(r)}</td>`).join('') + '</tr>';
+        out += '<tr><td></td>' + ROLE_LIST.map(r => `<td style="padding:2px 8px;font-weight:bold;text-align:center;">${formatJobRole(r)}</td>`).join('') + '</tr>';
         ['mottagen', 'registrerad'].forEach(metric => {
           out += `<tr><td style="padding:2px 8px;color:#5b6b75;">${metric === 'mottagen' ? 'Mål mottagna' : 'Mål registrerade'}</td>`;
           ROLE_LIST.forEach(role => {
@@ -162,7 +162,7 @@
         out += html`<label style="margin-left:8px;"><input type="checkbox" class="cs-cat-all" ${safe(allSelected ? 'checked' : '')}> Alla (default)</label>`;
         const selectedCats = s.categories ? s.categories.split(',').map(c => c.trim()) : [];
         ROLE_LIST.forEach(cat => {
-          out += html`<label style="margin-left:10px;"><input type="checkbox" class="cs-cat" value="${cat}" ${safe(selectedCats.includes(cat) ? 'checked' : '')} ${safe(allSelected ? 'disabled' : '')}> ${roleLabel(cat)}</label>`;
+          out += html`<label style="margin-left:10px;"><input type="checkbox" class="cs-cat" value="${cat}" ${safe(selectedCats.includes(cat) ? 'checked' : '')} ${safe(allSelected ? 'disabled' : '')}> ${formatJobRole(cat)}</label>`;
         });
         out += '</div>';
         out += '<div style="margin-top:10px;font-size:13px;display:flex;align-items:center;gap:8px;">';

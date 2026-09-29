@@ -112,7 +112,7 @@
           const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = u.email;
           if (checked.includes(u.email)) cb.checked = true;
           lbl.appendChild(cb);
-          lbl.appendChild(document.createTextNode(u.firstName + ' ' + u.lastName + ' (' + roleLabel(u.jobRole) + ')'));
+          lbl.appendChild(document.createTextNode(u.firstName + ' ' + u.lastName + ' (' + formatJobRole(u.jobRole) + ')'));
           container.appendChild(lbl);
         });
     }

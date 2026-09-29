@@ -1718,7 +1718,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.50.0';
+    const APP_VERSION = 'v4.50.1';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -1917,7 +1917,7 @@
     const hierarchy = ['Spec', 'ST', 'BT', 'AT'];
     // Visningsnamn för yrkesroll. Det lagrade värdet är fortfarande 'Spec' (databas, filter,
     // behörighetshierarki, CSV-import) — bara det som visas för användaren skrivs ut.
-    function roleLabel(role) { return role === 'Spec' ? 'Specialist' : (role || ''); }
+    function formatJobRole(role) { return role === 'Spec' ? 'Specialist' : (role || ''); }
     // Formulärtyper hämtas dynamiskt från Sheets via appData.formTypes
 
     // ── Node/Postgres backend URL ────────────────────────────────
@@ -2218,7 +2218,7 @@
       updateSidebarPrivButtons(activePrivilege);
       updatePendingUsersBadge();
       const initRoleLabel = document.getElementById('nav-role-label');
-      if (initRoleLabel) { initRoleLabel.textContent = activePrivilege || roleLabel(currentUser.jobRole); initRoleLabel.style.display = 'block'; }
+      if (initRoleLabel) { initRoleLabel.textContent = activePrivilege || formatJobRole(currentUser.jobRole); initRoleLabel.style.display = 'block'; }
       const isReceiverOnly = currentUser.userRole === 'Mottagare';
       const assessmentBtn = document.getElementById('nav-btn-assessment');
       if (assessmentBtn) assessmentBtn.classList.toggle('hidden', isReceiverOnly);
@@ -2404,13 +2404,13 @@
         let activeLabel = '';
         if (privilege === 'Administratör') activeLabel = 'Administratör';
         else if (privilege === 'Studierektor') activeLabel = 'Studierektor';
-        else activeLabel = roleLabel(currentUser.jobRole);
+        else activeLabel = formatJobRole(currentUser.jobRole);
         roleLabel.textContent = activeLabel;
         roleLabel.style.display = 'block';
         // Övriga tillgängliga roller
         const otherRolesEl = document.getElementById('nav-other-roles');
         if (otherRolesEl && privs.length) {
-          const all = [{ label: roleLabel(currentUser.jobRole) || 'Mitt konto', value: null }];
+          const all = [{ label: formatJobRole(currentUser.jobRole) || 'Mitt konto', value: null }];
           privs.forEach(p => all.push({ label: p.privilege, value: p.privilege }));
           const others = all.filter(o => o.label !== activeLabel);
           otherRolesEl.textContent = others.length ? others.map(o => o.label).join(' · ') : '';
@@ -4099,7 +4099,7 @@
 
     function _buildPrivilegeOptions() {
       const privs = currentUser.privileges || [];
-      const options = [{ label: roleLabel(currentUser.jobRole) || 'Mitt konto', value: null, klinikId: null }];
+      const options = [{ label: formatJobRole(currentUser.jobRole) || 'Mitt konto', value: null, klinikId: null }];
       privs.forEach(p => options.push({ label: p.privilege, value: p.privilege, klinikId: p.klinikId }));
       return options;
     }

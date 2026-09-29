@@ -66,7 +66,7 @@
         Object.entries(s.byRole).sort((a,b) => a[0].localeCompare(b[0])).forEach(([role, v], i) => {
           if (i > 0) out += '<div style="height:1px;background:#c7d1d7;margin:8px 0;"></div>';
           out += html`<div style="display:flex;align-items:center;gap:10px;">
-            <span style="flex:1;font-size:14px;font-weight:bold;">${roleLabel(role)}</span>
+            <span style="flex:1;font-size:14px;font-weight:bold;">${formatJobRole(role)}</span>
             <span style="font-size:13px;color:#5b6b75;">${v.done} av ${v.total} utförda</span>
           </div>`;
         });
@@ -86,7 +86,7 @@
           out += html`<div style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:6px;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
             <div style="flex:1;min-width:180px;">
               <span style="font-weight:bold;">${r.toName}</span>
-              <span style="font-size:13px;color:#5b6b75;"> (${roleLabel(r.toRole)})</span>
+              <span style="font-size:13px;color:#5b6b75;"> (${formatJobRole(r.toRole)})</span>
               ${r.kind === 'obtain' ? safe('<span style="font-size:12px;background:#f3ecdc;color:#2e4a5f;border-radius:4px;padding:1px 6px;margin-left:4px;">inhämta bedömning</span>') : r.isSelf ? safe('<span style="font-size:12px;background:#e8f4ea;color:#2e4a5f;border-radius:4px;padding:1px 6px;margin-left:4px;">självskattning</span>') : ''}
               <div style="font-size:12px;color:#8a97a0;margin-top:2px;">${r.formType || ''} · ${_requestParties(r)} · ${r.timestamp}${r.dueDate ? ' · sista datum ' + r.dueDate : ''}</div>
             </div>
@@ -130,12 +130,12 @@
       const subj = document.getElementById('mr-subject');
       subj.innerHTML = '<option value="">-- Välj person --</option>';
       _mrUsers.filter(u => ['ST', 'Spec', 'AT', 'BT'].includes(u.jobRole))
-        .forEach(u => subj.appendChild(newOption(u.id, `${_mrName(u)} (${roleLabel(u.jobRole)})`)));
+        .forEach(u => subj.appendChild(newOption(u.id, `${_mrName(u)} (${formatJobRole(u.jobRole)})`)));
       // Bedömare: alla som kan registrera bedömningar (inte rena Mottagare).
       const ass = document.getElementById('mr-assessor');
       ass.innerHTML = '<option value="">-- Välj bedömare --</option>';
       _mrUsers.filter(u => !/^Mottagare/.test(u.userRole || ''))
-        .forEach(u => ass.appendChild(newOption(u.id, `${_mrName(u)}${u.jobRole ? ' (' + roleLabel(u.jobRole) + ')' : ''}`)));
+        .forEach(u => ass.appendChild(newOption(u.id, `${_mrName(u)}${u.jobRole ? ' (' + formatJobRole(u.jobRole) + ')' : ''}`)));
       updateManagedRequestForm();
     }
 

@@ -22,7 +22,7 @@
     function fbCategoryCheckboxesHtml(prefix, selected) {
       const sel = (selected || '').split(',').map(s => s.trim()).filter(Boolean);
       return FB_CATEGORIES.map(cat =>
-        `<label style="margin-right:10px;font-size:14px;"><input type="checkbox" class="${prefix}-cat" value="${cat}" ${sel.includes(cat) ? 'checked' : ''}> ${roleLabel(cat)}</label>`
+        `<label style="margin-right:10px;font-size:14px;"><input type="checkbox" class="${prefix}-cat" value="${cat}" ${sel.includes(cat) ? 'checked' : ''}> ${formatJobRole(cat)}</label>`
       ).join('');
     }
     function fbReadCategoryCheckboxes(container, prefix) {
