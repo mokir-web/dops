@@ -1799,7 +1799,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.54.0';
+    const APP_VERSION = 'v4.54.1';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -1873,11 +1873,15 @@
       _deferredInstallPrompt = e;
     });
     // Installerad app: Chrome/Edge på datorn kan köra en installerad app i fler visningslägen
-    // än 'standalone' — 'minimal-ui' och 'window-controls-overlay' (anpassad titelrad) —
-    // som tidigare missades, så datorappen fick bokmärkesfrågan (v4.53.1). 'fullscreen'
-    // räknas inte: den matchar även en vanlig flik i helskärm (F11).
+    // än 'standalone' — 'minimal-ui', 'window-controls-overlay' (anpassad titelrad) och
+    // 'tabbed' (flikar i appfönstret) m.fl. Datorappen i Chrome matchade varken 'standalone'
+    // eller 'browser' i produktion (v4.54.1), så vi räknar allt som inte är en vanlig flik som
+    // app, i webbläsare som stöder display-mode ('(display-mode)' matchar då alltid).
+    // 'fullscreen' räknas inte: den matchar även en vanlig flik i helskärm (F11).
     function isStandaloneApp() {
-      return ['standalone', 'minimal-ui', 'window-controls-overlay'].some(m => window.matchMedia(`(display-mode: ${m})`).matches)
+      const mm = (q) => window.matchMedia(q).matches;
+      return (mm('(display-mode)') && !mm('(display-mode: browser)') && !mm('(display-mode: fullscreen)'))
+        || ['standalone', 'minimal-ui', 'window-controls-overlay', 'tabbed'].some(m => mm(`(display-mode: ${m})`))
         || window.navigator.standalone === true
         || document.referrer.startsWith('android-app://');
     }
@@ -3022,33 +3026,58 @@
       el.style.display = 'flex'; el.classList.remove('hidden');
     }
 
-    // Menynotisen "Installera som app": bara när appen inte körs installerad och inte redan
-    // är installerad i den här webbläsaren (dops_has_installed_app, se maybeShowInstallPrompt).
-    function updateInstallNotice() {
+    // Är MoraDOPS redan installerad på den här enheten? Bara Chrome/Edge (dator + Android) kan
+    // svara, via related_applications i manifest.json; övriga webbläsare → false. Svaret
+    // cachas per sidladdning (appinstalled nollställer). v4.54.1
+    let _installedHerePromise = null;
+    function isAppInstalledHere() {
+      if (!_installedHerePromise) {
+        _installedHerePromise = (navigator.getInstalledRelatedApps
+          ? navigator.getInstalledRelatedApps().then(apps => apps.length > 0).catch(() => false)
+          : Promise.resolve(false));
+      }
+      return _installedHerePromise;
+    }
+
+    // Menynotisen: syns alltid i webbläsaren (folk använder flera enheter), aldrig i appen.
+    // Är appen redan installerad på enheten erbjuds "Öppna i appen" i stället.
+    async function updateInstallNotice() {
       const btn = document.getElementById('nav-btn-install');
       if (!btn) return;
-      let installed = isStandaloneApp();
-      try {
-        if (installed) localStorage.setItem('dops_has_installed_app', '1');
-        else installed = localStorage.getItem('dops_has_installed_app') === '1';
-      } catch (e) { /* utan lagring: visa notisen */ }
-      btn.classList.toggle('hidden', installed || !!currentUser?.isDemo);
+      const hide = isStandaloneApp() || !!currentUser?.isDemo;
+      btn.classList.toggle('hidden', hide);
+      if (hide) return;
+      const here = await isAppInstalledHere();
+      btn.querySelector('.sidebar-btn-label').textContent = here ? 'Öppna i appen' : 'Installera som app';
+      btn.querySelector('i').className = here ? 'ti ti-external-link' : 'ti ti-download';
     }
-    function openInstallGuide() { closeMenu(); _showInstallModal(); }
+    async function openInstallGuide() {
+      closeMenu();
+      if (await isAppInstalledHere()) _showOpenAppModal(); else _showInstallModal();
+    }
     window.addEventListener('appinstalled', () => {
-      try { localStorage.setItem('dops_has_installed_app', '1'); } catch (e) { /* tyst */ }
+      _installedHerePromise = null;
       updateInstallNotice();
     });
 
-    function maybeShowInstallPrompt() {
-      if (currentUser.isDemo) return; // irrelevant för en säljdemo på delat konto — bara brus
-      // Har appen någon gång körts installerad i den här webbläsaren (appen och vanliga flikar
-      // delar localStorage) behövs ingen fråga i en vanlig flik heller — appen finns redan.
-      try {
-        if (isStandaloneApp()) { localStorage.setItem('dops_has_installed_app', '1'); return; }
-        if (localStorage.getItem('dops_has_installed_app') === '1') return;
-      } catch (e) { if (isStandaloneApp()) return; }
-      if (localStorage.getItem('dops_install_prompt_dismissed') === '1') return;
+    // En webbsida kan inte själv starta en installerad app — vi visar var man klickar.
+    function _showOpenAppModal() {
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      document.getElementById('install-prompt-title').textContent = 'MoraDOPS finns installerad här';
+      document.getElementById('install-prompt-body').innerHTML = (isAndroid
+        ? 'Öppna <strong>MoraDOPS</strong> från hemskärmen eller applistan.'
+        : 'Klicka på <strong>Öppna i MoraDOPS</strong>-ikonen längst till höger i adressfältet, eller starta MoraDOPS från Dock, Startmenyn eller skrivbordet.');
+      document.getElementById('install-prompt-action').classList.add('hidden');
+      const el = document.getElementById('install-prompt-modal');
+      el.style.display = 'flex'; el.classList.remove('hidden');
+    }
+
+    // Popup bara första gången (per webbläsare) — därefter räcker menynotisen. Ingen popup
+    // i appen eller när appen redan är installerad på enheten.
+    async function maybeShowInstallPrompt() {
+      if (currentUser.isDemo || isStandaloneApp()) return;
+      try { if (localStorage.getItem('dops_install_prompt_dismissed') === '1') return; } catch (e) { return; }
+      if (await isAppInstalledHere()) return;
       const tourModal = document.getElementById('tour-prompt-modal');
       if (tourModal && !tourModal.classList.contains('hidden')) return; // undvik dubbla modaler, erbjuds nästa inloggning
       _showInstallModal();
@@ -4900,7 +4929,7 @@
     // när jag uppdaterar sidan" — sammanföll med att flera versioner levererats tätt).
     function _applyVersionUpdateAndReload(newVersion, opts) {
       opts = opts || {};
-      const preserveKeys = ['dops_user', 'dops_sound_notify', 'dops_resume_panel', 'dops_install_prompt_dismissed', 'dops_has_installed_app'];
+      const preserveKeys = ['dops_user', 'dops_sound_notify', 'dops_resume_panel', 'dops_install_prompt_dismissed'];
       const preserved = {};
       Object.keys(localStorage).forEach(k => {
         if (preserveKeys.includes(k) || k.startsWith('dops_assessment_draft_')) preserved[k] = localStorage.getItem(k);
