@@ -1799,7 +1799,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.54.1';
+    const APP_VERSION = 'v4.54.2';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -1877,13 +1877,29 @@
     // 'tabbed' (flikar i appfönstret) m.fl. Datorappen i Chrome matchade varken 'standalone'
     // eller 'browser' i produktion (v4.54.1), så vi räknar allt som inte är en vanlig flik som
     // app, i webbläsare som stöder display-mode ('(display-mode)' matchar då alltid).
-    // 'fullscreen' räknas inte: den matchar även en vanlig flik i helskärm (F11).
+    // 'fullscreen' räknas inte: den matchar även en vanlig flik i helskärm (F11). En app i
+    // helskärm (macOS gröna knappen) känns i stället igen på att fönstret startats som app:
+    // manifestets start_url bär ?app=1 (v4.54.2), och varje gång ett app-läge setts minns
+    // fönstret det (sessionStorage — per fönster, överlever omladdning, delas inte med flikar).
+    try {
+      const _q = new URLSearchParams(window.location.search);
+      if (_q.get('app') === '1') {
+        sessionStorage.setItem('dops_app_window', '1');
+        _q.delete('app');
+        history.replaceState(history.state, '', window.location.pathname + (_q.toString() ? '?' + _q : '') + window.location.hash);
+      }
+    } catch (e) { /* utan sessionStorage: bara visningsläget avgör */ }
     function isStandaloneApp() {
       const mm = (q) => window.matchMedia(q).matches;
-      return (mm('(display-mode)') && !mm('(display-mode: browser)') && !mm('(display-mode: fullscreen)'))
+      const app = (mm('(display-mode)') && !mm('(display-mode: browser)') && !mm('(display-mode: fullscreen)'))
         || ['standalone', 'minimal-ui', 'window-controls-overlay', 'tabbed'].some(m => mm(`(display-mode: ${m})`))
         || window.navigator.standalone === true
         || document.referrer.startsWith('android-app://');
+      try {
+        if (app) sessionStorage.setItem('dops_app_window', '1');
+        else return sessionStorage.getItem('dops_app_window') === '1';
+      } catch (e) { /* tyst */ }
+      return app;
     }
 
     // ── Användningsstatistik (global admin ser aggregerat i adminpanelen) ──
