@@ -235,7 +235,7 @@
             onkeydown="if(event.key==='Enter'){event.preventDefault();setQuestionPosition('${q.id}', this.value);}"
             onblur="setQuestionPosition('${q.id}', this.value)">
           <div style="flex:1;cursor:pointer;" onclick="toggleQuestionExpand('${q.id}')">
-            <strong>${esc(q.section || '')}</strong> — ${esc(q.question)} <span style="color:#5b6b75;font-size:13px;">(${esc(q.type)})</span>
+            <strong>${esc(q.section || '')}</strong> — ${esc(q.question)} <span style="color:#5b6b75;font-size:13px;">(${esc(q.type)})</span>${q.prio ? ' <span style="background:#2e4a5f;color:#eef1f3;font-size:11px;border-radius:4px;padding:1px 6px;margin-left:4px;">Prio</span>' : ''}
           </div>
         `;
         const btnRow = document.createElement('div');
@@ -276,6 +276,7 @@
                 ${q.options ? `<div><strong>Alternativ:</strong> ${esc(q.options)}</div>` : ''}
                 ${q.jumpTo ? `<div><strong>Hoppa till:</strong> ${esc(q.jumpTo)}</div>` : ''}
                 ${q.autofill ? `<div><strong>Autofyll:</strong> ${esc(q.autofill)}</div>` : ''}
+                ${q.prio ? `<div><strong>Prio:</strong> ja (visas i förenklad registrering)</div>` : ''}
               </div>
               <div class="btn-row" style="margin-top:10px;"><button class="btn-secondary btn-small">Redigera</button></div>
             `;
@@ -340,7 +341,7 @@
       qs.forEach(q => {
         const row = [
           q.id || '', q.section || '', q.nextSection || '', q.question || '',
-          q.type || '', q.description || '', q.options || '', q.jumpTo || '', q.autofill || ''
+          q.type || '', q.description || '', q.options || '', q.jumpTo || '', q.autofill || '', q.prio ? 'ja' : ''
         ];
         lines.push(row.map(csvEscape).join(','));
       });
@@ -363,7 +364,7 @@
       { key: 'nextSection', label: 'Nästa avsnitt' }, { key: 'question', label: 'Fråga' },
       { key: 'type', label: 'Typ' }, { key: 'description', label: 'Beskrivning' },
       { key: 'options', label: 'Alternativ' }, { key: 'jumpTo', label: 'Hoppa till' },
-      { key: 'autofill', label: 'Autofyll' }
+      { key: 'autofill', label: 'Autofyll' }, { key: 'prio', label: 'Prio (ja/tom)' }
     ];
     let questionCsvGrid = null;
 
@@ -376,7 +377,7 @@
         const rows = qs.map(q => ({
           id: q.id || '', section: q.section || '', nextSection: q.nextSection || '',
           question: q.question || '', type: q.type || 'radio', description: q.description || '',
-          options: q.options || '', jumpTo: q.jumpTo || '', autofill: q.autofill || ''
+          options: q.options || '', jumpTo: q.jumpTo || '', autofill: q.autofill || '', prio: q.prio ? 'ja' : ''
         }));
         if (!rows.length) rows.push({ type: 'radio' });
         questionCsvGrid = buildCsvCellTable(document.getElementById('question-csv-table'), QUESTION_CSV_COLUMNS, rows);
@@ -447,6 +448,9 @@
         </div>
         <div class="field"><label class="field-label">Autofyll</label><input type="text" id="${prefix}-autofill" value="${esc(q?.autofill || '')}"></div>
         <div class="field"><label class="field-label">Ordning</label><input type="number" id="${prefix}-order" value="${q?.orderIndex ?? ''}"></div>
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="${prefix}-prio" ${q?.prio ? 'checked' : ''}> <span><strong>Prio</strong> — visas i den förenklade registreringen (förvalet i Registrera bedömning)</span></label>
+        </div>
       `;
     }
 
@@ -568,7 +572,8 @@
         options: document.getElementById(`${prefix}-options`).value.trim(),
         jumpTo: collectJumpToValue(prefix),
         autofill: document.getElementById(`${prefix}-autofill`).value.trim(),
-        orderIndex: parseInt(document.getElementById(`${prefix}-order`).value) || null
+        orderIndex: parseInt(document.getElementById(`${prefix}-order`).value) || null,
+        prio: !!document.getElementById(`${prefix}-prio`)?.checked
       };
     }
 

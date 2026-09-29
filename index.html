@@ -155,6 +155,8 @@
     .tab-btn { background: none; border: none; padding: 10px 18px; font-size: 16px; color: #8a97a0; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; font-family: Arial,sans-serif; }
     .tab-btn.active { color: #1c2b36; font-weight: bold; border-bottom-color: #2e4a5f; }
     .formtype-card:focus-within { box-shadow: 0 0 0 2px #2e4a5f; }
+    .formtype-star { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; padding: 0 2px; color: #8a97a0; flex-shrink: 0; }
+    .formtype-star.on { color: #d9a400; }
     .sidebar.collapsed #sidebar-user-btn, .sidebar.collapsed #privilege-inline, .sidebar.collapsed .sidebar-priv { display: none; }
     .sidebar.collapsed #sidebar-user-icon-collapsed { display: flex !important; }
     /* Menygrupper: fälls in med rubrik bara när allt inte får plats (se fitSidebarMenu) */
@@ -1695,7 +1697,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.48.10';
+    const APP_VERSION = 'v4.49.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -1881,6 +1883,8 @@
       submitErrorReport:      { method: 'POST',   path: () => '/error-reports', body: p => ({ message: p.message, systemInfo: p.systemInfo }) },
       getRecentServerErrors:  { method: 'GET',    path: () => '/error-reports/recent-server-errors' },
       markTourSeen:           { method: 'PATCH',  path: () => '/users/me/seen-tours', body: p => ({ tourId: p.tourId, remove: !!p.remove }) },
+      getFormShortcuts:       { method: 'GET',    path: () => '/users/me/form-shortcuts' },
+      setFavoriteForm:        { method: 'PATCH',  path: () => '/users/me/favorite-forms', body: p => ({ formType: p.formType, favorite: !!p.favorite }) },
       logUsageEvent:          { method: 'POST',   path: () => '/usage-events', body: p => ({ sessionId: p.sessionId, eventType: p.eventType, eventDetail: p.eventDetail, activePrivilege: p.activePrivilege }) },
       getUsageSummary:        { method: 'GET',    path: () => '/usage-events/summary', query: p => p.filters || {} },
       getUsageSessions:       { method: 'GET',    path: () => '/usage-events/sessions', query: p => p.filters || {} },
@@ -2962,27 +2966,83 @@
       show('f5', false);
       show('f-till-bedomning', false);
       updateTillBedomningBtn();
+      loadFormShortcuts();
     }
 
     let _formTypeGroupOpen = null; // vilken sektion som är expanderad i formulärväljaren
 
+    // Snabbval överst i formulärväljaren: favoriter (★, sparas per användare i backend)
+    // följt av användarens mest registrerade formulär, totalt 10 poster. Laddas i bakgrunden —
+    // väljaren ritas om när svaret kommer.
+    let _formShortcuts = { favorites: [], topForms: [] };
+    let _lastFormTypeSelectorArgs = null;
+
+    async function loadFormShortcuts() {
+      try {
+        const data = await api('getFormShortcuts', {});
+        if (!data || data.error) return;
+        _formShortcuts = { favorites: data.favorites || [], topForms: data.topForms || [] };
+        if (_lastFormTypeSelectorArgs) renderFormTypeSelector(..._lastFormTypeSelectorArgs);
+      } catch (e) { /* tyst — väljaren fungerar som vanligt utan snabbval */ }
+    }
+
+    function toggleFavoriteForm(formName) {
+      const fav = _formShortcuts.favorites;
+      const makeFav = !fav.includes(formName);
+      _formShortcuts.favorites = makeFav ? [...fav, formName] : fav.filter(f => f !== formName);
+      if (_lastFormTypeSelectorArgs) renderFormTypeSelector(..._lastFormTypeSelectorArgs);
+      api('setFavoriteForm', { formType: formName, favorite: makeFav }).catch(() => {});
+    }
+
     function renderFormTypeSelector(containerEl, formNames, groupsData) {
+      _lastFormTypeSelectorArgs = [containerEl, formNames, groupsData];
       const checkedFormType = containerEl.querySelector('input[name="formtype"]:checked')?.value;
       containerEl.innerHTML = '';
       const buildLabel = (f) => {
         const isChecked = checkedFormType === f;
+        const isFav = _formShortcuts.favorites.includes(f);
         const lbl = document.createElement('label');
         lbl.className = 'formtype-card';
-        lbl.style.cssText = `display:block;padding:9px 12px;border-radius:6px;margin-bottom:6px;cursor:pointer;font-size:15px;background:${isChecked ? '#2e4a5f' : '#f4f6f7'};color:${isChecked ? '#eef1f3' : '#1c2b36'};font-weight:${isChecked ? '500' : 'normal'};`;
+        lbl.style.cssText = `display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border-radius:6px;margin-bottom:6px;cursor:pointer;font-size:15px;background:${isChecked ? '#2e4a5f' : '#f4f6f7'};color:${isChecked ? '#eef1f3' : '#1c2b36'};font-weight:${isChecked ? '500' : 'normal'};`;
         const input = document.createElement('input');
         input.type = 'radio'; input.name = 'formtype'; input.value = f;
         input.style.cssText = 'position:absolute;opacity:0;pointer-events:none;';
         input.onchange = () => { updateTillBedomningBtn(); renderFormTypeSelector(containerEl, formNames, groupsData); };
         if (isChecked) input.checked = true;
         lbl.appendChild(input);
-        lbl.appendChild(document.createTextNode(f));
+        const txt = document.createElement('span');
+        txt.textContent = f;
+        lbl.appendChild(txt);
+        const star = document.createElement('button');
+        star.type = 'button';
+        star.className = 'formtype-star' + (isFav ? ' on' : '');
+        star.textContent = isFav ? '★' : '☆';
+        star.title = isFav ? 'Ta bort från favoriter' : 'Lägg till som favorit';
+        star.setAttribute('aria-label', star.title);
+        star.onclick = (e) => { e.preventDefault(); e.stopPropagation(); toggleFavoriteForm(f); };
+        lbl.appendChild(star);
         return lbl;
       };
+      // Snabbval: totalt 10 poster — favoriter först, resten fylls ut med mest använda
+      // (ett formulär som är båda visas bara en gång, som favorit). Bara formulär som
+      // finns för vald mottagarkategori (formNames). Fler än 10 favoriter visas alla.
+      const available = new Set(formNames);
+      const favs = _formShortcuts.favorites.filter(f => available.has(f));
+      const tops = _formShortcuts.topForms.filter(f => available.has(f) && !favs.includes(f)).slice(0, Math.max(0, 10 - favs.length));
+      if (favs.length || tops.length) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'background:#fff;border:1.5px solid #c7d1d7;border-radius:8px;margin-bottom:12px;padding:10px 10px 4px;box-shadow:0 1px 3px rgba(20,30,38,0.06);';
+        const head = document.createElement('div');
+        head.style.cssText = 'font-weight:500;color:#1c2b36;margin:0 2px 8px;';
+        head.textContent = 'Snabbval';
+        const sub = document.createElement('span');
+        sub.style.cssText = 'font-weight:normal;color:#8a97a0;font-size:13px;margin-left:8px;';
+        sub.textContent = '★ favoriter och dina mest använda formulär';
+        head.appendChild(sub);
+        wrap.appendChild(head);
+        [...favs, ...tops].forEach(f => wrap.appendChild(buildLabel(f)));
+        containerEl.appendChild(wrap);
+      }
       if (groupsData && groupsData.length > 1) {
         if (_formTypeGroupOpen !== null && !groupsData.some(g => g.group === _formTypeGroupOpen)) {
           _formTypeGroupOpen = null;
@@ -3108,7 +3168,50 @@
       currentFormData = questions;
       const first = questions.length > 0 ? questions[0].section : null;
       currentSection = first;
-      showSection(first);
+      // Förenklad registrering: har formuläret "Prio"-markerade frågor (Formulärbyggaren)
+      // och även andra frågor visas prio-frågorna samlat först, med möjlighet att skicka
+      // in direkt eller gå vidare till hela formuläret (se showPrioOverview).
+      showSection(_hasPrioOverview() ? PRIO_VIEW : first);
+    }
+
+    // Pseudo-avsnitt för den förenklade vyn. Används som vanligt avsnittsnamn i
+    // _sectionHistory/utkast, så Tillbaka och återupptagna utkast fungerar som vanligt.
+    const PRIO_VIEW = '__prio__';
+
+    function _isAnswerableQuestion(q) { return q.type !== 'rubrik' && q.type !== 'info'; }
+
+    function _hasPrioOverview() {
+      const qs = (currentFormData || []).filter(_isAnswerableQuestion);
+      return qs.some(q => q.prio) && qs.some(q => !q.prio);
+    }
+
+    function _prioQuestions() {
+      return (currentFormData || []).filter(q => q.prio && _isAnswerableQuestion(q));
+    }
+
+    function showPrioOverview() {
+      currentSection = PRIO_VIEW;
+      _kbFocusIdx = -1;
+      const container = document.getElementById('form-questions');
+      container.innerHTML = '';
+      const sDiv = document.createElement('div');
+      sDiv.className = 'section-header';
+      sDiv.textContent = window._pendingAssessmentMeta?.formType || document.querySelector('input[name="formtype"]:checked')?.value || 'Bedömning';
+      container.appendChild(sDiv);
+      const info = document.createElement('p');
+      info.className = 'field-description';
+      info.style.cssText = 'background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:12px 14px;color:#2e4a5f;font-size:14px;';
+      info.textContent = 'Fyll i frågorna nedan och skicka in direkt — eller klicka på ”Fyll även i hela bedömningsformuläret” längst ner om du vill besvara hela det associerade formuläret. Det du fyllt i här följer med.';
+      container.appendChild(info);
+      _prioQuestions().forEach((q, i) => container.appendChild(_buildQuestionEl(q, 'q_prio_' + i)));
+      const continueBtn = document.getElementById('continue-section-btn');
+      continueBtn.textContent = 'Fyll även i hela bedömningsformuläret →';
+      continueBtn.classList.remove('hidden');
+      continueBtn.onclick = () => navigateFrom(PRIO_VIEW, currentFormData[0].section);
+      document.getElementById('back-section-btn').classList.toggle('hidden', _sectionHistory.length === 0);
+      show('submit-btn', true);
+      window.scrollTo({ top: container.offsetTop - 20, behavior: 'smooth' });
+      setTimeout(() => _setFieldFocus(0), 50);
     }
 
     // Avgör om en skalfrågas beskrivning har "verbala alternativ" (minst en rad med
@@ -3120,7 +3223,220 @@
       return description.split(' | ').some(part => /^\d+:\s*\S+/.test(part.trim()));
     }
 
+    // Bygger DOM-elementet för EN fråga (rubrik/info/fält). Delas av showSection och
+    // den förenklade prio-vyn (showPrioOverview).
+    function _buildQuestionEl(q, fieldId) {
+      if (q.type === 'rubrik') {
+        const h = document.createElement('h4');
+        h.textContent = q.question;
+        return h;
+      }
+      if (q.type === 'info') {
+        // Ren informationstext (t.ex. varifrån formuläret är hämtat) — inget svar,
+        // ingen input, hoppas över av tangentbordsnavigeringen precis som 'rubrik'.
+        const p = document.createElement('p');
+        p.className = 'field-description';
+        p.textContent = q.question;
+        return p;
+      }
+      const div = document.createElement('div');
+      div.className = 'field';
+      const lbl = document.createElement('div');
+      lbl.className = 'question-label';
+      lbl.textContent = q.question;
+      div.appendChild(lbl);
+      // Skalfrågor med verbala alternativ (minst en "N: text"-rad) visar beskrivningen
+      // inline per radioknapp istället (se q.type === 'skala' nedan) — annars dubbleras
+      // texten. Rena numeriska skalfrågor (ingen/enkel beskrivning) visar den som vanligt.
+      if (q.description && !(q.type === 'skala' && _skalaHasVerbalAlternatives(q.description))) {
+        const desc = document.createElement('div');
+        desc.className = 'field-description';
+        // Skaltexter har format "1: text | 3: text | 5: text" – rendera med radbrytning
+        if (q.description.includes(' | ')) {
+          q.description.split(' | ').forEach((part, i) => {
+            if (i > 0) desc.appendChild(document.createElement('br'));
+            desc.appendChild(document.createTextNode(part.trim()));
+          });
+        } else {
+          desc.textContent = q.description;
+        }
+        div.appendChild(desc);
+      }
+      const savedVal = savedAnswers[`${q.section}__${q.question}`]?.answer;
+      if (q.type === 'radio') {
+        const group = document.createElement('div');
+        group.className = 'radio-group';
+        q.options.forEach(opt => {
+          const lbl2 = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'radio'; input.name = fieldId; input.value = opt;
+          input.dataset.question = q.question;
+          input.dataset.section  = q.section;
+          input.dataset.jumpTo   = q.jumpTo;
+          if (savedVal === opt) input.checked = true;
+          lbl2.appendChild(input);
+          const sp = document.createElement('span');
+          sp.textContent = opt;
+          lbl2.appendChild(sp);
+          group.appendChild(lbl2);
+        });
+        div.appendChild(group);
+      } else if (q.type === 'fritext') {
+        const ta = document.createElement('textarea');
+        ta.dataset.question = q.question;
+        ta.dataset.section  = q.section;
+        if (savedVal) ta.value = savedVal;
+        div.appendChild(ta);
+      } else if (q.type === 'multi') {
+        // Multi-checkbox: options från autofill-kolumn eller manuella options
+        const group = document.createElement('div');
+        group.className = 'checkbox-group';
+        let opts = [];
+        console.log('multi question:', q.question, '| autofill:', q.autofill, '| options:', q.options, '| clinic:', currentUser.clinic);
+        console.log('appData.lists.Spec:', appData.lists['Spec']);
+        if (q.autofill && appData.lists[q.autofill]) {
+          const clinic = currentUser.clinic;
+          opts = appData.lists[q.autofill][clinic] || [];
+          console.log('opts from autofill:', opts);
+        } else {
+          opts = q.options;
+          console.log('opts from options:', opts);
+        }
+        const savedVals = savedVal ? savedVal.split(', ') : [];
+        opts.forEach(opt => {
+          const lbl2 = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.name = fieldId;
+          input.value = opt;
+          input.dataset.question = q.question;
+          input.dataset.section  = q.section;
+          if (savedVals.includes(opt)) input.checked = true;
+          lbl2.appendChild(input);
+          const sp2 = document.createElement('span');
+          sp2.textContent = opt;
+          lbl2.appendChild(sp2);
+          group.appendChild(lbl2);
+        });
+        div.appendChild(group);
+      } else if (q.type === 'skala' && _skalaHasVerbalAlternatives(q.description)) {
+        // Skalfråga med verbala alternativ (minst en "N: text"-rad, t.ex. DOPS/Mini-CEX-
+        // svårighetsgrader) — i praktiken kategoriska svar, inte ett kontinuerligt mått.
+        // Renderas som radioknappar (vertikalt staplade, tydlig markering vid val — samma
+        // .radio-group-mönster som vanliga radiofrågor) istället för slider. Siffran sparas
+        // fortfarande som svar (används i statistik/AI-sammanställning), bara UI:t ändras.
+        const optStr = (q.options && q.options[0]) ? q.options[0].toString().trim() : '1-5';
+        const parts = optStr.split('-').map(Number);
+        const min = isNaN(parts[0]) ? 1 : parts[0];
+        const max = isNaN(parts[1]) ? 5 : parts[1];
+        const descByNum = {};
+        q.description.split(' | ').forEach(part => {
+          const m = part.trim().match(/^(\d+):\s*(.+)/);
+          if (m) descByNum[m[1]] = m[2].trim();
+        });
+        const group = document.createElement('div');
+        group.className = 'radio-group';
+        for (let v = min; v <= max; v++) {
+          const lbl2 = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'radio'; input.name = fieldId; input.value = String(v);
+          input.className = 'skala-radio';
+          input.dataset.question = q.question;
+          input.dataset.section  = q.section;
+          input.dataset.jumpTo   = q.jumpTo;
+          input.dataset.min = min; input.dataset.max = max;
+          if (savedVal === String(v)) input.checked = true;
+          lbl2.appendChild(input);
+          const sp = document.createElement('span');
+          sp.textContent = descByNum[v] ? `${v} — ${descByNum[v]}` : String(v);
+          lbl2.appendChild(sp);
+          group.appendChild(lbl2);
+        }
+        div.appendChild(group);
+      } else if (q.type === 'skala') {
+        // Ren numerisk skala (ingen/enkel beskrivning) — oförändrad slider som tidigare.
+        const optStr = (q.options && q.options[0]) ? q.options[0].toString().trim() : '1-5';
+        const parts = optStr.split('-').map(Number);
+        const min = isNaN(parts[0]) ? 1 : parts[0];
+        const max = isNaN(parts[1]) ? 5 : parts[1];
+        const touched = savedVal !== undefined && savedVal !== null && savedVal !== '';
+        const wrap = document.createElement('div');
+        wrap.className = 'slider-wrap';
+        const valueRow = document.createElement('div');
+        valueRow.className = 'slider-value-row';
+        const label = document.createElement('span');
+        label.className = 'slider-value-label' + (touched ? ' touched' : '');
+        label.textContent = touched ? savedVal : '–';
+        const input = document.createElement('input');
+        input.type = 'range'; input.className = 'skala-slider' + (touched ? ' touched' : '');
+        input.min = min; input.max = max; input.step = 1;
+        input.value = touched ? savedVal : min;
+        input.dataset.question = q.question;
+        input.dataset.section  = q.section;
+        input.dataset.jumpTo   = q.jumpTo;
+        input.dataset.touched  = touched ? 'true' : 'false';
+        input.addEventListener('input', () => {
+          input.dataset.touched = 'true';
+          input.classList.add('touched');
+          label.classList.add('touched');
+          label.textContent = input.value;
+        });
+        input.addEventListener('change', () => {
+          // Synka fokus-index till DENNA fråga innan vi avancerar — annars kan
+          // ett musval hoppa fel om tangentbordsfokus låg kvar på en tidigare fråga.
+          const idx = _getFormFields().indexOf(input.closest('.field'));
+          if (idx !== -1) _kbFocusIdx = idx;
+          setTimeout(() => _advanceField(), 120);
+        });
+        input.addEventListener('click', () => {
+          // Om man klickar exakt där tummen redan ligger (t.ex. standardvärdet min)
+          // ändras inte värdet, så varken 'input' eller 'change' avfyras av webbläsaren.
+          // Utan detta går det inte att välja min-värdet utan att först välja något annat.
+          if (input.dataset.touched !== 'true') {
+            input.dataset.touched = 'true';
+            input.classList.add('touched');
+            label.classList.add('touched');
+            label.textContent = input.value;
+            const idx = _getFormFields().indexOf(input.closest('.field'));
+            if (idx !== -1) _kbFocusIdx = idx;
+            setTimeout(() => _advanceField(), 120);
+          }
+        });
+        valueRow.appendChild(input);
+        valueRow.appendChild(label);
+        const marks = document.createElement('div');
+        marks.className = 'slider-marks';
+        const span = max - min;
+        const markStep = Math.max(1, Math.ceil((span + 1) / 7));
+        const markValues = [];
+        for (let i = min; i <= max; i += markStep) markValues.push(i);
+        if (markValues[markValues.length - 1] !== max) markValues.push(max);
+        markValues.forEach(v => {
+          const m = document.createElement('span');
+          m.textContent = v; m.dataset.value = v;
+          marks.appendChild(m);
+        });
+        valueRow.appendChild(marks);
+        wrap.appendChild(valueRow);
+        div.appendChild(wrap);
+        requestAnimationFrame(() => {
+          const trackWidth = input.offsetWidth;
+          if (!trackWidth) return;
+          const thumbSize = 26;
+          const usable = Math.max(0, trackWidth - thumbSize);
+          marks.querySelectorAll('span').forEach(m => {
+            const v = parseFloat(m.dataset.value);
+            const frac = (max === min) ? 0 : (v - min) / (max - min);
+            m.style.left = (thumbSize / 2 + frac * usable) + 'px';
+          });
+        });
+      }
+      return div;
+    }
+
     function showSection(sectionName) {
+      if (sectionName === PRIO_VIEW) { showPrioOverview(); return; }
+      document.getElementById('continue-section-btn').textContent = 'Fortsätt →';
       currentSection = sectionName;
       _kbFocusIdx = -1;
       const container = document.getElementById('form-questions');
@@ -3133,215 +3449,7 @@
       sDiv.textContent = sectionName;
       container.appendChild(sDiv);
       questions.forEach((q, idx) => {
-        if (q.type === 'rubrik') {
-          const h = document.createElement('h4');
-          h.textContent = q.question;
-          container.appendChild(h);
-          return;
-        }
-        if (q.type === 'info') {
-          // Ren informationstext (t.ex. varifrån formuläret är hämtat) — inget svar,
-          // ingen input, hoppas över av tangentbordsnavigeringen precis som 'rubrik'.
-          const p = document.createElement('p');
-          p.className = 'field-description';
-          p.textContent = q.question;
-          container.appendChild(p);
-          return;
-        }
-        const div = document.createElement('div');
-        div.className = 'field';
-        const lbl = document.createElement('div');
-        lbl.className = 'question-label';
-        lbl.textContent = q.question;
-        div.appendChild(lbl);
-        // Skalfrågor med verbala alternativ (minst en "N: text"-rad) visar beskrivningen
-        // inline per radioknapp istället (se q.type === 'skala' nedan) — annars dubbleras
-        // texten. Rena numeriska skalfrågor (ingen/enkel beskrivning) visar den som vanligt.
-        if (q.description && !(q.type === 'skala' && _skalaHasVerbalAlternatives(q.description))) {
-          const desc = document.createElement('div');
-          desc.className = 'field-description';
-          // Skaltexter har format "1: text | 3: text | 5: text" – rendera med radbrytning
-          if (q.description.includes(' | ')) {
-            q.description.split(' | ').forEach((part, i) => {
-              if (i > 0) desc.appendChild(document.createElement('br'));
-              desc.appendChild(document.createTextNode(part.trim()));
-            });
-          } else {
-            desc.textContent = q.description;
-          }
-          div.appendChild(desc);
-        }
-        const fieldId = `q_${sectionName}_${idx}`.replace(/[^a-zA-Z0-9_]/g, '_');
-        const savedVal = savedAnswers[`${sectionName}__${q.question}`]?.answer;
-        if (q.type === 'radio') {
-          const group = document.createElement('div');
-          group.className = 'radio-group';
-          q.options.forEach(opt => {
-            const lbl2 = document.createElement('label');
-            const input = document.createElement('input');
-            input.type = 'radio'; input.name = fieldId; input.value = opt;
-            input.dataset.question = q.question;
-            input.dataset.section  = q.section;
-            input.dataset.jumpTo   = q.jumpTo;
-            if (savedVal === opt) input.checked = true;
-            lbl2.appendChild(input);
-            const sp = document.createElement('span');
-            sp.textContent = opt;
-            lbl2.appendChild(sp);
-            group.appendChild(lbl2);
-          });
-          div.appendChild(group);
-        } else if (q.type === 'fritext') {
-          const ta = document.createElement('textarea');
-          ta.dataset.question = q.question;
-          ta.dataset.section  = q.section;
-          if (savedVal) ta.value = savedVal;
-          div.appendChild(ta);
-        } else if (q.type === 'multi') {
-          // Multi-checkbox: options från autofill-kolumn eller manuella options
-          const group = document.createElement('div');
-          group.className = 'checkbox-group';
-          let opts = [];
-          console.log('multi question:', q.question, '| autofill:', q.autofill, '| options:', q.options, '| clinic:', currentUser.clinic);
-          console.log('appData.lists.Spec:', appData.lists['Spec']);
-          if (q.autofill && appData.lists[q.autofill]) {
-            const clinic = currentUser.clinic;
-            opts = appData.lists[q.autofill][clinic] || [];
-            console.log('opts from autofill:', opts);
-          } else {
-            opts = q.options;
-            console.log('opts from options:', opts);
-          }
-          const savedVals = savedVal ? savedVal.split(', ') : [];
-          opts.forEach(opt => {
-            const lbl2 = document.createElement('label');
-            const input = document.createElement('input');
-            input.type = 'checkbox';
-            input.name = fieldId;
-            input.value = opt;
-            input.dataset.question = q.question;
-            input.dataset.section  = q.section;
-            if (savedVals.includes(opt)) input.checked = true;
-            lbl2.appendChild(input);
-            const sp2 = document.createElement('span');
-            sp2.textContent = opt;
-            lbl2.appendChild(sp2);
-            group.appendChild(lbl2);
-          });
-          div.appendChild(group);
-        } else if (q.type === 'skala' && _skalaHasVerbalAlternatives(q.description)) {
-          // Skalfråga med verbala alternativ (minst en "N: text"-rad, t.ex. DOPS/Mini-CEX-
-          // svårighetsgrader) — i praktiken kategoriska svar, inte ett kontinuerligt mått.
-          // Renderas som radioknappar (vertikalt staplade, tydlig markering vid val — samma
-          // .radio-group-mönster som vanliga radiofrågor) istället för slider. Siffran sparas
-          // fortfarande som svar (används i statistik/AI-sammanställning), bara UI:t ändras.
-          const optStr = (q.options && q.options[0]) ? q.options[0].toString().trim() : '1-5';
-          const parts = optStr.split('-').map(Number);
-          const min = isNaN(parts[0]) ? 1 : parts[0];
-          const max = isNaN(parts[1]) ? 5 : parts[1];
-          const descByNum = {};
-          q.description.split(' | ').forEach(part => {
-            const m = part.trim().match(/^(\d+):\s*(.+)/);
-            if (m) descByNum[m[1]] = m[2].trim();
-          });
-          const group = document.createElement('div');
-          group.className = 'radio-group';
-          for (let v = min; v <= max; v++) {
-            const lbl2 = document.createElement('label');
-            const input = document.createElement('input');
-            input.type = 'radio'; input.name = fieldId; input.value = String(v);
-            input.className = 'skala-radio';
-            input.dataset.question = q.question;
-            input.dataset.section  = q.section;
-            input.dataset.jumpTo   = q.jumpTo;
-            input.dataset.min = min; input.dataset.max = max;
-            if (savedVal === String(v)) input.checked = true;
-            lbl2.appendChild(input);
-            const sp = document.createElement('span');
-            sp.textContent = descByNum[v] ? `${v} — ${descByNum[v]}` : String(v);
-            lbl2.appendChild(sp);
-            group.appendChild(lbl2);
-          }
-          div.appendChild(group);
-        } else if (q.type === 'skala') {
-          // Ren numerisk skala (ingen/enkel beskrivning) — oförändrad slider som tidigare.
-          const optStr = (q.options && q.options[0]) ? q.options[0].toString().trim() : '1-5';
-          const parts = optStr.split('-').map(Number);
-          const min = isNaN(parts[0]) ? 1 : parts[0];
-          const max = isNaN(parts[1]) ? 5 : parts[1];
-          const touched = savedVal !== undefined && savedVal !== null && savedVal !== '';
-          const wrap = document.createElement('div');
-          wrap.className = 'slider-wrap';
-          const valueRow = document.createElement('div');
-          valueRow.className = 'slider-value-row';
-          const label = document.createElement('span');
-          label.className = 'slider-value-label' + (touched ? ' touched' : '');
-          label.textContent = touched ? savedVal : '–';
-          const input = document.createElement('input');
-          input.type = 'range'; input.className = 'skala-slider' + (touched ? ' touched' : '');
-          input.min = min; input.max = max; input.step = 1;
-          input.value = touched ? savedVal : min;
-          input.dataset.question = q.question;
-          input.dataset.section  = q.section;
-          input.dataset.jumpTo   = q.jumpTo;
-          input.dataset.touched  = touched ? 'true' : 'false';
-          input.addEventListener('input', () => {
-            input.dataset.touched = 'true';
-            input.classList.add('touched');
-            label.classList.add('touched');
-            label.textContent = input.value;
-          });
-          input.addEventListener('change', () => {
-            // Synka fokus-index till DENNA fråga innan vi avancerar — annars kan
-            // ett musval hoppa fel om tangentbordsfokus låg kvar på en tidigare fråga.
-            const idx = _getFormFields().indexOf(input.closest('.field'));
-            if (idx !== -1) _kbFocusIdx = idx;
-            setTimeout(() => _advanceField(), 120);
-          });
-          input.addEventListener('click', () => {
-            // Om man klickar exakt där tummen redan ligger (t.ex. standardvärdet min)
-            // ändras inte värdet, så varken 'input' eller 'change' avfyras av webbläsaren.
-            // Utan detta går det inte att välja min-värdet utan att först välja något annat.
-            if (input.dataset.touched !== 'true') {
-              input.dataset.touched = 'true';
-              input.classList.add('touched');
-              label.classList.add('touched');
-              label.textContent = input.value;
-              const idx = _getFormFields().indexOf(input.closest('.field'));
-              if (idx !== -1) _kbFocusIdx = idx;
-              setTimeout(() => _advanceField(), 120);
-            }
-          });
-          valueRow.appendChild(input);
-          valueRow.appendChild(label);
-          const marks = document.createElement('div');
-          marks.className = 'slider-marks';
-          const span = max - min;
-          const markStep = Math.max(1, Math.ceil((span + 1) / 7));
-          const markValues = [];
-          for (let i = min; i <= max; i += markStep) markValues.push(i);
-          if (markValues[markValues.length - 1] !== max) markValues.push(max);
-          markValues.forEach(v => {
-            const m = document.createElement('span');
-            m.textContent = v; m.dataset.value = v;
-            marks.appendChild(m);
-          });
-          valueRow.appendChild(marks);
-          wrap.appendChild(valueRow);
-          div.appendChild(wrap);
-          requestAnimationFrame(() => {
-            const trackWidth = input.offsetWidth;
-            if (!trackWidth) return;
-            const thumbSize = 26;
-            const usable = Math.max(0, trackWidth - thumbSize);
-            marks.querySelectorAll('span').forEach(m => {
-              const v = parseFloat(m.dataset.value);
-              const frac = (max === min) ? 0 : (v - min) / (max - min);
-              m.style.left = (thumbSize / 2 + frac * usable) + 'px';
-            });
-          });
-        }
-        container.appendChild(div);
+        container.appendChild(_buildQuestionEl(q, `q_${sectionName}_${idx}`.replace(/[^a-zA-Z0-9_]/g, '_')));
       });
       const nextSection = questions[0].nextSection;
       const continueBtn = document.getElementById('continue-section-btn');
@@ -3360,6 +3468,14 @@
     }
 
     function saveCurrentSectionAnswers(sectionName) {
+      if (sectionName === PRIO_VIEW) {
+        // Prio-vyn blandar frågor från flera avsnitt — varje input bär sitt riktiga avsnitt
+        // i data-section. Rensa först prio-frågornas tidigare svar (så ett tömt fritextfält
+        // inte ligger kvar), spara sedan per avsnitt med samma logik som nedan.
+        _prioQuestions().forEach(q => { delete savedAnswers[`${q.section}__${q.question}`]; });
+        new Set(_prioQuestions().map(q => q.section)).forEach(sec => saveCurrentSectionAnswers(sec));
+        return;
+      }
       // Täcker både vanliga radiofrågor och skala-frågor med verbala alternativ (nu
       // radioknappar, se showSection/_skalaHasVerbalAlternatives).
       document.querySelectorAll(`input[type=radio][data-section="${sectionName}"]:checked`).forEach(input => {
@@ -3520,7 +3636,12 @@
         section: a.section, question: a.question, answer: a.answer,
         klinikId: currentUser.klinikId || ''
       }));
-      if (!answerList.length) { await customAlert('Inga svar att spara.'); return; }
+      if (!answerList.length) {
+        if (submitBtn) submitBtn.textContent = origSubmitText;
+        unlockUI();
+        await customAlert('Inga svar att spara.');
+        return;
+      }
       try {
         const recipientEmail = await api('getRecipientEmail', { recipientFullName: recipient });
         const recipientName  = recipient.split(' -- ')[0];
@@ -3548,8 +3669,7 @@
         document.getElementById('recipient').innerHTML = '<option value="">-- Välj mottagare --</option>';
         document.getElementById('form-type-group').innerHTML = '';
         document.getElementById('form-questions').innerHTML = '';
-        const submitBtn = document.getElementById('submit-btn');
-        if (submitBtn) { submitBtn.disabled = false; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Skicka bedömning'; }
         show('f4', false); show('f5', false); show('f6-container', false); show('submit-btn', false);
         showSelectionFields();
         const status = document.getElementById('assessment-status');
@@ -4280,7 +4400,7 @@
         // ska ALDRIG aktiveras via tangentbord — bara fokusera knappen, inte klicka den
         // (se submit-btn:s onclick-vakt längre ner som ändå skulle blockera ett sånt klick).
         fields.forEach(f => f.classList.remove('kb-focused'));
-        const nextBtn = (document.getElementById('continue-section-btn')?.classList.contains('hidden') === false ? document.getElementById('continue-section-btn') : null);
+        const nextBtn = (currentSection !== PRIO_VIEW && document.getElementById('continue-section-btn')?.classList.contains('hidden') === false ? document.getElementById('continue-section-btn') : null);
         if (nextBtn) { nextBtn.click(); }
         else {
           const sub = document.getElementById('submit-btn');
@@ -4352,7 +4472,7 @@
           if (isRadio) { e.preventDefault(); if (!active.checked) active.checked = true; _advanceField(); return; }
           if (isNextBtn) { return; } // browser default click
           if (inForm) {
-            const nextBtn = (document.getElementById('continue-section-btn')?.classList.contains('hidden') === false ? document.getElementById('continue-section-btn') : null);
+            const nextBtn = (currentSection !== PRIO_VIEW && document.getElementById('continue-section-btn')?.classList.contains('hidden') === false ? document.getElementById('continue-section-btn') : null);
             if (nextBtn) { e.preventDefault(); nextBtn.click(); }
           }
           return;
