@@ -224,11 +224,15 @@
       window._overviewCharts[key]?.destroy();
       window._overviewCharts[key] = new Chart(ctx, {
         type: 'bar',
-        data: { labels: filteredKeys.map(k => byBucket?.[k]?.label || formatPeriodLabel(k, resolution)), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
+        data: { labels: filteredKeys.map(k => periodTickLabel(k, resolution, byBucket?.[k]?.label || formatPeriodLabel(k, resolution))), datasets: [...datasets.map(ds => ({ ...ds, fill: undefined, tension: undefined, pointRadius: undefined })), makeTotalLine(datasets, filteredKeys.length)] },
         options: {
           responsive: true, maintainAspectRatio: false, resizeDelay: 100,
-          plugins: { legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[key])(e, li) } },
-          scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } }, x: { stacked: true, grid: { color: '#c7d1d7' } } }
+          plugins: {
+            legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(window._overviewCharts[key])(e, li) },
+            // Veckoupplösning: hela datumintervallet i tooltip (samma som Klinikens statistik).
+            tooltip: { callbacks: { title: items => { if (!items.length) return ''; const k = filteredKeys[items[0].dataIndex]; return periodTooltipTitle(k, resolution, byBucket?.[k]?.label || formatPeriodLabel(k, resolution)); } } }
+          },
+          scales: { y: { beginAtZero: true, stacked: true, ticks: { stepSize: 1 }, grid: { color: '#c7d1d7' } }, x: periodXScale(resolution) }
         }
       });
       attachLegendTouch(window._overviewCharts[key]);

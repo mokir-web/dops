@@ -43,6 +43,48 @@
       return key; // month: redan YYYY-MM
     }
 
+    // Måndagen i en ISO-vecka ("YYYY-Www") som lokalt datum.
+    function isoWeekMonday(key) {
+      const m = /^(\d{4})-W(\d{2})$/.exec(key || '');
+      if (!m) return null;
+      const jan4 = new Date(+m[1], 0, 4);
+      const monday = new Date(jan4);
+      monday.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7) + (+m[2] - 1) * 7);
+      return monday;
+    }
+    const SV_MONTHS_SHORT = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+
+    // Veckoupplösning (v4.51.2): två-radig etikett ["v.30", "21/7"] (måndagens datum) så
+    // det går att se vilken vecka en stapel avser; övriga upplösningar oförändrade.
+    function periodTickLabel(key, resolution, label) {
+      if (resolution !== 'week') return label;
+      const mon = isoWeekMonday(key);
+      return mon ? [label, `${mon.getDate()}/${mon.getMonth() + 1}`] : label;
+    }
+    // Tooltip-rubrik: veckans hela datumintervall, t.ex. "Vecka 30 (21–27 jul)".
+    function periodTooltipTitle(key, resolution, label) {
+      if (resolution !== 'week') return label;
+      const mon = isoWeekMonday(key);
+      if (!mon) return label;
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+      const wk = parseInt(key.slice(6), 10);
+      const range = mon.getMonth() === sun.getMonth()
+        ? `${mon.getDate()}–${sun.getDate()} ${SV_MONTHS_SHORT[sun.getMonth()]}`
+        : `${mon.getDate()} ${SV_MONTHS_SHORT[mon.getMonth()]}–${sun.getDate()} ${SV_MONTHS_SHORT[sun.getMonth()]}`;
+      return `Vecka ${wk} (${range})`;
+    }
+    // X-axel för staplade periodstaplar. Vecka: inga lodräta linjer mellan staplarna, istället
+    // ett kort streck under MITTEN av varje stapel (grid.offset:false) som knyter ihop etikett
+    // och stapel.
+    function periodXScale(resolution) {
+      if (resolution !== 'week') return { stacked: true, grid: { color: '#c7d1d7' } };
+      return {
+        stacked: true,
+        grid: { offset: false, drawOnChartArea: false, drawTicks: true, tickLength: 6, color: '#5b6b75' },
+        ticks: { maxRotation: 0, autoSkipPadding: 10, font: { size: 11 } }
+      };
+    }
+
     // Genererar en komplett, obruten lista av {key,label} för given upplösning mellan
     // start och slut (inklusive) — så grafer kan visa alla perioder, även utan data,
     // istället för att bara visa de perioder som råkar ha data.

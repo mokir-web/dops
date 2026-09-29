@@ -1358,6 +1358,10 @@
         <label style="font-size:13px;color:#5b6b75;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="reqstat-mine-only" onchange="renderRequestStats(_lastRequestStats)"> Visa bara mina utskick</label>
       </div>
       <div id="managed-request-form" class="hidden filter-box" style="margin-top:14px;max-width:640px;">
+        <div class="field hidden" id="mr-clinic-field">
+          <label class="field-label">Klinik *</label>
+          <select id="mr-clinic" onchange="_mrLoadClinic(this.value)" style="max-width:400px;"></select>
+        </div>
         <div class="field">
           <label class="field-label">Typ av förfrågan</label>
           <div class="radio-group" id="mr-mode-group">
@@ -1753,7 +1757,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.51.1';
+    const APP_VERSION = 'v4.52.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2066,6 +2070,7 @@
       markRequestRead:        { method: 'PATCH',  path: p => '/requests/' + encodeURIComponent(p.id) + '/read' },
       markRequestDone:        { method: 'PATCH',  path: p => '/requests/' + encodeURIComponent(p.id) + '/done' },
       getRequestStats:        { method: 'GET',    path: () => '/requests/stats', query: p => ({ clinicId: p.klinikId }) },
+      getStatisticsTrainees:  { method: 'GET',    path: () => '/statistics/trainees', query: p => ({ clinicId: p.klinikId, dateFrom: p.dateFrom, dateTo: p.dateTo }) },
 
       getMyOverview:          { method: 'GET',    path: () => '/overview' },
       toggleHiddenFormType:   { method: 'PUT',    path: () => '/overview/hidden-form-types', body: p => ({ formType: p.formType, hidden: p.hidden, direction: p.direction }) },
@@ -4186,9 +4191,25 @@
     function _buildPrivilegeOptions() {
       const privs = currentUser.privileges || [];
       const options = [{ label: formatJobRole(currentUser.jobRole) || 'Mitt konto', value: null, klinikId: null }];
-      privs.forEach(p => options.push({ label: p.privilege, value: p.privilege, klinikId: p.klinikId }));
+      // Samma roll på flera kliniker (v4.52.0): lägg till klinikens namn, annars heter alla
+      // valen bara "Studierektor" och går inte att skilja åt.
+      const nameById = {};
+      Object.entries(appData?.klinikIdMap || {}).forEach(([name, id]) => { nameById[id] = name; });
+      const perPrivilege = {};
+      privs.forEach(p => { perPrivilege[p.privilege] = (perPrivilege[p.privilege] || 0) + 1; });
+      privs.forEach(p => {
+        const clinicName = p.klinikId === '*' ? 'alla kliniker' : nameById[p.klinikId];
+        const label = perPrivilege[p.privilege] > 1 && clinicName ? `${p.privilege} · ${clinicName}` : p.privilege;
+        options.push({ label, value: p.privilege, klinikId: p.klinikId });
+      });
       return options;
     }
+    // Aktivt val = samma roll OCH samma klinik (samma roll kan finnas på flera kliniker).
+    function _isActivePrivilegeOption(o) {
+      if (activePrivilege !== o.value) return false;
+      return o.value === null || !o.klinikId || activeKlinikId === o.klinikId;
+    }
+
     // dark:true = mörk inline-dropdown (i sidomenyn), dark:false = ljus popup-modal
     // (infälld meny) — samma val-lista, olika färgtema för respektive bakgrund.
     function _privilegeOptionHtml(o, isActive, { dark, borderTop }) {
@@ -4219,7 +4240,7 @@
       const options = _buildPrivilegeOptions();
       if (options.length <= 1) return; // inget att välja
       inlineEl.innerHTML = options.map((o, i) =>
-        _privilegeOptionHtml(o, activePrivilege === o.value, { dark: true, borderTop: i > 0 ? '1px solid #3d5a70' : 'none' })
+        _privilegeOptionHtml(o, _isActivePrivilegeOption(o), { dark: true, borderTop: i > 0 ? '1px solid #3d5a70' : 'none' })
       ).join('');
       inlineEl.classList.remove('hidden');
     }
@@ -4229,7 +4250,7 @@
       if (options.length <= 1) return; // inget att välja
       const listEl = document.getElementById('privilege-switch-list');
       listEl.innerHTML = options.map(o =>
-        _privilegeOptionHtml(o, activePrivilege === o.value, { dark: false })
+        _privilegeOptionHtml(o, _isActivePrivilegeOption(o), { dark: false })
       ).join('');
       const el = document.getElementById('privilege-switch-modal');
       el.style.display = 'flex'; el.classList.remove('hidden');

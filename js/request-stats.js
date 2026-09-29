@@ -112,11 +112,31 @@
     const _mrName = u => `${u.firstName || ''} ${u.lastName || ''}`.trim();
     const _mrSort = (a, b) => (a.lastName || '').localeCompare(b.lastName || '', 'sv') || (a.firstName || '').localeCompare(b.firstName || '', 'sv');
 
+    // Kliniker användaren får skicka förfrågningar för: global behörighet ('*') → alla,
+    // annars klinikerna i Studierektor-/Administratör-privilegierna. [{id, name}], sorterat.
+    function _mrClinicChoices() {
+      const nameById = {};
+      Object.entries(appData?.klinikIdMap || {}).forEach(([name, id]) => { nameById[id] = name; });
+      const privs = (currentUser.privileges || []).filter(p => ['Studierektor', 'Administratör'].includes(p.privilege));
+      const ids = privs.some(p => p.klinikId === '*') ? Object.keys(nameById) : [...new Set(privs.map(p => p.klinikId))];
+      return ids.filter(id => nameById[id]).map(id => ({ id, name: nameById[id] })).sort((a, b) => a.name.localeCompare(b.name, 'sv'));
+    }
+
     async function showManagedRequestForm() {
-      _mrKlinikId = activeKlinikId && activeKlinikId !== '*' ? activeKlinikId : null;
-      if (!_mrKlinikId) { await customAlert('Välj en specifik klinik först — förfrågningar skickas inom en klinik.'); return; }
+      // Specifik aktiv klinik → använd den. "Alla kliniker" (Studierektor/Administratör med
+      // flera kliniker, v4.51.2) → välj klinik i formuläret istället för att neka.
+      const fixed = activeKlinikId && activeKlinikId !== '*' ? activeKlinikId : null;
+      const choices = fixed ? [] : _mrClinicChoices();
+      if (!fixed && !choices.length) { await customAlert('Hittade ingen klinik du kan skicka förfrågningar för.'); return; }
       show('managed-request-form', true);
+      show('mr-clinic-field', !fixed);
       setStatus('mr-status', '', false);
+      if (!fixed) {
+        const sel = document.getElementById('mr-clinic');
+        sel.innerHTML = '';
+        choices.forEach(c => sel.appendChild(newOption(c.id, c.name)));
+        sel.value = choices.some(c => c.id === currentUser.klinikId) ? currentUser.klinikId : choices[0].id;
+      }
       const ft = document.getElementById('mr-formtype');
       ft.innerHTML = '<option value="">-- Välj formulär --</option>';
       [...new Set(Object.values(appData?.formTypes || {}).flat())].sort((a, b) => a.localeCompare(b, 'sv'))
@@ -124,6 +144,15 @@
       const due = document.getElementById('mr-due');
       const t = new Date();
       due.min = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+      await _mrLoadClinic(fixed || document.getElementById('mr-clinic').value);
+    }
+
+    // Laddar klinikens användare till personlistorna (även vid byte av klinik i formuläret).
+    async function _mrLoadClinic(klinikId) {
+      _mrKlinikId = klinikId;
+      setStatus('mr-status', '', false);
+      document.getElementById('mr-recipients').innerHTML = '';
+      document.getElementById('mr-role').value = '';
       try {
         _mrUsers = (await api('getAllUsers', { klinikId: _mrKlinikId })).filter(u => !u.pendingActivation).sort(_mrSort);
       } catch (err) { setStatus('mr-status', err.message, true); return; }
