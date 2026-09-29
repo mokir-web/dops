@@ -73,6 +73,7 @@
       loadUsageDevices();
       loadUsageRegions();
       loadUsageLaunchMode();
+      loadUsageSubmitMode();
     }
 
     let usageDevicesChart = null;
@@ -244,6 +245,48 @@
         }
       });
       addMobileLegendToggle(usageLaunchModeChart, cardEl);
+    }
+
+    let usageSubmitModeChart = null;
+
+    async function loadUsageSubmitMode() {
+      const el = document.getElementById('us-submitmode-chart-wrap');
+      if (!el) return;
+      const statusEl = document.getElementById('us-submitmode-status');
+      if (statusEl) statusEl.textContent = '';
+      try {
+        const data = await api('getUsageSubmitMode', { filters: _usageStatsFilters() });
+        renderUsageSubmitMode(data);
+      } catch (err) {
+        if (statusEl) statusEl.innerHTML = html`<p class="status-err">${err.message}</p>`;
+      }
+    }
+
+    // Samma mönster som renderUsageLaunchMode ovan.
+    function renderUsageSubmitMode(data) {
+      const statusEl = document.getElementById('us-submitmode-status');
+      const cardEl = document.getElementById('us-submitmode-chart-card');
+      if (!data.total) {
+        if (statusEl) statusEl.innerHTML = '<p style="color:#888;">Inga inskick från formulär med Prio-frågor för valt filter.</p>';
+        if (usageSubmitModeChart) { usageSubmitModeChart.destroy(); usageSubmitModeChart = null; }
+        return;
+      }
+      const labels = data.modes.map(m => m.name);
+      const values = data.modes.map(m => m.count);
+      if (usageSubmitModeChart) usageSubmitModeChart.destroy();
+      const ctx = document.getElementById('chart-usage-submitmode').getContext('2d');
+      usageSubmitModeChart = new Chart(ctx, {
+        type: 'pie',
+        data: { labels, datasets: [{ data: values, backgroundColor: CHART_COLORS.slice(0, labels.length), borderColor: '#eef1f3', borderWidth: 2 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, resizeDelay: 100,
+          plugins: {
+            legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makePieLegendClick(usageSubmitModeChart)(e, li) },
+            tooltip: { callbacks: { label: ctx2 => `${ctx2.label}: ${ctx2.parsed} (${Math.round(ctx2.parsed / data.total * 100)}%)` } }
+          }
+        }
+      });
+      addMobileLegendToggle(usageSubmitModeChart, cardEl);
     }
 
     function renderUsageSummary(rows) {

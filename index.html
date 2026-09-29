@@ -1154,6 +1154,11 @@
         <input type="email" id="global-feedback-email" placeholder="global-admin@moradops.se" style="flex:1;min-width:200px;padding:6px;border:1.5px solid #c7d1d7;border-radius:5px;font-size:14px;">
         <button class="btn-secondary btn-small" onclick="saveGlobalFeedbackEmail()">Spara</button>
       </div>
+      <p style="color:#5b6b75;font-size:13px;margin-top:-8px;">Samma adress får ett dagligt felsammandrag (webbläsarfel + serverfel senaste dygnet) när något har hänt.</p>
+      <div class="section-header" style="margin-top:20px;">Automatiskt rapporterade fel</div>
+      <p style="color:#5b6b75;font-size:13px;margin-top:4px;">Kodfel som uppstått i användarnas webbläsare, sammanslagna per fel. Ett åtgärdat fel som inträffar igen öppnas automatiskt.</p>
+      <div id="client-errors-list"><p style="color:#888;">Läser in...</p></div>
+      <div class="section-header" style="margin-top:24px;">Felanmälningar från användare</div>
       <div id="error-reports-global-list"><p style="color:#888;">Läser in...</p></div>
     </div>
 
@@ -1225,6 +1230,15 @@
         <div id="us-launchmode-status"></div>
         <div id="us-launchmode-chart-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
           <div id="us-launchmode-chart-wrap" class="chart-canvas-wrap" style="width:100%;height:260px;"><canvas id="chart-usage-launchmode"></canvas></div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;max-width:420px;">
+        <div class="section-header">Inskick: förenklad vy eller hela formuläret</div>
+        <p style="color:#5b6b75;font-size:13px;margin-top:4px;">För formulär med Prio-markerade frågor: andel bedömningar som skickats direkt från den förenklade vyn jämfört med efter att hela formuläret fyllts i.</p>
+        <div id="us-submitmode-status"></div>
+        <div id="us-submitmode-chart-card" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;min-width:0;">
+          <div id="us-submitmode-chart-wrap" class="chart-canvas-wrap" style="width:100%;height:260px;"><canvas id="chart-usage-submitmode"></canvas></div>
         </div>
       </div>
 
@@ -1697,7 +1711,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.49.0';
+    const APP_VERSION = 'v4.49.1';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -1719,13 +1733,48 @@
       _sessionErrorLog.push(Object.assign({ t: new Date().toISOString() }, entry));
       if (_sessionErrorLog.length > 30) _sessionErrorLog.shift();
     }
+    // ── Automatisk felrapportering till servern (Felanmälningar → Automatiskt rapporterade fel,
+    // samt dagligt felsammandrag per mejl). Okontrollerade fel rapporteras alltid (utom känt
+    // brus); console.error, avvisade promises och fel som fångats och visats för användaren
+    // (setStatus/customAlert) bara om de ser ut som kodfel — inte nätverks-/sessionsfel eller
+    // serverns egna felmeddelanden (serverfel finns redan i Cloud Logging). Max 10 unika per
+    // sidladdning, och samma fel bara en gång.
+    const _NOISE_ERROR_RE = /Failed to fetch|NetworkError|Load failed|network connection|AbortError|aborted|Sessionen har gått ut|^Script error\.?$|ResizeObserver loop/i;
+    const _CODE_BUG_RE = /\b(TypeError|ReferenceError|RangeError|SyntaxError)\b|is not defined|is not a function|Cannot read propert|Cannot set propert|before initialization|undefined is not an object|null is not an object|is not iterable|Maximum call stack/;
+    const _reportedClientErrors = new Set();
+    let _reportingClientError = false;
+    function _looksLikeCodeBug(msg) { return _CODE_BUG_RE.test(String(msg || '')); }
+    function reportClientError(type, message, source) {
+      const msg = String(message || '').slice(0, 1000);
+      if (!msg || !currentUser || _reportingClientError || _NOISE_ERROR_RE.test(msg)) return;
+      const key = msg + '|' + (source || '');
+      if (_reportedClientErrors.has(key) || _reportedClientErrors.size >= 10) return;
+      _reportedClientErrors.add(key);
+      _reportingClientError = true; // ett misslyckat rapportanrop får inte rapportera sig självt
+      try {
+        api('reportClientError', { type, message: msg, source: source || null, appVersion: APP_VERSION, panel: _currentNavPanel || null }).catch(() => {});
+      } catch (e) { /* tyst */ } finally { _reportingClientError = false; }
+    }
+
     const _origConsoleError = console.error;
     console.error = function(...args) {
-      try { logSessionError({ type: 'console', message: args.map(a => String(a)).join(' ') }); } catch (e) { /* tyst */ }
+      try {
+        const msg = args.map(a => (a && a.stack) ? a.stack.split('\n')[0] : String(a)).join(' ');
+        logSessionError({ type: 'console', message: msg });
+        if (_looksLikeCodeBug(msg)) reportClientError('console', msg);
+      } catch (e) { /* tyst */ }
       _origConsoleError.apply(console, args);
     };
-    window.addEventListener('error', e => logSessionError({ type: 'window', message: e.message, source: (e.filename || '') + ':' + e.lineno }));
-    window.addEventListener('unhandledrejection', e => logSessionError({ type: 'promise', message: String(e.reason) }));
+    window.addEventListener('error', e => {
+      const source = (e.filename || '') + ':' + e.lineno;
+      logSessionError({ type: 'window', message: e.message, source });
+      reportClientError('window', e.message, source);
+    });
+    window.addEventListener('unhandledrejection', e => {
+      const msg = String(e.reason);
+      logSessionError({ type: 'promise', message: msg });
+      if (_looksLikeCodeBug(msg)) reportClientError('promise', msg);
+    });
 
     // ── PWA: hemskärm/installation ──
     // Fångas tidigt (innan inloggning) eftersom webbläsaren bara skickar eventet en gång
@@ -1885,6 +1934,9 @@
       markTourSeen:           { method: 'PATCH',  path: () => '/users/me/seen-tours', body: p => ({ tourId: p.tourId, remove: !!p.remove }) },
       getFormShortcuts:       { method: 'GET',    path: () => '/users/me/form-shortcuts' },
       setFavoriteForm:        { method: 'PATCH',  path: () => '/users/me/favorite-forms', body: p => ({ formType: p.formType, favorite: !!p.favorite }) },
+      reportClientError:      { method: 'POST',   path: () => '/error-reports/client-errors', body: p => ({ type: p.type, message: p.message, source: p.source, appVersion: p.appVersion, panel: p.panel }) },
+      getClientErrors:        { method: 'GET',    path: () => '/error-reports/client-errors' },
+      setClientErrorResolved: { method: 'PATCH',  path: p => '/error-reports/client-errors/' + encodeURIComponent(p.id), body: p => ({ resolved: !!p.resolved }) },
       logUsageEvent:          { method: 'POST',   path: () => '/usage-events', body: p => ({ sessionId: p.sessionId, eventType: p.eventType, eventDetail: p.eventDetail, activePrivilege: p.activePrivilege }) },
       getUsageSummary:        { method: 'GET',    path: () => '/usage-events/summary', query: p => p.filters || {} },
       getUsageSessions:       { method: 'GET',    path: () => '/usage-events/sessions', query: p => p.filters || {} },
@@ -1892,6 +1944,7 @@
       getUsageDevices:        { method: 'GET',    path: () => '/usage-events/devices', query: p => p.filters || {} },
       getUsageRegions:        { method: 'GET',    path: () => '/usage-events/regions', query: p => p.filters || {} },
       getUsageLaunchMode:     { method: 'GET',    path: () => '/usage-events/launch-mode', query: p => p.filters || {} },
+      getUsageSubmitMode:     { method: 'GET',    path: () => '/usage-events/submit-mode', query: p => p.filters || {} },
       getErrorReports:        { method: 'GET',    path: () => '/error-reports' },
       getGlobalFeedbackSettings: { method: 'GET',  path: () => '/error-reports/global-settings' },
       saveGlobalFeedbackSettings: { method: 'PUT', path: () => '/error-reports/global-settings', body: p => ({ feedbackEmail: p.feedbackEmail }) },
@@ -3292,15 +3345,11 @@
         const group = document.createElement('div');
         group.className = 'checkbox-group';
         let opts = [];
-        console.log('multi question:', q.question, '| autofill:', q.autofill, '| options:', q.options, '| clinic:', currentUser.clinic);
-        console.log('appData.lists.Spec:', appData.lists['Spec']);
         if (q.autofill && appData.lists[q.autofill]) {
           const clinic = currentUser.clinic;
           opts = appData.lists[q.autofill][clinic] || [];
-          console.log('opts from autofill:', opts);
         } else {
           opts = q.options;
-          console.log('opts from options:', opts);
         }
         const savedVals = savedVal ? savedVal.split(', ') : [];
         opts.forEach(opt => {
@@ -3629,6 +3678,9 @@
       const formType  = meta?.formType  || document.querySelector('input[name="formtype"]:checked')?.value;
       if (!category || !recipient || !formType) { await customAlert('Fyll i alla obligatoriska fält.'); unlockUI(); return; }
       saveCurrentSectionAnswers(currentSection);
+      // Användningsstatistik: skickades bedömningen direkt från den förenklade prio-vyn
+      // eller efter hela formuläret? Loggas bara när prio-vyn faktiskt erbjöds.
+      const submitMode = _hasPrioOverview() ? (currentSection === PRIO_VIEW ? 'prio' : 'hela') : null;
       const answerList = Object.values(savedAnswers).map(a => ({
         clinic: currentUser.clinic,
         registrar: `${currentUser.firstName} ${currentUser.lastName}`,
@@ -3656,6 +3708,7 @@
         }
         clearDraft();
         _disarmAssessmentNavFrame();
+        if (submitMode) logUsageEvent('submit_mode', submitMode);
         // Markera berörda cachar inaktuella: innehåll visas direkt, revalidering hämtar nya bedömningen
         bgMarkStale('myOverview');
         bgMarkStale('myAssessments_sent');
@@ -3886,6 +3939,7 @@
     }
 
     function customAlert(message) {
+      if (_looksLikeCodeBug(message)) reportClientError('caught', message, 'customAlert');
       return new Promise(resolve => {
         const modal = document.getElementById('custom-dialog-modal');
         document.getElementById('custom-dialog-message').textContent = message;
@@ -5161,6 +5215,9 @@
     }
 
     function setStatus(id, msg, isError) {
+      // Kodfel som fångats och visas som felmeddelande (t.ex. "Cannot access 'x' before
+      // initialization") rapporteras automatiskt — annars syns de bara för användaren.
+      if (isError && _looksLikeCodeBug(msg)) reportClientError('caught', msg, 'setStatus:' + id);
       const el = document.getElementById(id);
       if (!el) return;
       el.textContent = msg;
