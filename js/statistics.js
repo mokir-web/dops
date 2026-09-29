@@ -175,22 +175,58 @@
         let out = '';
         out += '<div class="section-header">Totalt antal bedömningar</div>';
         out += html`<p style="font-size:28px;font-weight:bold;color:#2e4a5f;margin:12px 0;">${stats.total}</p>`;
-        out += _renderTimeAndFeedback(stats);
+        // Tid/sparad tid och fritext: bara Studierektor/Administratör (v4.53.1 — servern
+        // skickar dem inte heller till andra).
+        if (['Studierektor', 'Administratör'].includes(activePrivilege)) out += _renderTimeAndFeedback(stats);
         out += '<div id="stat-trainees"></div>';
-        out += '<div class="section-header">Mest aktiva registrerare</div>';
-        out += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
-        Object.entries(stats.byRegistrar).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
-          out += html`<tr><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;">${k}</td><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;text-align:right;font-weight:bold;">${v}</td></tr>`;
+        // Topp 10 som staplade liggande staplar per formulär (v4.54.0, ersatte tabellerna).
+        [['registrar', 'Mest aktiva registrerare'], ['recipient', 'Mest bedömda']].forEach(([key, title]) => {
+          out += html`<div class="section-header">${title}</div>`;
+          out += html`<div id="stat-people-card-${key}" style="background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:16px;margin-top:14px;min-width:0;">
+            <div class="chart-canvas-wrap" style="width:100%;height:${safe(String(_peopleChartHeight(key === 'registrar' ? stats.byRegistrar : stats.byRecipient)))}px;"><canvas id="stat-people-chart-${key}"></canvas></div></div>`;
         });
-        out += '</table>';
-        out += '<div class="section-header">Mest bedömda</div>';
-        out += '<table style="width:100%;max-width:600px;border-collapse:collapse;margin-top:10px;">';
-        Object.entries(stats.byRecipient).sort((a,b)=>b[1]-a[1]).slice(0,10).forEach(([k,v]) => {
-          out += html`<tr><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;">${k}</td><td style="padding:7px 0;border-bottom:1px solid #c7d1d7;text-align:right;font-weight:bold;">${v}</td></tr>`;
-        });
-        out += '</table>';
         el.innerHTML = out;
+        _renderPeopleChart('registrar', stats.byRegistrar, stats.byRegistrarForms, allFormTypes);
+        _renderPeopleChart('recipient', stats.byRecipient, stats.byRecipientForms, allFormTypes);
         loadStatTrainees();
+    }
+
+    // ── Mest aktiva registrerare / Mest bedömda som staplade liggande staplar ──────────
+    const _peopleCharts = {};
+    function _topPeople(byPerson) {
+      return Object.entries(byPerson || {}).filter(([n]) => n).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'sv')).slice(0, 10);
+    }
+    function _peopleChartHeight(byPerson) { return Math.max(120, _topPeople(byPerson).length * 30 + 60); }
+    // formOrder = samma ordning (och därmed färger) som stapeldiagrammet över tid ovanför.
+    function _renderPeopleChart(key, byPerson, byPersonForms, formOrder) {
+      const canvas = document.getElementById('stat-people-chart-' + key);
+      if (!canvas) return;
+      _peopleCharts[key]?.destroy();
+      const top = _topPeople(byPerson);
+      if (!top.length) { canvas.parentElement.innerHTML = '<p style="color:#8a97a0;font-size:14px;margin:0;">Inga bedömningar i valt intervall.</p>'; return; }
+      const names = top.map(([n]) => n);
+      const forms = formOrder.filter(ft => names.some(n => byPersonForms?.[n]?.[ft]));
+      const datasets = forms.map(ft => {
+        const color = CHART_COLORS[formOrder.indexOf(ft) % CHART_COLORS.length];
+        return { label: ft, data: names.map(n => byPersonForms?.[n]?.[ft] || 0), backgroundColor: color + 'cc', borderColor: color, borderWidth: 1, borderRadius: 2 };
+      });
+      _peopleCharts[key] = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: { labels: names, datasets },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false, resizeDelay: 100,
+          plugins: {
+            legend: { display: window.innerWidth > 600, position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 }, onClick: (e, li) => makeLegendClick(_peopleCharts[key])(e, li) },
+            tooltip: { callbacks: { footer: items => items.length ? 'Totalt: ' + (byPerson[names[items[0].dataIndex]] || 0) : '' } }
+          },
+          scales: {
+            x: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#c7d1d7' } },
+            y: { stacked: true, grid: { display: false }, ticks: { font: { size: 12 } } }
+          }
+        }
+      });
+      attachLegendTouch(_peopleCharts[key]);
+      addMobileLegendToggle(_peopleCharts[key], document.getElementById('stat-people-card-' + key));
     }
 
     // ── Tidsåtgång, sparad tid och fritextåterkoppling per formulär (v4.52.0) ──────────
