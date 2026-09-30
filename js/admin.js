@@ -292,7 +292,7 @@
             : 'Global';
           return html`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
             <span style="font-size:15px;">${p.privilege} <span style="color:#5b6b75;">(${klinikNamn})</span></span>
-            <button class="btn-danger btn-small" onclick="removePrivilege('${id}','${p.privilege}')">Ta bort</button>
+            <button class="btn-danger btn-small" onclick="removePrivilege('${id}','${p.privilege}','${p.klinikId}')">Ta bort</button>
           </div>`;
         }).join('');
       } catch(err) { el.innerHTML = '<span style="color:#c00;font-size:14px;">' + esc(err.message) + '</span>'; }
@@ -313,8 +313,9 @@
       loadUserPrivileges(id);
     }
 
-    async function removePrivilege(id, privilege) {
-      await api('setUserPrivilege', { targetId: id, privilege, klinikId: '', remove: true });
+    // klinikId = raden som tas bort ('' = det globala) — backend tar bara bort just den (v4.55.0).
+    async function removePrivilege(id, privilege, klinikId) {
+      await api('setUserPrivilege', { targetId: id, privilege, klinikId: klinikId || '', remove: true });
       loadUserPrivileges(id);
     }
 

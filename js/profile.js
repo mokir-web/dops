@@ -143,10 +143,17 @@
           if (!check || check.locked || check.failed) { setStatus('profile-pin-status', 'Nuvarande PIN är felaktig.', true); if (saveBtn) { saveBtn.textContent = origSaveBtnText; saveBtn.disabled = false; } return; }
         }
 
+        // Aviseringsvalen skickas bara när de ändrats (v4.55.0): en session där de är okända
+        // (t.ex. äldre inloggning via mejllänk) visar annars ett gissat läge som skulle sparas.
+        const snap = _profileSnapshot || {};
+        const notifyUpdates = {
+          ...((emailNotify === 'Ja') !== snap.emailNotify ? { emailNotify } : {}),
+          ...((emailNotifyRequests === 'Ja') !== snap.emailNotifyRequests ? { emailNotifyRequests } : {})
+        };
         const result = await api('updateProfile', {
           email: currentUser.email,
           updates: { firstName, lastName, newEmail, clinic, klinikId: newKlinikId, jobRole, userRole,
-            emailNotify, emailNotifyRequests, startPage,
+            ...notifyUpdates, startPage,
             ...(newPin ? { newPin } : {}) }
         });
         if (result.error) { setStatus('profile-role-status', result.error, true); if (saveBtn) { saveBtn.textContent = origSaveBtnText; saveBtn.disabled = false; } return; }

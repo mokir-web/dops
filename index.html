@@ -1799,7 +1799,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.54.2';
+    const APP_VERSION = 'v4.55.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2378,8 +2378,12 @@
       const pendingPoll = setInterval(async () => {
         try {
           const res = await api('getAuthStatus');
-          if (!res.pendingActivation) {
+          if (res.pendingActivation === false) {
             clearInterval(pendingPoll);
+            // Godkänd: byt till den nya token (den gamla bär pendingActivation) — v4.55.0
+            if (res.token) currentUser.token = res.token;
+            currentUser.pendingActivation = false;
+            localStorage.setItem('dops_user', JSON.stringify(currentUser));
             location.reload();
           }
         } catch (e) { /* tyst, försöker igen om 10s */ }
@@ -2701,6 +2705,13 @@
         const el = document.getElementById('must-change-pin-modal');
         el.style.display = 'none'; el.classList.add('hidden');
         bootApp();
+        // Personlistorna i referensdatan kräver inloggning (v4.55.0) — hämta om med token.
+        try {
+          appData = await api('getData', { klinikId: currentUser.klinikId });
+          localStorage.setItem('dops_appdata', JSON.stringify({ ts: Date.now(), data: appData }));
+          populateLocationDropdown();
+          updateVersionLabels();
+        } catch (_e) { /* tyst, försöker igen vid nästa sidladdning */ }
       } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
     }
 
