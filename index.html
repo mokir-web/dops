@@ -1799,7 +1799,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.55.0';
+    const APP_VERSION = 'v4.56.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2072,7 +2072,7 @@
       registerUser:           { method: 'POST',   path: () => '/users', body: p => ({ ...p.user, clinicId: p.user.klinikId || undefined }) },
       getAllUsers:            { method: 'GET',    path: () => '/users', query: p => ({ clinicId: p.klinikId, includeInactive: p.includeInaktiverade ? 'true' : undefined }) },
       deleteUser:             { method: 'DELETE', path: p => '/users/' + encodeURIComponent(p.id) },
-      deleteMyAccount:        { method: 'DELETE', path: () => '/users/me' },
+      deleteMyAccount:        { method: 'DELETE', path: () => '/users/me', body: p => ({ pin: p.pin }) },
       updateUserByAdmin:      { method: 'PATCH',  path: p => '/users/' + encodeURIComponent(p.targetId), body: p => normalizeProfileUpdates(p.updates) },
       getPrivilegesForUser:   { method: 'GET',    path: p => '/users/' + encodeURIComponent(p.targetId) + '/privileges' },
       setUserPrivilege:       { method: 'PUT',    path: p => '/users/' + encodeURIComponent(p.targetId) + '/privileges', body: p => ({ privilege: p.privilege, klinikId: p.klinikId, remove: p.remove }) },
@@ -2593,13 +2593,17 @@
           setStatus('login-status', 'Din klinik har inget aktivt abonnemang. Kontakta lokal administratör.', true);
           unlockUI(); return;
         }
+        if (result.ipLimited) {
+          setStatus('login-status', `För många misslyckade inloggningar från din uppkoppling. Försök igen om ${formatWaitTime(result.minutesLeft)}.`, true);
+          unlockUI(); return;
+        }
         if (result.locked) {
-          setStatus('login-status', `Kontot är tillfälligt låst. Försök igen om ${result.minutesLeft} minut${result.minutesLeft !== 1 ? 'er' : ''}.`, true);
+          setStatus('login-status', `Kontot är tillfälligt låst. Försök igen om ${formatWaitTime(result.minutesLeft)}.`, true);
           unlockUI(); return;
         }
         if (result.failed) {
-          const left = result.attemptsLeft;
-          setStatus('login-status', `Felaktig PIN. ${left} försök kvar innan kontot låses i 10 minuter.`, true);
+          // Samma besked för okänd e-post och fel PIN (v4.56.0) — avslöjar inte vilka konton som finns.
+          setStatus('login-status', 'Felaktig e-post eller PIN. Kontot låses tillfälligt efter 3 felaktiga försök.', true);
           unlockUI(); return;
         }
         currentUser = normalizeUserPrivileges(result);
@@ -2713,6 +2717,14 @@
           updateVersionLabels();
         } catch (_e) { /* tyst, försöker igen vid nästa sidladdning */ }
       } catch (err) { statusEl.textContent = err.message; statusEl.style.color = '#9e2a18'; }
+    }
+
+    // Spärrtid i klartext: kontospärren trappas upp till 24 h (v4.56.0) — "1440 minuter" är svårläst.
+    function formatWaitTime(minutes) {
+      const m = Math.max(1, Math.round(minutes || 0));
+      if (m < 60) return `${m} minut${m !== 1 ? 'er' : ''}`;
+      const h = Math.round(m / 60);
+      return `${h} timm${h !== 1 ? 'ar' : 'e'}`;
     }
 
     function doLogout() {
@@ -3207,7 +3219,7 @@
       try {
         const result = await api('sendResetCode', { email });
         if (result.error) { setStatus('forgot-status1', result.error, true); unlockUI(); return; }
-        setStatus('forgot-status1', '✓ Länk skickad till din e-post. Klicka på den för att sätta ett nytt lösenord.', false);
+        setStatus('forgot-status1', '✓ Om adressen finns i MoraDOPS har vi skickat en länk. Klicka på den för att sätta ett nytt lösenord.', false);
         unlockUI();
       } catch(err) { setStatus('forgot-status1', err.message, true); unlockUI(); }
     }

@@ -139,8 +139,7 @@
         if (newPin) {
           if (!/^\d{4,6}$/.test(newPin)) { setStatus('profile-pin-status', 'Ny PIN måste vara 4–6 siffror.', true); if (saveBtn) { saveBtn.textContent = origSaveBtnText; saveBtn.disabled = false; } return; }
           if (!currentPin) { setStatus('profile-pin-status', 'Ange nuvarande PIN för att byta.', true); if (saveBtn) { saveBtn.textContent = origSaveBtnText; saveBtn.disabled = false; } return; }
-          const check = await api('login', { email: currentUser.email, pin: currentPin });
-          if (!check || check.locked || check.failed) { setStatus('profile-pin-status', 'Nuvarande PIN är felaktig.', true); if (saveBtn) { saveBtn.textContent = origSaveBtnText; saveBtn.disabled = false; } return; }
+          // Nuvarande PIN kontrolleras av servern när ändringen sparas (v4.56.0).
         }
 
         // Aviseringsvalen skickas bara när de ändrats (v4.55.0): en session där de är okända
@@ -154,7 +153,7 @@
           email: currentUser.email,
           updates: { firstName, lastName, newEmail, clinic, klinikId: newKlinikId, jobRole, userRole,
             ...notifyUpdates, startPage,
-            ...(newPin ? { newPin } : {}) }
+            ...(newPin ? { newPin, currentPin } : {}) }
         });
         if (result.error) { setStatus('profile-role-status', result.error, true); if (saveBtn) { saveBtn.textContent = origSaveBtnText; saveBtn.disabled = false; } return; }
 
@@ -185,7 +184,7 @@
         if (s3('profile-new-pin'))     s3('profile-new-pin').value     = '';
         if (saveBtn) { saveBtn.textContent = '\u00c4ndringar sparade'; saveBtn.disabled = true; }
         _snapshotProfile();
-      } catch(err) { setStatus('profile-role-status', err.message, true); if (saveBtn) { saveBtn.textContent = origSaveBtnText; saveBtn.disabled = false; } }
+      } catch(err) { setStatus(newPin ? 'profile-pin-status' : 'profile-role-status', err.message, true); if (saveBtn) { saveBtn.textContent = origSaveBtnText; saveBtn.disabled = false; } }
     }
 
     async function confirmDeleteProfile() {
@@ -194,10 +193,10 @@
       const pin = await customPrompt('Bekräfta med din PIN:', 'password');
       if (!pin) return;
       try {
-        const user = await api('login', { email: currentUser.email, pin });
-        if (!user) { setStatus('profile-delete-status', 'Felaktig PIN.', true); return; }
+        // PIN:en kontrolleras av servern (v4.56.0) — den tidigare kontrollen här släppte
+        // igenom fel PIN, eftersom inloggningsanropet alltid svarar med ett objekt.
         setStatus('profile-delete-status', '⏳ Raderar...', false);
-        const result = await api('deleteMyAccount');
+        const result = await api('deleteMyAccount', { pin });
         if (result.error) { setStatus('profile-delete-status', result.error, true); return; }
         localStorage.removeItem('dops_user');
         await customAlert('Ditt konto har raderats.');
