@@ -529,6 +529,7 @@
         <select id="reg-clinic">
           <option value="">-- Välj klinik --</option>
         </select>
+        <button type="button" onclick="openDemoLeadModal('register')" style="background:none;border:none;padding:6px 0 0;color:#1a73e8;font-size:13px;cursor:pointer;text-decoration:underline;">Finns inte din klinik i listan? Kontakta utvecklaren</button>
       </div>
       <div class="field">
         <label class="field-label">Användarroll *</label>
@@ -1760,8 +1761,8 @@
 
   <div id="demo-lead-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:center;justify-content:center;padding:20px;">
     <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;">
-      <h3 style="margin-top:0;">Intresserad av MoraDOPS?</h3>
-      <p style="color:#5b6b75;font-size:14px;">Lämna dina uppgifter så hör vi av oss.</p>
+      <h3 id="demo-lead-title" style="margin-top:0;">Intresserad av MoraDOPS?</h3>
+      <p id="demo-lead-intro" style="color:#5b6b75;font-size:14px;">Lämna dina uppgifter så hör vi av oss.</p>
       <div class="field"><label class="field-label">Namn *</label><input type="text" id="demo-lead-name"></div>
       <div class="field"><label class="field-label">Email *</label><input type="email" id="demo-lead-email"></div>
       <div class="field"><label class="field-label">Ort *</label><input type="text" id="demo-lead-city"></div>
@@ -1799,7 +1800,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.56.0';
+    const APP_VERSION = 'v4.57.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2068,7 +2069,7 @@
       loginWithToken:         { method: 'POST',   path: () => '/auth/login-token', body: p => ({ token: p.token }) },
       getDemoUsers:           { method: 'GET',    path: () => '/demo/users' },
       demoLogin:              { method: 'POST',   path: () => '/demo/login', body: p => ({ userId: p.userId }) },
-      submitDemoLead:         { method: 'POST',   path: () => '/demo/leads', body: p => ({ name: p.name, email: p.email, city: p.city, clinic: p.clinic, phone: p.phone }) },
+      submitDemoLead:         { method: 'POST',   path: () => '/demo/leads', body: p => ({ name: p.name, email: p.email, city: p.city, clinic: p.clinic, phone: p.phone, source: p.source }) },
       registerUser:           { method: 'POST',   path: () => '/users', body: p => ({ ...p.user, clinicId: p.user.klinikId || undefined }) },
       getAllUsers:            { method: 'GET',    path: () => '/users', query: p => ({ clinicId: p.klinikId, includeInactive: p.includeInaktiverade ? 'true' : undefined }) },
       deleteUser:             { method: 'DELETE', path: p => '/users/' + encodeURIComponent(p.id) },
@@ -2795,7 +2796,15 @@
       el.style.display = 'none'; el.classList.add('hidden');
     }
 
-    function openDemoLeadModal() {
+    // source 'register' = "Finns inte din klinik i listan?" från registreringsskärmen (v4.57.0).
+    let _demoLeadSource = null;
+    function openDemoLeadModal(source) {
+      _demoLeadSource = source || null;
+      const fromRegister = _demoLeadSource === 'register';
+      document.getElementById('demo-lead-title').textContent = fromRegister ? 'Finns inte din klinik?' : 'Intresserad av MoraDOPS?';
+      document.getElementById('demo-lead-intro').textContent = fromRegister
+        ? 'Lämna dina uppgifter och vilken klinik du tillhör, så hör utvecklaren av sig.'
+        : 'Lämna dina uppgifter så hör vi av oss.';
       ['demo-lead-name','demo-lead-email','demo-lead-city','demo-lead-clinic','demo-lead-phone'].forEach(id => document.getElementById(id).value = '');
       document.getElementById('demo-lead-status').textContent = '';
       const el = document.getElementById('demo-lead-modal');
@@ -2816,7 +2825,7 @@
         statusEl.textContent = 'Namn, email, ort och klinik krävs.'; statusEl.style.color = '#9e2a18'; return;
       }
       try {
-        const result = await api('submitDemoLead', { name, email, city, clinic, phone });
+        const result = await api('submitDemoLead', { name, email, city, clinic, phone, source: _demoLeadSource });
         if (result.error) { statusEl.textContent = result.error; statusEl.style.color = '#9e2a18'; return; }
         statusEl.textContent = 'Tack! Vi hör av oss.'; statusEl.style.color = '#2e4a5f';
         setTimeout(closeDemoLeadModal, 1500);
