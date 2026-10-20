@@ -1791,6 +1791,7 @@
   <div id="install-prompt-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:450;align-items:center;justify-content:center;padding:20px;">
     <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:380px;width:100%;">
       <h3 id="install-prompt-title" style="margin-top:0;"></h3>
+      <div id="install-prompt-anim"></div>
       <p id="install-prompt-body" style="color:#5b6b75;font-size:14px;line-height:1.6;"></p>
       <div class="btn-row" style="flex-wrap:wrap;gap:8px;">
         <button id="install-prompt-action" class="btn-primary hidden"></button>
@@ -1800,7 +1801,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.57.0';
+    const APP_VERSION = 'v4.58.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -3032,33 +3033,46 @@
       if (isIOS) {
         const share = isIPad ? 'uppe till höger' : (isChromeIOS ? 'i adressfältet uppe till höger' : 'i verktygsfältet längst ned');
         return { title: 'Lägg till MoraDOPS på hemskärmen', canPrompt: false,
-          html: steps([`Tryck på <strong>Dela</strong>-ikonen (fyrkant med pil uppåt) ${share}.`, 'Bläddra ned och välj <strong>Lägg till på hemskärmen</strong>.', 'Tryck <strong>Lägg till</strong>.'])
+          anim: (isChromeIOS || isIPad) ? 'iosTop' : 'ios',
+          html: steps([`Tryck på <strong>Dela</strong>-ikonen (fyrkant med pil uppåt) ${share}${isChromeIOS || isIPad ? '' : ' — på nyare iPhone ligger den under <strong>⋯</strong>'}.`, 'Bläddra ned och välj <strong>Lägg till på hemskärmen</strong>.', 'Tryck <strong>Lägg till</strong>.'])
             + (isChromeIOS || isFirefox || isEdge ? '<p style="margin:8px 0 0;font-size:13px;">Fungerar i Chrome, Firefox och Edge från iOS 16.4. På äldre iOS: öppna moradops.se i Safari och gör samma sak där.</p>' : '')
             + '<p style="margin:8px 0 0;font-size:13px;">Första gången du öppnar appen från hemskärmen behöver du logga in igen.</p>' };
       }
       if (isAndroid) {
-        if (isSamsung) return { title: 'Lägg till MoraDOPS på startskärmen', canPrompt: false,
+        if (isSamsung) return { title: 'Lägg till MoraDOPS på startskärmen', canPrompt: false, anim: 'samsung',
           html: steps(['Tryck på menyn <strong>☰</strong> längst ned.', 'Välj <strong>Lägg till sida på</strong> → <strong>Startskärm</strong>.']) };
-        if (isFirefox) return { title: 'Lägg till MoraDOPS på startskärmen', canPrompt: false,
+        if (isFirefox) return { title: 'Lägg till MoraDOPS på startskärmen', canPrompt: false, anim: 'firefoxAndroid',
           html: steps(['Tryck på menyn <strong>⋮</strong>.', 'Välj <strong>Installera</strong> (eller <strong>Lägg till på startskärmen</strong>).']) };
-        return { title: 'Installera MoraDOPS som app', canPrompt: false,
+        return { title: 'Installera MoraDOPS som app', canPrompt: false, anim: 'android',
           html: steps(['Tryck på menyn <strong>⋮</strong> uppe till höger.', 'Välj <strong>Installera app</strong> (eller <strong>Lägg till på startskärmen</strong>).', 'Bekräfta med <strong>Installera</strong>.']) };
       }
-      if (isEdge) return { title: 'Installera MoraDOPS som app', canPrompt: false,
+      if (isEdge) return { title: 'Installera MoraDOPS som app', canPrompt: false, anim: 'edge',
         html: steps(['Klicka på <strong>⋯</strong> uppe till höger i Edge.', 'Välj <strong>Appar</strong> → <strong>Installera den här webbplatsen som en app</strong>.', 'Klicka <strong>Installera</strong>.']) };
-      if (isSafariMac) return { title: 'Lägg till MoraDOPS i Dock', canPrompt: false,
+      if (isSafariMac) return { title: 'Lägg till MoraDOPS i Dock', canPrompt: false, anim: 'safariMac',
         html: steps(['Välj menyn <strong>Arkiv</strong> i Safari.', 'Välj <strong>Lägg till i Dock</strong> och klicka <strong>Lägg till</strong>.']) + '<p style="margin:8px 0 0;font-size:13px;">Kräver macOS Sonoma (14) eller senare.</p>' };
       if (isFirefox) return { title: 'Installera MoraDOPS som app', canPrompt: false,
         html: 'Firefox kan inte installera webbappar. Öppna <strong>moradops.se</strong> i Chrome eller Edge och installera därifrån — eller bokmärk sidan (Ctrl+D, eller Cmd+D på Mac).' };
-      return { title: 'Installera MoraDOPS som app', canPrompt: false,
+      return { title: 'Installera MoraDOPS som app', canPrompt: false, anim: 'chrome',
         html: steps(['Klicka på installationsikonen (skärm med nedåtpil) längst till höger i adressfältet.', 'Eller: menyn <strong>⋮</strong> → <strong>Casta, spara och dela</strong> → <strong>Installera sidan som app</strong>.', 'Klicka <strong>Installera</strong>.']) };
     }
 
     // Visar instruktionerna i installationsdialogen (samma dialog som engångsfrågan).
+    let _installAnim = null;
     function _showInstallModal() {
       const ins = _installInstructions();
       document.getElementById('install-prompt-title').textContent = ins.title;
       document.getElementById('install-prompt-body').innerHTML = ins.html;
+      // Animation för den aktuella webbläsaren (v4.58.0) — markerar instruktionspunkten som visas.
+      _installAnim?.stop();
+      const animEl = document.getElementById('install-prompt-anim');
+      animEl.innerHTML = '';
+      if (ins.anim && window.InstallAnimation) {
+        const items = document.querySelectorAll('#install-prompt-body li');
+        _installAnim = InstallAnimation.mount(animEl, ins.anim, {
+          maxHeight: 230,
+          onStep: (li) => items.forEach((el, i) => { el.style.fontWeight = i === li ? '700' : ''; el.style.color = i === li ? '#1c2b36' : ''; })
+        });
+      }
       const actionBtn = document.getElementById('install-prompt-action');
       actionBtn.classList.toggle('hidden', !ins.canPrompt);
       if (ins.canPrompt) {
@@ -3112,6 +3126,7 @@
     function _showOpenAppModal() {
       const isAndroid = /Android/i.test(navigator.userAgent);
       document.getElementById('install-prompt-title').textContent = 'MoraDOPS finns installerad här';
+      document.getElementById('install-prompt-anim').innerHTML = '';
       document.getElementById('install-prompt-body').innerHTML = (isAndroid
         ? 'Öppna <strong>MoraDOPS</strong> från hemskärmen eller applistan.'
         : 'Klicka på <strong>Öppna i MoraDOPS</strong>-ikonen längst till höger i adressfältet, eller starta MoraDOPS från Dock, Startmenyn eller skrivbordet.');
@@ -5516,5 +5531,6 @@
   <script src="./js/documents.js"></script>
   <script src="./js/profile.js"></script>
   <script src="./js/competition.js"></script>
+  <script src="./js/install-animation.js"></script>
 </body>
 </html>
