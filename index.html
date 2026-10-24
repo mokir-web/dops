@@ -2,6 +2,9 @@
 <html lang="sv">
 <head>
   <title>MoraDOPS</title>
+  <!-- v4.58.3: CSP (GitHub Pages tillåter inga egna headers). 'unsafe-inline' krävs av inline-skriptet och
+       alla onclick/style-attribut, men begränsar ändå vilka servrar sidan får ladda från och skicka data till. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://api.moradops.se; form-action 'self' https://api.moradops.se; object-src 'none'; base-uri 'self'; worker-src 'none'; upgrade-insecure-requests">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <meta name="format-detection" content="telephone=no">
   <meta name="mobile-web-app-capable" content="yes">
@@ -1801,7 +1804,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.58.0';
+    const APP_VERSION = 'v4.58.3';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
