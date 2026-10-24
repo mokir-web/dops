@@ -246,6 +246,10 @@
     .ai-actions:empty { display: none; }
     .ai-actions button { padding: 4px 10px; }
     .ai-actions button.ai-rated { background: #1c2b36; color: #fff; }
+    .aif-table { border-collapse: collapse; font-size: 13px; min-width: 520px; }
+    .aif-table th, .aif-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #c7d1d7; }
+    .aif-table th { color: #5b6b75; font-weight: 600; }
+    .ai-date { color: #2a6f97; text-decoration: underline dotted; cursor: pointer; white-space: nowrap; }
     .ai-history { margin-top: 6px; font-size: 12px; color: #6b7a84; max-width: 700px; }
     .ai-history button { background: none; border: none; color: #2a6f97; cursor: pointer; padding: 0 6px 0 0; font-size: 12px; text-decoration: underline; }
 
@@ -652,6 +656,7 @@
           <button class="sidebar-btn-secondary hidden" id="nav-btn-admin"           onclick="showPanel('admin')"><i class="ti ti-users" aria-hidden="true"></i><span class="sidebar-btn-label">Administration</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-error-reports"   onclick="showPanel('error-reports')"><i class="ti ti-message-report" aria-hidden="true"></i><span class="sidebar-btn-label">Felanmälningar</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-usage-stats"   onclick="showPanel('usage-stats')"><i class="ti ti-chart-dots" aria-hidden="true"></i><span class="sidebar-btn-label">Användningsstatistik</span></button>
+          <button class="sidebar-btn-secondary hidden" id="nav-btn-ai-feedback"   onclick="showPanel('ai-feedback')"><i class="ti ti-sparkles" aria-hidden="true"></i><span class="sidebar-btn-label">AI-feedback</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-form-builder"   onclick="showPanel('form-builder')"><i class="ti ti-forms" aria-hidden="true"></i><span class="sidebar-btn-label">Formulärbyggare</span></button>
           <button class="sidebar-btn-secondary hidden" id="nav-btn-pending-users" onclick="showPanel('pending-users')">
             <i class="ti ti-user-check" aria-hidden="true"></i><span class="sidebar-btn-label">Användargodkännande</span> <span id="pending-users-badge" class="hidden sidebar-btn-badge" style="background:#9e2a18;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px;margin-left:4px;"></span>
@@ -902,7 +907,7 @@
         <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Sammanställer alla formulärtyper om ingen är vald ovan, annars den valda. Namn tas bort innan underlaget skickas till AI-tjänsten. Sammanställningarna sparas.</span>
         <div id="progress-ai-result" class="hidden ai-box">
           <div id="progress-ai-meta" class="ai-meta"></div>
-          <div id="progress-ai-body"></div>
+          <div id="progress-ai-body" onclick="onAiBodyClick(event)"></div>
           <div id="progress-ai-actions" class="ai-actions"></div>
         </div>
         <div id="progress-ai-history" class="ai-history"></div>
@@ -1250,6 +1255,13 @@
     </div>
 
     <!-- ── ANVÄNDNINGSSTATISTIK ──────────────────────────────────────── -->
+    <!-- v4.59.3: AI-sammanställningar och deras tumme upp/ner (global Administratör) -->
+    <div id="panel-ai-feedback" class="hidden">
+      <h2>AI-feedback</h2>
+      <p style="color:#5b6b75;font-size:13px;">AI-sammanställningar per omfattning och de betyg (👍/👎) användarna gett. Visar inte vem sammanställningen gäller eller vem som betygsatte.</p>
+      <div id="aif-content"></div>
+    </div>
+
     <div id="panel-usage-stats" class="hidden">
       <h2>Användningsstatistik</h2>
       <p style="color:#5b6b75;font-size:13px;">Aggregerat per användare och klinik. DEMO-aktivitet exkluderas som standard.</p>
@@ -1716,6 +1728,14 @@
     </div><!-- /app-layout -->
   </div><!-- /app -->
 
+  <!-- v4.59.2: bedömningarna bakom ett datum i AI-sammanställningen -->
+  <div id="ai-assessment-modal" class="hidden" onclick="if (event.target === this) closeAiAssessmentModal()" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:600;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:#eef1f3;border-radius:10px;padding:20px 22px;max-width:560px;width:100%;max-height:85vh;overflow:auto;">
+      <div id="ai-assessment-modal-body"></div>
+      <div class="btn-row" style="margin-top:14px;"><button class="btn-primary" onclick="closeAiAssessmentModal()">Stäng</button></div>
+    </div>
+  </div>
+
   <div id="custom-dialog-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:600;align-items:center;justify-content:center;padding:20px;">
     <div style="background:#eef1f3;border-radius:10px;padding:24px;max-width:420px;width:100%;">
       <p id="custom-dialog-message" style="font-size:16px;color:#1c2b36;margin:0 0 20px;white-space:pre-line;line-height:1.5;"></p>
@@ -1824,7 +1844,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.59.0';
+    const APP_VERSION = 'v4.59.3';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2115,6 +2135,8 @@
       getProgressData:        { method: 'GET',    path: () => '/progress', query: p => ({ recipientEmail: p.recipientEmail, formType: p.formType, dateFrom: p.dateFrom, dateTo: p.dateTo }) },
       getProgressUsers:       { method: 'GET',    path: () => '/progress/users', query: p => ({ clinicId: p.klinikId }) },
       getProgressAiSummaries: { method: 'GET',    path: () => '/progress/ai-summaries', query: p => ({ recipientEmail: p.recipientEmail, formType: p.formType }) },
+      getAssessmentsByIds:    { method: 'GET',    path: () => '/progress/assessments-by-ids', query: p => ({ recipientEmail: p.recipientEmail, ids: p.ids }) },
+      getAiFeedback:          { method: 'GET',    path: () => '/progress/ai-feedback' },
       rateProgressAiSummary:  { method: 'POST',   path: p => '/progress/ai-summaries/' + encodeURIComponent(p.id) + '/rating', body: p => ({ rating: p.rating, comment: p.comment }) },
 
       saveAnswers: {
@@ -2528,6 +2550,9 @@
       // Användningsstatistik: bara global Administratör (klinik '*')
       const usageStatsBtn = document.getElementById('nav-btn-usage-stats');
       if (usageStatsBtn) usageStatsBtn.classList.toggle('hidden', !(isAdmin && activeKlinikId === '*'));
+      // AI-feedback: bara global Administratör (klinik '*')
+      const aiFeedbackBtn = document.getElementById('nav-btn-ai-feedback');
+      if (aiFeedbackBtn) aiFeedbackBtn.classList.toggle('hidden', !(isAdmin && activeKlinikId === '*'));
       // Progresssida: Mottagare, Blandbild samt Studierektor
       const progressBtn = document.getElementById('nav-btn-progress');
       const _role = currentUser?.userRole || '';
@@ -2951,6 +2976,7 @@
         { id: 'nav-btn-request-stats', title: 'Förfrågningsöversikt', description: 'Statistik över klinikens förfrågningar om bedömning — hur stor andel som utförts, uppdelat per formulärtyp och yrkesroll. Sätt även hur många veckor en obesvarad förfrågan ska räknas som inaktuell.' },
         { id: 'nav-btn-admin', title: 'Administration', description: 'Hantera användare, deras roller/privilegier och kliniker. Klicka på en klinik i listan för att se och redigera dess användare, eller skapa/inaktivera hela kliniker.' },
         { id: 'nav-btn-error-reports', title: 'Felanmälningar', description: 'Här samlas feedback och buggrapporter som skickats in via "Felanmälan" i sidomenyn, med teknisk systeminformation automatiskt bifogad. Ställ in vilken e-postadress nya felanmälningar ska mejlas till.' },
+        { id: 'nav-btn-ai-feedback', title: 'AI-feedback', description: 'Hur AI-sammanställningarna tas emot: antal per formulärtyp, andel tumme upp/ner, tokenförbrukning och användarnas kommentarer. Klicka på en betygsatt rad för att läsa själva sammanställningen.' },
         { id: 'nav-btn-usage-stats', title: 'Användningsstatistik', description: 'Aggregerad statistik per användare och klinik — antal sessioner, aktiv tid, mest besökta paneler. Klicka på en rad för att se den personens enskilda sessioner, och på en session för att se hela händelseloggen.' },
         { id: 'nav-btn-form-builder', title: 'Formulärbyggare', description: 'Skapa nya formulärtyper eller redigera frågorna i befintliga (rubriker, skala, flerval, fritext). Du kan klistra in hela rader/kolumner direkt från Excel via CSV-redigeraren för snabb massredigering.' },
         { id: 'nav-btn-pending-users', title: 'Användargodkännande', description: 'Nya konton som registrerat sig själva väntar här tills en admin godkänner dem — innan dess kan de bara se mottagna bedömningar. Godkänn direkt i listan eller via länken i mejlet som skickades vid registreringen.' },
@@ -5074,10 +5100,19 @@
         msg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#2e4a5f;color:#eef1f3;text-align:center;padding:14px;font-size:15px;z-index:9999;';
         msg.textContent = 'Systemet uppdateras till senaste version…';
         document.body.appendChild(msg);
-        setTimeout(() => location.reload(), 800);
+        setTimeout(() => _reloadWithFreshScripts(), 800);
       } else {
-        location.reload();
+        _reloadWithFreshScripts();
       }
+    }
+
+    // v4.59.1: hämta om sidans egna skript (js/, vendor/) förbi HTTP-cachen före omladdningen.
+    // Annars kan ny index.html köras med gamla js/-filer i upp till 10 min (GitHub Pages
+    // max-age=600) — hittat i produktion 2026-10-24: "Okänd action: getProgressAiSummary".
+    async function _reloadWithFreshScripts() {
+      const srcs = [...document.querySelectorAll('script[src]')].map(el => el.getAttribute('src')).filter(src => !/^https?:/.test(src));
+      await Promise.all(srcs.map(src => fetch(src, { cache: 'reload' }).catch(() => {})));
+      location.reload();
     }
 
     // Sparar osparad formulärdata + vilken panel användaren stod på innan omladdning,
@@ -5489,10 +5524,10 @@
       // Ta bort loading-overlay vid första showPanel
       const loadingEl = document.getElementById('app-loading');
       if (loadingEl) loadingEl.remove();
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats','competition'].forEach(p =>
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','blank','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats','ai-feedback','competition'].forEach(p =>
         show(`panel-${p}`, p === panel)
       );
-      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats','competition'].forEach(p => {
+      ['assessment','my-assessments','overview','confirmation','clinic-overview','admin','reminders','statistics','documents','about','inbox','request-stats','profile','progress','clinic-settings','form-builder','pending-users','error-reports','usage-stats','ai-feedback','competition'].forEach(p => {
         const btn = document.getElementById(`nav-btn-${p}`);
         if (btn) btn.classList.toggle('active', p === panel);
       });
@@ -5557,6 +5592,7 @@
       if (panel === 'request-stats')    { loadRequestStats(); }
       if (panel === 'competition')      { loadCompetition(); }
       if (panel === 'usage-stats')      { loadUsageStats(); }
+      if (panel === 'ai-feedback')      { loadAiFeedback(); }
       if (panel === 'progress')          { initProgress(); }
       if (panel !== 'progress') { _progressCharts.forEach(c => { try { c.destroy(); } catch(_){} }); _progressCharts = []; }
     }
@@ -5592,6 +5628,7 @@
   <script src="./js/scheduled-sends.js"></script>
   <script src="./js/request-stats.js"></script>
   <script src="./js/usage-stats.js"></script>
+  <script src="./js/ai-feedback.js"></script>
   <script src="./js/clinic-assessments.js"></script>
   <script src="./js/admin.js"></script>
   <script src="./js/clinic-settings.js"></script>

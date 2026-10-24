@@ -16,6 +16,7 @@
     // per omfattning (vald formulärtyp, eller översikt) med historik och tumme upp/ner.
     let _aiHistory = [];
     let _aiScopeKey = '';
+    let _aiShownRefs = null; // refs för sammanställningen som visas: [nr, datum] → bedömningens id
 
     function clearProgressAiResult() {
       const resultEl = document.getElementById('progress-ai-result');
@@ -36,10 +37,16 @@
     }
 
     // Enkel markdown för AI-svaret: ## rubriker, - punktlistor, **fetstil**. Allt escapas först.
-    function renderAiMarkdown(md) {
+    // Hänvisningar [nr, datum] blir länkar till just den bedömningen (refs[nr-1] = id); utan
+    // refs (äldre sammanställningar) visas bara datumet.
+    function renderAiMarkdown(md, refs) {
       let out = '', inList = false;
       for (const raw of md.split('\n')) {
-        const line = esc(raw).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        const line = esc(raw).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\[(\d{1,3}), (\d{4}-\d{2}-\d{2})\]/g, (m, nr, date) => {
+            const id = refs?.[nr - 1];
+            return id ? '<a href="#" class="ai-date" data-id="' + esc(id) + '">' + date + '</a>' : date;
+          });
         const li = line.match(/^\s*[-*] (.*)$/);
         if (li) {
           if (!inList) { out += '<ul class="ai-list">'; inList = true; }
@@ -55,12 +62,13 @@
     }
 
     function showProgressAiSummary(item, newSince) {
+      _aiShownRefs = item.refs || null;
       document.getElementById('progress-ai-result').classList.remove('hidden');
       const n = item.assessmentCount;
       let meta = 'Sparad ' + item.createdAt + ' · baserad på ' + n + (n === 1 ? ' bedömning' : ' bedömningar');
       if (newSince) meta += ' · ' + newSince + (newSince === 1 ? ' ny bedömning' : ' nya bedömningar') + ' sedan dess';
       document.getElementById('progress-ai-meta').textContent = meta;
-      document.getElementById('progress-ai-body').innerHTML = renderAiMarkdown(item.content)
+      document.getElementById('progress-ai-body').innerHTML = renderAiMarkdown(item.content, item.refs)
         + (item.truncated ? '<p class="ai-p" style="color:#9e2a18;">Obs: svaret klipptes av. Gör gärna en ny sammanställning.</p>' : '');
       const actions = document.getElementById('progress-ai-actions');
       actions.innerHTML = '';
@@ -105,6 +113,62 @@
           renderProgressAiHistory(_aiHistory[0].id);
         }
       } catch (e) { console.warn('getProgressAiSummaries:', e); }
+    }
+
+    function onAiBodyClick(e) {
+      const link = e.target.closest('a.ai-date');
+      if (!link) return;
+      e.preventDefault();
+      showAiRefAssessment(link.dataset.id, link.textContent);
+    }
+
+    function closeAiAssessmentModal() {
+      const modal = document.getElementById('ai-assessment-modal');
+      modal.style.display = 'none'; modal.classList.add('hidden');
+    }
+
+    // v4.59.3: visar bedömningen som en hänvisning [nr, datum] i AI-sammanställningen pekar på.
+    async function showAiRefAssessment(id, date) {
+      const modal = document.getElementById('ai-assessment-modal');
+      const body = document.getElementById('ai-assessment-modal-body');
+      body.innerHTML = '<p style="color:#8a97a0;margin:0;">Hämtar bedömningen från ' + esc(date) + '…</p>';
+      modal.style.display = 'flex'; modal.classList.remove('hidden');
+      try {
+        const list = await api('getAssessmentsByIds', { recipientEmail: progressAiScope().recipientEmail, ids: id });
+        body.innerHTML = '';
+        if (!list.length) { body.innerHTML = '<p style="margin:0;">Bedömningen från ' + esc(date) + ' finns inte längre.</p>'; return; }
+        list.forEach(a => {
+          const card = document.createElement('div');
+          card.className = 'assessment-card';
+          card.style.cursor = 'default';
+          const title = document.createElement('h4');
+          title.textContent = a.formType; title.style.margin = '0';
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          meta.textContent = a.timestamp + (a.registrar ? ' — Registrerare: ' + a.registrar : '');
+          card.append(title, meta);
+          let lastSection = '';
+          a.answers.forEach(ans => {
+            if (!ans.answer) return;
+            if (ans.section && ans.section !== lastSection) {
+              lastSection = ans.section;
+              const sec = document.createElement('div');
+              sec.className = 'ans-section'; sec.textContent = ans.section;
+              card.append(sec);
+            }
+            const row = document.createElement('div');
+            row.className = 'ans-row';
+            const desc = appData?.formDescriptions?.[a.formType]?.[ans.question] || '';
+            const shown = formatScaleAnswer(a.formType, ans.question, ans.answer, desc);
+            const dashIdx = shown.indexOf(' — ');
+            row.textContent = (ans.question || '') + ': ' + (dashIdx !== -1 ? shown.slice(0, dashIdx) : shown);
+            card.append(row);
+          });
+          body.append(card);
+        });
+      } catch (err) {
+        body.innerHTML = '<p class="status-err" style="margin:0;">' + esc(err.message) + '</p>';
+      }
     }
 
     async function rateProgressAiSummary(item, value) {
@@ -252,10 +316,12 @@
       document.getElementById('progress-ai-meta').textContent = formType ? 'Ny sammanställning: ' + formType : 'Ny sammanställning: alla formulärtyper';
       document.getElementById('progress-ai-actions').innerHTML = '';
       body.innerHTML = '<p class="ai-p" style="color:#8a97a0;">Läser underlaget och analyserar… Texten börjar visas efter några sekunder.</p>';
+      _aiShownRefs = null;
       let text = '', done = null, error = null;
       try {
         await apiStream('/progress/ai-summary', { recipientEmail, formType }, ev => {
-          if (ev.t === 'delta') { text += ev.text; body.innerHTML = renderAiMarkdown(text); }
+          if (ev.t === 'refs') _aiShownRefs = ev.refs;
+          else if (ev.t === 'delta') { text += ev.text; body.innerHTML = renderAiMarkdown(text, _aiShownRefs); }
           else if (ev.t === 'done') done = ev;
           else if (ev.t === 'error') error = ev.error;
           else if (ev.summary) body.innerHTML = '<p class="ai-p">' + esc(ev.summary) + '</p>'; // inget underlag
