@@ -233,6 +233,21 @@
     hr { border: none; border-top: 1.5px solid #c7d1d7; margin: 24px 0; }
     .status-ok  { color: #3a6e30; font-weight: bold; margin-top: 14px; font-size: 18px; }
     .status-err { color: #9e2a18; font-weight: bold; margin-top: 14px; font-size: 18px; }
+    /* v4.59.0: AI-sammanställning */
+    .ai-box { margin-top: 10px; background: #eef1f3; border: 1.5px solid #c7d1d7; border-radius: 8px; padding: 12px 16px; font-size: 14px; max-width: 700px; line-height: 1.5; }
+    .ai-meta { font-size: 12px; color: #6b7a84; margin-bottom: 4px; }
+    .ai-meta:empty { display: none; }
+    .ai-h { font-size: 15px; margin: 12px 0 4px; color: #1c2b36; }
+    .ai-h:first-child { margin-top: 2px; }
+    .ai-p { margin: 4px 0; }
+    .ai-list { margin: 4px 0; padding-left: 20px; }
+    .ai-list li { margin: 3px 0; }
+    .ai-actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; font-size: 12px; color: #6b7a84; }
+    .ai-actions:empty { display: none; }
+    .ai-actions button { padding: 4px 10px; }
+    .ai-actions button.ai-rated { background: #1c2b36; color: #fff; }
+    .ai-history { margin-top: 6px; font-size: 12px; color: #6b7a84; max-width: 700px; }
+    .ai-history button { background: none; border: none; color: #2a6f97; cursor: pointer; padding: 0 6px 0 0; font-size: 12px; text-decoration: underline; }
 
     .assessment-card { border: 1.5px solid #b9c3ca; border-radius: 7px; padding: 16px; margin-top: 16px; background: #ffffff; box-shadow: 0 1px 3px rgba(30,22,18,0.08); }
     .assessment-card h4 { margin: 0 0 7px; color: #1c2b36; font-size: 17px; text-transform: none; letter-spacing: 0; }
@@ -884,8 +899,13 @@
       <div id="progress-swr-status" style="min-height:20px;margin-bottom:4px;"></div>
       <div style="margin-bottom:16px;">
         <button class="btn-secondary btn-small" onclick="runProgressAiSummary()" id="progress-ai-btn">✨ AI-sammanställning</button>
-        <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Ger en övergripande sammanställning om ingen formulärtyp är vald ovan, annars en djupare per formulärtyp. Ingen identifierande information (namn, klinik) skickas till AI-tjänsten.</span>
-        <div id="progress-ai-result" class="hidden" style="margin-top:10px;background:#eef1f3;border:1.5px solid #c7d1d7;border-radius:8px;padding:14px 16px;font-size:14px;white-space:pre-wrap;max-width:700px;"></div>
+        <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Sammanställer alla formulärtyper om ingen är vald ovan, annars den valda. Namn tas bort innan underlaget skickas till AI-tjänsten. Sammanställningarna sparas.</span>
+        <div id="progress-ai-result" class="hidden ai-box">
+          <div id="progress-ai-meta" class="ai-meta"></div>
+          <div id="progress-ai-body"></div>
+          <div id="progress-ai-actions" class="ai-actions"></div>
+        </div>
+        <div id="progress-ai-history" class="ai-history"></div>
       </div>
       <div id="progress-content"></div>
     </div>
@@ -1804,7 +1824,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.58.3';
+    const APP_VERSION = 'v4.59.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2094,7 +2114,8 @@
       getProgressFormTypes:   { method: 'GET',    path: () => '/progress/form-types', query: p => ({ recipientEmail: p.recipientEmail }) },
       getProgressData:        { method: 'GET',    path: () => '/progress', query: p => ({ recipientEmail: p.recipientEmail, formType: p.formType, dateFrom: p.dateFrom, dateTo: p.dateTo }) },
       getProgressUsers:       { method: 'GET',    path: () => '/progress/users', query: p => ({ clinicId: p.klinikId }) },
-      getProgressAiSummary:   { method: 'POST',   path: () => '/progress/ai-summary', body: p => ({ recipientEmail: p.recipientEmail, formType: p.formType }) },
+      getProgressAiSummaries: { method: 'GET',    path: () => '/progress/ai-summaries', query: p => ({ recipientEmail: p.recipientEmail, formType: p.formType }) },
+      rateProgressAiSummary:  { method: 'POST',   path: p => '/progress/ai-summaries/' + encodeURIComponent(p.id) + '/rating', body: p => ({ rating: p.rating, comment: p.comment }) },
 
       saveAnswers: {
         method: 'POST', path: () => '/assessments', body: p => ({
@@ -2219,6 +2240,51 @@
       }
       const text = await res.text();
       return text ? JSON.parse(text) : null;
+    }
+
+    // v4.59.0: som api(), men för POST-svar som strömmas som NDJSON (en JSON-rad per händelse,
+    // t.ex. AI-sammanställningen). Ett vanligt JSON-svar skickas till onEvent som en enda händelse.
+    async function apiStream(path, body, onEvent) {
+      const headers = { 'Content-Type': 'application/json' };
+      const stored = currentUser || JSON.parse(localStorage.getItem('dops_user') || 'null');
+      if (stored?.token) headers['Authorization'] = 'Bearer ' + stored.token;
+      const res = await fetch(API_BASE + path, { method: 'POST', headers, body: JSON.stringify(body || {}) });
+      const refreshedToken = res.headers.get('X-Refreshed-Token');
+      if (refreshedToken && stored) {
+        stored.token = refreshedToken;
+        localStorage.setItem('dops_user', JSON.stringify(stored));
+      }
+      if (res.status === 401) {
+        logSessionError({ type: 'api', action: path, status: 401 });
+        if (!window._sessionExpiredReloading) {
+          window._sessionExpiredReloading = true;
+          localStorage.removeItem('dops_user');
+          location.reload();
+        }
+        throw new Error('Sessionen har gått ut. Loggar in på nytt.');
+      }
+      if (!res.ok) {
+        let msg = 'HTTP ' + res.status;
+        try { const b = await res.json(); if (b?.error) msg = b.error; } catch (e) { /* inget JSON-svar */ }
+        logSessionError({ type: 'api', action: path, status: res.status, message: msg });
+        throw new Error(msg);
+      }
+      if (!(res.headers.get('Content-Type') || '').includes('ndjson')) { onEvent(await res.json()); return; }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let i;
+        while ((i = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, i).trim();
+          buf = buf.slice(i + 1);
+          if (line) onEvent(JSON.parse(line));
+        }
+      }
+      if (buf.trim()) onEvent(JSON.parse(buf));
     }
 
     // ── Boot ─────────────────────────────────────────────────────
@@ -3216,7 +3282,7 @@
       profile: [{ popover: { title: 'Min profil', description: 'Här ändrar du dina uppgifter, klinik, aviseringsinställningar och PIN. Du kan även byta startsida (vilken panel som visas direkt vid inloggning) och radera ditt konto längst ner på sidan.' } }],
       progress: [
         { element: '#progress-formtype', popover: { title: 'Formulärtyp', description: 'Välj en formulärtyp för grafer och detaljerad progress per delmoment över tid, eller lämna tomt för en övergripande AI-sammanställning över alla dina formulärtyper.' } },
-        { element: '#progress-ai-btn', popover: { title: 'AI-sammanställning', description: 'Ger en AI-genererad sammanställning av dina bedömningar — anonymiserad, inga namn eller kliniker skickas till AI-tjänsten. Djupare per formulärtyp om en är vald, annars en lättare översikt baserad på fritextkommentarer.' } }
+        { element: '#progress-ai-btn', popover: { title: 'AI-sammanställning', description: 'Ger en AI-genererad sammanställning av dina bedömningar med styrkor, utvecklingsområden och konkreta förslag, med datum för de bedömningar varje punkt bygger på. Gäller vald formulärtyp, annars alla. Namn tas bort innan underlaget skickas, och tidigare sammanställningar sparas.' } }
       ]
     };
 

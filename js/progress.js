@@ -12,9 +12,113 @@
 
     let _progressCharts = [];
 
+    // v4.59.0: AI-sammanställningen strömmas (texten växer fram), visas med rubriker och sparas
+    // per omfattning (vald formulärtyp, eller översikt) med historik och tumme upp/ner.
+    let _aiHistory = [];
+    let _aiScopeKey = '';
+
     function clearProgressAiResult() {
       const resultEl = document.getElementById('progress-ai-result');
-      if (resultEl) { resultEl.classList.add('hidden'); resultEl.textContent = ''; }
+      if (resultEl) resultEl.classList.add('hidden');
+      ['progress-ai-meta', 'progress-ai-body', 'progress-ai-actions', 'progress-ai-history'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+      });
+      _aiHistory = [];
+    }
+
+    function progressAiScope() {
+      const isStudierektor = activePrivilege === 'Studierektor';
+      return {
+        recipientEmail: isStudierektor ? (document.getElementById('progress-recipient')?.value || '') : currentUser.email,
+        formType: document.getElementById('progress-formtype')?.value || ''
+      };
+    }
+
+    // Enkel markdown för AI-svaret: ## rubriker, - punktlistor, **fetstil**. Allt escapas först.
+    function renderAiMarkdown(md) {
+      let out = '', inList = false;
+      for (const raw of md.split('\n')) {
+        const line = esc(raw).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        const li = line.match(/^\s*[-*] (.*)$/);
+        if (li) {
+          if (!inList) { out += '<ul class="ai-list">'; inList = true; }
+          out += '<li>' + li[1] + '</li>';
+          continue;
+        }
+        if (inList) { out += '</ul>'; inList = false; }
+        const h = line.match(/^#{1,4} (.*)$/);
+        if (h) out += '<h4 class="ai-h">' + h[1] + '</h4>';
+        else if (line.trim()) out += '<p class="ai-p">' + line + '</p>';
+      }
+      return out + (inList ? '</ul>' : '');
+    }
+
+    function showProgressAiSummary(item, newSince) {
+      document.getElementById('progress-ai-result').classList.remove('hidden');
+      const n = item.assessmentCount;
+      let meta = 'Sparad ' + item.createdAt + ' · baserad på ' + n + (n === 1 ? ' bedömning' : ' bedömningar');
+      if (newSince) meta += ' · ' + newSince + (newSince === 1 ? ' ny bedömning' : ' nya bedömningar') + ' sedan dess';
+      document.getElementById('progress-ai-meta').textContent = meta;
+      document.getElementById('progress-ai-body').innerHTML = renderAiMarkdown(item.content)
+        + (item.truncated ? '<p class="ai-p" style="color:#9e2a18;">Obs: svaret klipptes av. Gör gärna en ny sammanställning.</p>' : '');
+      const actions = document.getElementById('progress-ai-actions');
+      actions.innerHTML = '';
+      if (item.canRate) {
+        actions.append('Var den till hjälp?');
+        [[1, '👍'], [-1, '👎']].forEach(([value, label]) => {
+          const b = document.createElement('button');
+          b.className = 'btn-secondary btn-small' + (item.rating === value ? ' ai-rated' : '');
+          b.textContent = label;
+          b.onclick = () => rateProgressAiSummary(item, value);
+          actions.append(b);
+        });
+      }
+    }
+
+    function renderProgressAiHistory(activeId) {
+      const el = document.getElementById('progress-ai-history');
+      if (!el) return;
+      el.innerHTML = '';
+      const older = _aiHistory.filter(i => i.id !== activeId);
+      if (!older.length) return;
+      el.append('Tidigare sammanställningar: ');
+      older.forEach(item => {
+        const b = document.createElement('button');
+        b.textContent = item.createdAt.slice(0, 10);
+        b.onclick = () => { showProgressAiSummary(item, 0); renderProgressAiHistory(item.id); };
+        el.append(b);
+      });
+    }
+
+    async function loadProgressAiHistory() {
+      const { recipientEmail, formType } = progressAiScope();
+      const key = recipientEmail + '|' + formType;
+      _aiScopeKey = key;
+      if (!recipientEmail) return;
+      try {
+        const res = await api('getProgressAiSummaries', { recipientEmail, formType });
+        if (_aiScopeKey !== key) return; // användaren hann byta urval
+        _aiHistory = res.items || [];
+        if (_aiHistory[0]) {
+          showProgressAiSummary(_aiHistory[0], res.newSinceLatest);
+          renderProgressAiHistory(_aiHistory[0].id);
+        }
+      } catch (e) { console.warn('getProgressAiSummaries:', e); }
+    }
+
+    async function rateProgressAiSummary(item, value) {
+      const rating = item.rating === value ? null : value; // samma tumme igen = ångra
+      let comment = null;
+      if (rating === -1) {
+        comment = await customPrompt('Vad kunde ha varit bättre? (valfritt)');
+        if (comment === null) return;
+      }
+      try {
+        await api('rateProgressAiSummary', { id: item.id, rating, comment });
+        item.rating = rating;
+        showProgressAiSummary(item, 0);
+      } catch (e) { await customAlert('Kunde inte spara: ' + e.message); }
     }
 
     async function initProgress() {
@@ -67,6 +171,7 @@
 
     async function onProgressRecipientChange() {
       clearProgressAiResult();
+      loadProgressAiHistory();
       const ftSel = document.getElementById('progress-formtype');
       ftSel.innerHTML = '<option value="">-- Välj formulärtyp --</option>';
       ftSel.disabled = true;
@@ -83,6 +188,7 @@
 
     async function loadProgressData() {
       clearProgressAiResult();
+      loadProgressAiHistory();
       const isStudierektor = activePrivilege === 'Studierektor';
       const recipientEmail = isStudierektor
         ? (document.getElementById('progress-recipient')?.value || '')
@@ -133,32 +239,37 @@
     }
 
     async function runProgressAiSummary() {
-      const isStudierektor = activePrivilege === 'Studierektor';
-      const recipientEmail = isStudierektor
-        ? (document.getElementById('progress-recipient')?.value || '')
-        : currentUser.email;
-      const formType = document.getElementById('progress-formtype')?.value || '';
-      const resultEl = document.getElementById('progress-ai-result');
-      const btn = document.getElementById('progress-ai-btn');
-      if (isStudierektor && !recipientEmail) {
+      const { recipientEmail, formType } = progressAiScope();
+      if (!recipientEmail) {
         await customAlert('Välj läkare först.');
         return;
       }
+      const btn = document.getElementById('progress-ai-btn');
+      const body = document.getElementById('progress-ai-body');
       const origText = btn.textContent;
       btn.disabled = true; btn.textContent = 'Analyserar…';
-      resultEl.classList.remove('hidden');
-      resultEl.textContent = formType
-        ? 'Hämtar och analyserar bedömningsdata…'
-        : 'Hämtar och analyserar bedömningsdata från alla formulärtyper…';
+      document.getElementById('progress-ai-result').classList.remove('hidden');
+      document.getElementById('progress-ai-meta').textContent = formType ? 'Ny sammanställning: ' + formType : 'Ny sammanställning: alla formulärtyper';
+      document.getElementById('progress-ai-actions').innerHTML = '';
+      body.innerHTML = '<p class="ai-p" style="color:#8a97a0;">Läser underlaget och analyserar… Texten börjar visas efter några sekunder.</p>';
+      let text = '', done = null, error = null;
       try {
-        const res = await api('getProgressAiSummary', { recipientEmail, formType });
-        resultEl.textContent = res.summary || res.error || 'Inget svar.';
-        if (res.truncated) resultEl.textContent += '\n\n[Obs: svaret klipptes av — testa gärna igen, eller hör av dig om det upprepas.]';
+        await apiStream('/progress/ai-summary', { recipientEmail, formType }, ev => {
+          if (ev.t === 'delta') { text += ev.text; body.innerHTML = renderAiMarkdown(text); }
+          else if (ev.t === 'done') done = ev;
+          else if (ev.t === 'error') error = ev.error;
+          else if (ev.summary) body.innerHTML = '<p class="ai-p">' + esc(ev.summary) + '</p>'; // inget underlag
+        });
       } catch (err) {
-        resultEl.textContent = 'Kunde inte hämta AI-sammanställning: ' + err.message;
+        error = err.message;
       } finally {
         btn.disabled = false; btn.textContent = origText;
       }
+      if (error) {
+        body.insertAdjacentHTML('beforeend', '<p class="ai-p" style="color:#9e2a18;">Kunde inte slutföra AI-sammanställningen: ' + esc(error) + '</p>');
+        return;
+      }
+      if (done) await loadProgressAiHistory(); // visar den sparade versionen med tumme upp/ner
     }
 
     function renderProgress({ submissions, formDef }) {
