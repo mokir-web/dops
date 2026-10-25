@@ -242,9 +242,23 @@
     .ai-p { margin: 4px 0; }
     .ai-list { margin: 4px 0; padding-left: 20px; }
     .ai-list li { margin: 3px 0; }
-    .ai-actions { margin-top: 10px; display: flex; gap: 8px; align-items: center; font-size: 12px; color: #6b7a84; }
+    .ai-actions { margin-top: 10px; font-size: 12px; color: #6b7a84; }
     .ai-actions:empty { display: none; }
     .ai-actions button { padding: 4px 10px; }
+    .ai-rate-row, .ai-comment-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .ai-comment-row { margin-top: 6px; }
+    .ai-comment-row button { font-size: 12px; padding: 3px 10px; }
+    .ai-comment-row input { flex: 1; min-width: 180px; max-width: 420px; padding: 4px 8px; font-size: 12px; border: 1px solid #c7d1d7; border-radius: 5px; background: #fff; }
+    .ai-fu { margin-top: 14px; padding-top: 10px; border-top: 1px solid #c7d1d7; }
+    .ai-fu-q { font-weight: 600; font-size: 13px; color: #1c2b36; white-space: pre-wrap; }
+    .ai-fu-a { margin-top: 4px; }
+    .ai-fu-form { margin-top: 14px; padding-top: 10px; border-top: 1px solid #c7d1d7; font-size: 12px; color: #6b7a84; }
+    .ai-fu-form textarea { width: 100%; box-sizing: border-box; font-family: inherit; padding: 6px 8px; font-size: 13px; border: 1px solid #c7d1d7; border-radius: 5px; background: #fff; resize: vertical; margin-bottom: 6px; }
+    .ai-fu-note { font-size: 12px; color: #6b7a84; margin: 10px 0 0; }
+    .ai-status { display: inline-block; padding: 1px 8px; border-radius: 10px; font-weight: 600; }
+    .ai-status-ok { background: #dcefe2; color: #1f6b3a; }
+    .ai-status-new { background: #fbe9c8; color: #8a5300; }
+    .ai-status-old { background: #e2e6e9; color: #5b6b75; }
     .ai-actions button.ai-rated { background: #1c2b36; color: #fff; }
     .aif-table { border-collapse: collapse; font-size: 13px; min-width: 520px; }
     .aif-table th, .aif-table td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #c7d1d7; }
@@ -905,10 +919,11 @@
       <div style="margin-bottom:16px;">
         <button class="btn-secondary btn-small" onclick="runProgressAiSummary()" id="progress-ai-btn">✨ AI-sammanställning</button>
         <span style="font-size:12px;color:#8a97a0;margin-left:8px;">Sammanställer alla formulärtyper om ingen är vald ovan, annars den valda. Namn tas bort innan underlaget skickas till AI-tjänsten. Sammanställningarna sparas.</span>
-        <div id="progress-ai-result" class="hidden ai-box">
+        <div id="progress-ai-result" class="hidden ai-box" onclick="onAiBodyClick(event)">
           <div id="progress-ai-meta" class="ai-meta"></div>
-          <div id="progress-ai-body" onclick="onAiBodyClick(event)"></div>
+          <div id="progress-ai-body"></div>
           <div id="progress-ai-actions" class="ai-actions"></div>
+          <div id="progress-ai-followups"></div>
         </div>
         <div id="progress-ai-history" class="ai-history"></div>
       </div>
@@ -1844,7 +1859,7 @@
   </div>
 
   <script>
-    const APP_VERSION = 'v4.59.3';
+    const APP_VERSION = 'v4.60.0';
     // 'can-wait' (standard): inloggade användare får en nedräkningsdialog (30s, med
     // möjlighet att skjuta upp 10 min) istället för att ryckas ur det de gör mitt i en
     // session. Sätt till 'must-reload' ENDAST för ändringar som inte kan vänta (t.ex.
@@ -2137,6 +2152,7 @@
       getProgressAiSummaries: { method: 'GET',    path: () => '/progress/ai-summaries', query: p => ({ recipientEmail: p.recipientEmail, formType: p.formType }) },
       getAssessmentsByIds:    { method: 'GET',    path: () => '/progress/assessments-by-ids', query: p => ({ recipientEmail: p.recipientEmail, ids: p.ids }) },
       getAiFeedback:          { method: 'GET',    path: () => '/progress/ai-feedback' },
+      rateProgressAiFollowup: { method: 'POST',   path: p => '/progress/ai-followups/' + encodeURIComponent(p.id) + '/rating', body: p => ({ rating: p.rating, comment: p.comment }) },
       rateProgressAiSummary:  { method: 'POST',   path: p => '/progress/ai-summaries/' + encodeURIComponent(p.id) + '/rating', body: p => ({ rating: p.rating, comment: p.comment }) },
 
       saveAnswers: {

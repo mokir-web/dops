@@ -16,12 +16,13 @@
     // per omfattning (vald formulärtyp, eller översikt) med historik och tumme upp/ner.
     let _aiHistory = [];
     let _aiScopeKey = '';
+    let _aiNewSinceLatest = 0;
     let _aiShownRefs = null; // refs för sammanställningen som visas: [nr, datum] → bedömningens id
 
     function clearProgressAiResult() {
       const resultEl = document.getElementById('progress-ai-result');
       if (resultEl) resultEl.classList.add('hidden');
-      ['progress-ai-meta', 'progress-ai-body', 'progress-ai-actions', 'progress-ai-history'].forEach(id => {
+      ['progress-ai-meta', 'progress-ai-body', 'progress-ai-actions', 'progress-ai-followups', 'progress-ai-history'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '';
       });
@@ -61,27 +62,162 @@
       return out + (inList ? '</ul>' : '');
     }
 
-    function showProgressAiSummary(item, newSince) {
+    // v4.59.4: statusrad som tydligt visar om den sparade sammanställningen täcker all data.
+    // Bara den senaste har ett uträknat antal nya bedömningar (_aiNewSinceLatest).
+    function showProgressAiSummary(item) {
       _aiShownRefs = item.refs || null;
       document.getElementById('progress-ai-result').classList.remove('hidden');
       const n = item.assessmentCount;
-      let meta = 'Sparad ' + item.createdAt + ' · baserad på ' + n + (n === 1 ? ' bedömning' : ' bedömningar');
-      if (newSince) meta += ' · ' + newSince + (newSince === 1 ? ' ny bedömning' : ' nya bedömningar') + ' sedan dess';
-      document.getElementById('progress-ai-meta').textContent = meta;
+      const meta = document.getElementById('progress-ai-meta');
+      meta.textContent = 'Sparad ' + item.createdAt + ' · baserad på ' + n + (n === 1 ? ' bedömning' : ' bedömningar') + ' ';
+      const status = document.createElement('span');
+      if (item !== _aiHistory[0]) {
+        status.className = 'ai-status ai-status-old';
+        status.textContent = 'Äldre sammanställning';
+      } else if (_aiNewSinceLatest > 0) {
+        status.className = 'ai-status ai-status-new';
+        status.textContent = _aiNewSinceLatest + (_aiNewSinceLatest === 1 ? ' ny bedömning' : ' nya bedömningar')
+          + ' sedan dess — gör en ny sammanställning för att ta med ' + (_aiNewSinceLatest === 1 ? 'den' : 'dem');
+      } else {
+        status.className = 'ai-status ai-status-ok';
+        status.textContent = '✓ Aktuell — omfattar alla bedömningar';
+      }
+      meta.append(status);
       document.getElementById('progress-ai-body').innerHTML = renderAiMarkdown(item.content, item.refs)
         + (item.truncated ? '<p class="ai-p" style="color:#9e2a18;">Obs: svaret klipptes av. Gör gärna en ny sammanställning.</p>' : '');
       const actions = document.getElementById('progress-ai-actions');
       actions.innerHTML = '';
-      if (item.canRate) {
-        actions.append('Var den till hjälp?');
-        [[1, '👍'], [-1, '👎']].forEach(([value, label]) => {
-          const b = document.createElement('button');
-          b.className = 'btn-secondary btn-small' + (item.rating === value ? ' ai-rated' : '');
-          b.textContent = label;
-          b.onclick = () => rateProgressAiSummary(item, value);
-          actions.append(b);
-        });
+      if (item.canRate) renderAiRating(actions, item, 'rateProgressAiSummary', 'Var den till hjälp?');
+      renderAiFollowups(item);
+    }
+
+    // Tumme upp/ner + diskret kommentarsfält (v4.59.4). target = sammanställning eller följdfrågesvar.
+    function renderAiRating(container, target, action, label) {
+      container.innerHTML = '';
+      const row = document.createElement('div');
+      row.className = 'ai-rate-row';
+      row.append(label);
+      [[1, '👍'], [-1, '👎']].forEach(([value, emoji]) => {
+        const b = document.createElement('button');
+        b.className = 'btn-secondary btn-small' + (target.rating === value ? ' ai-rated' : '');
+        b.textContent = emoji;
+        b.onclick = async () => {
+          const rating = target.rating === value ? null : value; // samma tumme igen = ångra
+          try {
+            // Ny tumme = ny kommentar (en 👍-kommentar passar sällan till 👎); fältet visas tomt.
+            await api(action, { id: target.id, rating, comment: null });
+            target.rating = rating;
+            target.ratingComment = null;
+            renderAiRating(container, target, action, label);
+          } catch (e) { await customAlert('Kunde inte spara: ' + e.message); }
+        };
+        row.append(b);
+      });
+      container.append(row);
+      if (target.rating !== 1 && target.rating !== -1) return;
+      const commentRow = document.createElement('div');
+      commentRow.className = 'ai-comment-row';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.maxLength = 1000;
+      input.placeholder = target.rating === 1 ? 'Vad var bra? (valfritt)' : 'Vad kunde ha varit bättre? (valfritt)';
+      input.value = target.ratingComment || '';
+      const save = document.createElement('button');
+      save.className = 'btn-secondary btn-small';
+      save.textContent = 'Spara';
+      const note = document.createElement('span');
+      const submit = async () => {
+        try {
+          await api(action, { id: target.id, rating: target.rating, comment: input.value.trim() });
+          target.ratingComment = input.value.trim() || null;
+          note.textContent = 'Sparat';
+        } catch (e) { note.textContent = 'Kunde inte spara: ' + e.message; }
+      };
+      save.onclick = submit;
+      input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+      input.addEventListener('input', () => { note.textContent = ''; });
+      commentRow.append(input, save, note);
+      container.append(commentRow);
+    }
+
+    // v4.60.0: följdfrågor — tidigare frågor och svar, och ett frågefält (bara för den som
+    // skapade sammanställningen, högst AI_FOLLOWUP_MAX per sammanställning).
+    const AI_FOLLOWUP_MAX = 10;
+    function renderAiFollowups(item) {
+      const el = document.getElementById('progress-ai-followups');
+      el.innerHTML = '';
+      const list = item.followups || [];
+      list.forEach(f => el.append(aiFollowupBlock(f, item.refs)));
+      if (item.canAsk && list.length < AI_FOLLOWUP_MAX) {
+        const form = document.createElement('div');
+        form.className = 'ai-fu-form';
+        const ta = document.createElement('textarea');
+        ta.rows = 2;
+        ta.maxLength = 500;
+        ta.placeholder = 'Ställ en följdfråga om sammanställningen, t.ex. "Vad ska jag fokusera på vid nästa operation?"';
+        const row = document.createElement('div');
+        row.className = 'ai-rate-row';
+        const btn = document.createElement('button');
+        btn.className = 'btn-secondary btn-small';
+        btn.textContent = 'Fråga';
+        const count = document.createElement('span');
+        count.textContent = list.length + ' av ' + AI_FOLLOWUP_MAX + ' frågor · högst 500 tecken';
+        btn.onclick = () => askAiFollowup(item, ta, btn);
+        ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) askAiFollowup(item, ta, btn); });
+        row.append(btn, count);
+        form.append(ta, row);
+        el.append(form);
+      } else if (item.canAsk) {
+        el.insertAdjacentHTML('beforeend', '<p class="ai-fu-note">Max antal frågor på den här sammanställningen. Gör en ny sammanställning för att fortsätta.</p>');
+      } else if (item.canRate && item === _aiHistory[0]) {
+        el.insertAdjacentHTML('beforeend', '<p class="ai-fu-note">Följdfrågor kan ställas på sammanställningar som görs från och med nu. Gör en ny sammanställning för att kunna fråga.</p>');
       }
+    }
+
+    function aiFollowupBlock(f, refs) {
+      const block = document.createElement('div');
+      block.className = 'ai-fu';
+      const q = document.createElement('div');
+      q.className = 'ai-fu-q';
+      q.textContent = 'Du frågade: ' + f.question;
+      const a = document.createElement('div');
+      a.className = 'ai-fu-a';
+      a.innerHTML = renderAiMarkdown(f.answer || '', refs);
+      block.append(q, a);
+      if (f.id) {
+        const rating = document.createElement('div');
+        rating.className = 'ai-actions';
+        renderAiRating(rating, f, 'rateProgressAiFollowup', 'Hjälpte svaret?');
+        block.append(rating);
+      }
+      return block;
+    }
+
+    async function askAiFollowup(item, ta, btn) {
+      const question = ta.value.trim();
+      if (!question || btn.disabled) return;
+      btn.disabled = true; ta.disabled = true;
+      const pending = { question, answer: '' };
+      const block = aiFollowupBlock(pending, item.refs);
+      const answerEl = block.querySelector('.ai-fu-a');
+      answerEl.innerHTML = '<p class="ai-p" style="color:#8a97a0;">Tänker…</p>';
+      ta.closest('.ai-fu-form').before(block);
+      let text = '', done = null, error = null;
+      try {
+        await apiStream('/progress/ai-summaries/' + encodeURIComponent(item.id) + '/followups', { question }, ev => {
+          if (ev.t === 'delta') { text += ev.text; answerEl.innerHTML = renderAiMarkdown(text, item.refs); }
+          else if (ev.t === 'done') done = ev;
+          else if (ev.t === 'error') error = ev.error;
+        });
+      } catch (err) { error = err.message; }
+      if (error || !done) {
+        block.remove();
+        btn.disabled = false; ta.disabled = false;
+        ta.closest('.ai-fu-form').insertAdjacentHTML('afterbegin', '<p class="ai-fu-note" style="color:#9e2a18;">' + esc(error || 'Inget svar.') + '</p>');
+        return;
+      }
+      (item.followups ||= []).push({ id: done.id, createdAt: done.createdAt, question, answer: text.trim(), rating: null, ratingComment: null });
+      renderAiFollowups(item);
     }
 
     function renderProgressAiHistory(activeId) {
@@ -94,7 +230,7 @@
       older.forEach(item => {
         const b = document.createElement('button');
         b.textContent = item.createdAt.slice(0, 10);
-        b.onclick = () => { showProgressAiSummary(item, 0); renderProgressAiHistory(item.id); };
+        b.onclick = () => { showProgressAiSummary(item); renderProgressAiHistory(item.id); };
         el.append(b);
       });
     }
@@ -108,8 +244,9 @@
         const res = await api('getProgressAiSummaries', { recipientEmail, formType });
         if (_aiScopeKey !== key) return; // användaren hann byta urval
         _aiHistory = res.items || [];
+        _aiNewSinceLatest = res.newSinceLatest || 0;
         if (_aiHistory[0]) {
-          showProgressAiSummary(_aiHistory[0], res.newSinceLatest);
+          showProgressAiSummary(_aiHistory[0]);
           renderProgressAiHistory(_aiHistory[0].id);
         }
       } catch (e) { console.warn('getProgressAiSummaries:', e); }
@@ -169,20 +306,6 @@
       } catch (err) {
         body.innerHTML = '<p class="status-err" style="margin:0;">' + esc(err.message) + '</p>';
       }
-    }
-
-    async function rateProgressAiSummary(item, value) {
-      const rating = item.rating === value ? null : value; // samma tumme igen = ångra
-      let comment = null;
-      if (rating === -1) {
-        comment = await customPrompt('Vad kunde ha varit bättre? (valfritt)');
-        if (comment === null) return;
-      }
-      try {
-        await api('rateProgressAiSummary', { id: item.id, rating, comment });
-        item.rating = rating;
-        showProgressAiSummary(item, 0);
-      } catch (e) { await customAlert('Kunde inte spara: ' + e.message); }
     }
 
     async function initProgress() {
@@ -315,6 +438,7 @@
       document.getElementById('progress-ai-result').classList.remove('hidden');
       document.getElementById('progress-ai-meta').textContent = formType ? 'Ny sammanställning: ' + formType : 'Ny sammanställning: alla formulärtyper';
       document.getElementById('progress-ai-actions').innerHTML = '';
+      document.getElementById('progress-ai-followups').innerHTML = '';
       body.innerHTML = '<p class="ai-p" style="color:#8a97a0;">Läser underlaget och analyserar… Texten börjar visas efter några sekunder.</p>';
       _aiShownRefs = null;
       let text = '', done = null, error = null;
